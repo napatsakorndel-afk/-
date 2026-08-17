@@ -1,0 +1,38 @@
+{
+  "entities": {
+    "Registration": {
+      "title": "Registration",
+      "description": "Information about a runner's registration",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "LSED Registration Reference ID" },
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "nationalId": { "type": "string" },
+        "age": { "type": "integer" },
+        "gender": { "type": "string", "enum": ["male", "female"] },
+        "bloodType": { "type": "string" },
+        "emergencyContactName": { "type": "string" },
+        "emergencyContactPhone": { "type": "string" },
+        "distance": { "type": "string", "enum": ["5K", "vip", "vip_duo", "vip_trio", "donation"] },
+        "shirtSize": { "type": "string", "enum": ["XS", "S", "M", "L", "XL", "XXL", "3XL", "4XL"] },
+        "status": { "type": "string", "enum": ["pending_payment", "pending_verification", "approved", "rejected"] },
+        "price": { "type": "number" },
+        "slipUrl": { "type": "string" },
+        "rejectionReason": { "type": "string" },
+        "bibNumber": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "verifiedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "firstName", "lastName", "email", "phone", "nationalId", "age", "gender", "distance", "shirtSize", "status", "price", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/registrations/{registrationId}": {
+      "schema": "Registration",
+      "description": "Runner registration documents"
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "LSEd Running 2569",
+  "description": "ระบบลงทะเบียนงานวิ่งออนไลน์ครบวงจรสำหรับ LSEd Running 2569 พร้อมระบบตรวจสอบสลิปการชำระเงินและจัดการบิ๊บออนไลน์หลังบ้าน",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
