@@ -1,3 +1,5 @@
+import { db } from "../lib/firebaseClient.js";
+import { doc, getDoc } from "firebase/firestore";
 import React, { useState, useEffect } from "react";
 import { 
   Calendar, 
@@ -44,23 +46,30 @@ export default function LandingPage({ onRegisterClick, onCheckStatusClick, onChe
   const [routeMapImage, setRouteMapImage] = useState<string>("");
 
   useEffect(() => {
-    fetch("/api/assets/settings")
-      .then(res => res.json())
-      .then(data => {
-        if (data.shirtImage) setShirtImage(data.shirtImage);
-        if (data.poloShirtImage) setPoloShirtImage(data.poloShirtImage);
-        if (data.medalImage) setMedalImage(data.medalImage);
-        if (data.souvenirImage) setSouvenirImage(data.souvenirImage);
-        if (data.routeMapImage) setRouteMapImage(data.routeMapImage);
-      })
-      .catch(err => console.error("Failed to load assets", err));
+    const fetchAssets = async () => {
+      try {
+        const docRef = doc(db, "settings", "assets");
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data.shirtImage) setShirtImage(data.shirtImage);
+          if (data.poloShirtImage) setPoloShirtImage(data.poloShirtImage);
+          if (data.medalImage) setMedalImage(data.medalImage);
+          if (data.souvenirImage) setSouvenirImage(data.souvenirImage);
+          if (data.routeMapImage && typeof setRouteMapImage === 'function') setRouteMapImage(data.routeMapImage);
+        }
+      } catch (err) {
+        console.error("Failed to load assets from Firestore", err);
+      }
+    };
+    fetchAssets();
   }, []);
 
 
-  // Calculate Countdown to Event (Dec 13, 2569 / 2026)
+  // Calculate Countdown to Event (Jan 24, 2570 / 2027)
   useEffect(() => {
-    // 2569 BE is 2026 AD
-    const eventDate = new Date("2026-12-13T05:00:00").getTime();
+    // 2570 BE is 2027 AD
+    const eventDate = new Date("2027-01-24T05:00:00").getTime();
 
     const interval = setInterval(() => {
       const now = new Date().getTime();
@@ -99,9 +108,10 @@ export default function LandingPage({ onRegisterClick, onCheckStatusClick, onChe
       subtitle: "เดิน-วิ่งเพื่อสุขภาพและร่วมสมทบทุนการศึกษา",
       price: 555,
       time: "05:45 น.",
-      color: "from-blue-600/20 to-indigo-600/5",
-      borderColor: "border-blue-500/20 hover:border-blue-500/40",
-      textColor: "text-blue-400",
+      color: "from-teal-500/15 to-emerald-500/5",
+      borderColor: "border-teal-500/25 hover:border-teal-500/50",
+      textColor: "text-teal-600 dark:text-teal-400",
+      buttonColor: "bg-teal-600 hover:bg-teal-500 shadow-teal-500/20",
       desc: "เส้นทางมาตรฐานระยะทาง 5 กิโลเมตร ปล่อยตัวจากอาคารสิริวิทยาลักษณ์ คณะวิทยาการเรียนรู้ฯ วิ่งออกกำลังกายรับอรุณยามเช้ารอบแกนกลาง มธ. รังสิต",
       gift: "เหรียญรางวัลผู้พิชิต, เสื้อยืดที่ระลึก REGULAR, หมายเลขประจำตัววิ่ง BIB"
     },
@@ -111,11 +121,12 @@ export default function LandingPage({ onRegisterClick, onCheckStatusClick, onChe
       subtitle: "ผู้สนับสนุนหลักเดี่ยวและสิทธิพิเศษระดับ VIP",
       price: 990,
       time: "05:45 น.",
-      color: "from-yellow-600/20 to-amber-600/5",
-      borderColor: "border-yellow-500/20 hover:border-yellow-500/40",
-      textColor: "text-yellow-400",
+      color: "from-amber-500/15 to-orange-500/5",
+      borderColor: "border-orange-500/25 hover:border-orange-500/50",
+      textColor: "text-orange-600 dark:text-orange-400",
+      buttonColor: "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-orange-500/20",
       desc: "ร่วมสนับสนุนเดี่ยวเพื่อรับสิทธิพิเศษเต็มรูปแบบ วิ่งระยะทาง 5 กิโลเมตร พร้อมเลือกลายและขนาดเสื้อยืดพิเศษเฉพาะ VIP และสิทธิพิเศษการต้อนรับในงาน",
-      gift: "เหรียญรางวัลผู้พิชิต (ลายพรีเมียม), เสื้อยืด VIP สุดพิเศษ, หมายเลขประจำตัววิ่ง VIP, เกียรทีบัตรขอบคุณพิเศษจากคณะ"
+      gift: "เหรียญรางวัลผู้พิชิต (ลายพรีเมียม), เสื้อยืด VIP สุดพิเศษ, หมายเลขประจำตัววิ่ง VIP, เกียรติบัตรขอบคุณพิเศษจากคณะ"
     },
     {
       type: "souvenir" as DistanceType,
@@ -123,9 +134,10 @@ export default function LandingPage({ onRegisterClick, onCheckStatusClick, onChe
       subtitle: "เหรียญที่ระลึก & เสื้อยืดพรีเมียมสุดพิเศษ (ลดหย่อนภาษีได้)",
       price: 390,
       time: "จัดส่งพัสดุ",
-      color: "from-orange-600/20 to-red-600/5",
-      borderColor: "border-orange-500/20 hover:border-orange-500/40",
-      textColor: "text-orange-400",
+      color: "from-orange-500/15 to-orange-600/5",
+      borderColor: "border-orange-500/25 hover:border-orange-500/50",
+      textColor: "text-orange-600 dark:text-orange-400",
+      buttonColor: "bg-orange-600 hover:bg-orange-500 shadow-orange-500/20",
       desc: "สำหรับผู้ที่ประสงค์สมทบทุนและสะสมเหรียญรางวัล (Finisher Medal) พร้อมเสื้อที่ระลึกพรีเมียม (ไม่ได้วิ่งหน้างาน) รายได้ทั้งหมดหลังหักค่าใช้จ่ายร่วมสมทบเข้ากองทุนคณะ และสามารถขอลดหย่อนภาษีได้!",
       gift: "เหรียญที่ระลึกผู้พิชิต (Boutique Series), เสื้อวิ่งพรีเมียม LSEd 1 ตัว, สิทธิ์ในการขอลดหย่อนภาษี"
     },
@@ -135,9 +147,10 @@ export default function LandingPage({ onRegisterClick, onCheckStatusClick, onChe
       subtitle: "ลดหย่อนภาษีเงินได้ 2 เท่า (e-Donation)",
       price: 500,
       time: "e-Donation",
-      color: "from-purple-600/20 to-indigo-600/5",
-      borderColor: "border-purple-500/20 hover:border-purple-500/40",
-      textColor: "text-purple-400",
+      color: "from-teal-900/15 to-teal-800/5",
+      borderColor: "border-teal-600/25 hover:border-teal-600/50",
+      textColor: "text-teal-700 dark:text-teal-300",
+      buttonColor: "bg-teal-700 hover:bg-teal-600 shadow-teal-700/20",
       desc: "สำหรับผู้ที่มีความประสงค์สมทบทุนสนับสนุนงานพัฒนาวิชาการและระบบการศึกษาของคณะ LSEd มธ. โดยไม่ประสงค์เข้าร่วมกิจกรรมวิ่งหรือรับของที่ระลึก",
       gift: "ใบเสร็จลดหย่อนภาษีอิเล็กทรอนิกส์ 2 เท่าส่งตรงกรมสรรพากร, จดหมายขอบคุณขอบพระคุณอย่างสูงจากทางคณะ"
     }
@@ -146,31 +159,31 @@ export default function LandingPage({ onRegisterClick, onCheckStatusClick, onChe
   return (
     <div className="space-y-16 pb-16 animate-fade-in" id="landing-page">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-orange-50 via-white to-orange-50 dark:from-neutral-950 dark:via-zinc-900 dark:to-orange-950/20 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-3xl p-8 md:p-16 shadow-2xl">
-        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-blue-600/15 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-96 h-96 bg-orange-600/10 rounded-full blur-3xl"></div>
+      <section className="relative overflow-hidden bg-gradient-to-br from-teal-50/40 via-white to-orange-50/40 dark:from-[#0B1319] dark:via-[#0E1720] dark:to-[#141210] border border-teal-500/15 dark:border-white/10 text-slate-900 dark:text-white rounded-3xl p-8 md:p-16 shadow-xl backdrop-blur-sm">
+        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-teal-400/12 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-96 h-96 bg-orange-400/10 rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="relative z-10 max-w-4xl space-y-6">
           <div className="flex flex-wrap gap-2.5 items-center">
-            <div className="inline-flex items-center gap-2 bg-[#E25B45]/10 border border-[#E25B45]/20 text-[#E25B45] px-4 py-1.5 rounded-full text-xs font-black tracking-widest uppercase shadow-sm">
-              <Activity className="w-4 h-4" /> วิ่งเพื่อการขับเคลื่อนสังคมและการศึกษา 2569
+            <div className="inline-flex items-center gap-2 bg-teal-500/10 border border-teal-500/20 text-teal-700 dark:text-teal-300 px-4 py-1.5 rounded-full text-xs font-bold tracking-wider uppercase shadow-xs">
+              <Activity className="w-4 h-4 text-teal-600 dark:text-teal-400" /> วิ่งเพื่อการขับเคลื่อนสังคมและการศึกษา 2569
             </div>
-            <div className="inline-flex items-center gap-2 bg-[#E25B45] text-white px-4 py-1.5 rounded-full text-xs font-black tracking-wider shadow-sm uppercase border border-[#FCA5A5]/40">
+            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-teal-600 to-orange-500 text-white px-4 py-1.5 rounded-full text-xs font-bold tracking-wider shadow-xs">
               โครงการวิ่ง 12 Years LSEd
             </div>
           </div>
           
-          <h1 className="text-4xl sm:text-6xl md:text-7xl font-black italic tracking-tight uppercase leading-none space-y-2">
-            <span className="block text-[#7F1D1D] font-extrabold text-5xl sm:text-7xl md:text-8xl leading-none tracking-tight flex flex-wrap items-center gap-x-4 gap-y-1">
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-black italic tracking-tight leading-none space-y-2">
+            <span className="block text-slate-900 dark:text-white font-black text-5xl sm:text-7xl md:text-8xl leading-none tracking-tight uppercase flex flex-wrap items-center gap-x-4 gap-y-1">
               Run to Shine
-              <Sparkles className="w-10 h-10 md:w-14 md:h-14 text-[#E25B45] animate-pulse shrink-0" />
+              <Sparkles className="w-10 h-10 md:w-14 md:h-14 text-orange-500 animate-pulse shrink-0" />
             </span>
-            <span className="block text-[#E25B45] font-extrabold text-4xl sm:text-6xl md:text-7xl leading-none flex items-center gap-2">
+            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-teal-600 via-teal-500 to-orange-500 font-extrabold text-4xl sm:text-6xl md:text-7xl leading-none flex items-center gap-2">
               วิ่ง-ฉาย-แสง
-              <Sparkle className="w-5 h-5 text-orange-400 animate-spin shrink-0" style={{ animationDuration: '6s' }} />
+              <Sparkle className="w-6 h-6 text-orange-400 animate-spin shrink-0" style={{ animationDuration: '6s' }} />
             </span>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E25B45] to-[#7F1D1D] text-2xl sm:text-4xl md:text-5xl font-black italic mt-2 uppercase block tracking-wider">
-              LSEd RUNNING 2569
+            <span className="text-teal-700 dark:text-teal-400 text-2xl sm:text-4xl md:text-5xl font-black italic mt-2 block tracking-wider">
+              LSEd <span className="uppercase">RUNNING 2569</span>
             </span>
           </h1>
           
@@ -180,24 +193,24 @@ export default function LandingPage({ onRegisterClick, onCheckStatusClick, onChe
 
           {/* Quick Info Badges */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 text-slate-900 dark:text-white/80">
-            <div className="flex items-center gap-3 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl p-4">
-              <Calendar className="w-5 h-5 text-orange-400" />
+            <div className="flex items-center gap-3 bg-white/70 dark:bg-white/5 border border-teal-500/10 dark:border-white/10 rounded-2xl p-4 shadow-xs">
+              <Calendar className="w-5 h-5 text-orange-500" />
               <div>
                 <p className="text-[10px] text-slate-400 dark:text-white/40 uppercase font-bold tracking-wider">วันจัดกิจกรรม</p>
-                <p className="text-sm font-black text-slate-900 dark:text-white">13 ธันวาคม 2569</p>
+                <p className="text-sm font-black text-slate-900 dark:text-white">24 มกราคม 2570</p>
               </div>
             </div>
             
-            <div className="flex items-center gap-3 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl p-4">
-              <MapPin className="w-5 h-5 text-blue-400" />
+            <div className="flex items-center gap-3 bg-white/70 dark:bg-white/5 border border-teal-500/10 dark:border-white/10 rounded-2xl p-4 shadow-xs">
+              <MapPin className="w-5 h-5 text-teal-600 dark:text-teal-400" />
               <div>
                 <p className="text-[10px] text-slate-400 dark:text-white/40 uppercase font-bold tracking-wider">จุดปล่อยตัว & เส้นชัย</p>
                 <p className="text-sm font-black text-slate-900 dark:text-white">อาคารสิริวิทยาลักษณ์ คณะวิทยาการเรียนรู้ฯ</p>
               </div>
             </div>
             
-            <div className="flex items-center gap-3 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl p-4">
-              <Clock className="w-5 h-5 text-blue-400" />
+            <div className="flex items-center gap-3 bg-white/70 dark:bg-white/5 border border-teal-500/10 dark:border-white/10 rounded-2xl p-4 shadow-xs">
+              <Clock className="w-5 h-5 text-teal-600 dark:text-teal-400" />
               <div>
                 <p className="text-[10px] text-slate-400 dark:text-white/40 uppercase font-bold tracking-wider">ปล่อยตัวเช้าตรู่</p>
                 <p className="text-sm font-black text-slate-900 dark:text-white">ตั้งแต่เวลา 05:00 น.</p>
@@ -209,14 +222,14 @@ export default function LandingPage({ onRegisterClick, onCheckStatusClick, onChe
           <div className="flex flex-col sm:flex-row flex-wrap gap-4 pt-6">
             <button
               onClick={() => onRegisterClick()}
-              className="px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-widest text-xs rounded-xl shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 transition duration-200 cursor-pointer transform hover:scale-[1.02]"
+              className="px-8 py-4 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-600 text-white font-black uppercase tracking-widest text-xs rounded-xl shadow-lg shadow-teal-500/25 flex items-center justify-center gap-2 transition duration-200 cursor-pointer transform hover:scale-[1.02]"
               id="hero-register-btn"
             >
               สมัครวิ่งออนไลน์ตอนนี้ <ChevronRight className="w-5 h-5" />
             </button>
             <button
               onClick={onCheckStatusClick}
-              className="px-8 py-4 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white font-black uppercase tracking-widest text-xs rounded-xl border border-slate-200 dark:border-white/10 flex items-center justify-center gap-2 transition duration-200 cursor-pointer hover:border-blue-500/50"
+              className="px-8 py-4 bg-white/80 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-800 dark:text-white font-bold uppercase tracking-widest text-xs rounded-xl border border-slate-200 dark:border-white/10 flex items-center justify-center gap-2 transition duration-200 cursor-pointer hover:border-teal-500/40 hover:text-teal-600 dark:hover:text-teal-300"
               id="hero-status-btn"
             >
               ตรวจสอบสถานะ / อัปโหลดสลิป
@@ -224,10 +237,10 @@ export default function LandingPage({ onRegisterClick, onCheckStatusClick, onChe
             {onCheckShippingClick && (
               <button
                 onClick={onCheckShippingClick}
-                className="px-8 py-4 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 font-black uppercase tracking-widest text-xs rounded-xl border border-orange-500/30 flex items-center justify-center gap-2 transition duration-200 cursor-pointer hover:border-orange-400"
+                className="px-8 py-4 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 dark:text-orange-400 font-bold uppercase tracking-widest text-xs rounded-xl border border-orange-500/30 flex items-center justify-center gap-2 transition duration-200 cursor-pointer hover:border-orange-500"
                 id="hero-shipping-btn"
               >
-                <Truck className="w-4 h-4 text-orange-400" /> ตรวจสอบเลขพัสดุส่งไปรษณีย์
+                <Truck className="w-4 h-4 text-orange-500" /> ตรวจสอบเลขพัสดุส่งไปรษณีย์
               </button>
             )}
           </div>
@@ -235,28 +248,30 @@ export default function LandingPage({ onRegisterClick, onCheckStatusClick, onChe
       </section>
 
       {/* Countdown Timer */}
-      <section className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-6 md:p-8 shadow-sm">
+      <section className="bg-white/70 dark:bg-white/5 border border-teal-500/15 dark:border-white/10 rounded-2xl p-6 md:p-8 shadow-sm backdrop-blur-sm">
         <div className="text-center space-y-4">
-          <p className="text-xs font-black text-blue-500 uppercase tracking-widest">นับถอยหลังสู่เวลาปล่อยตัว</p>
+          <p className="text-xs font-bold text-teal-700 dark:text-teal-400 uppercase tracking-widest flex items-center justify-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-orange-500" /> นับถอยหลังสู่เวลาปล่อยตัว
+          </p>
           <div className="flex justify-center items-center gap-4 md:gap-8 text-center">
-            <div className="bg-slate-100 dark:bg-black/40 rounded-xl p-4 w-24 md:w-32 border border-slate-200 dark:border-white/5 shadow-inner">
+            <div className="bg-slate-50 dark:bg-black/30 rounded-2xl p-4 w-24 md:w-32 border border-slate-200/80 dark:border-white/5 shadow-xs">
               <p className="text-4xl md:text-6xl font-black italic text-slate-900 dark:text-white leading-none">{timeLeft.days}</p>
               <p className="text-[10px] text-slate-400 dark:text-white/40 uppercase tracking-wider font-bold mt-2">วัน</p>
             </div>
-            <div className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white/20">:</div>
-            <div className="bg-slate-100 dark:bg-black/40 rounded-xl p-4 w-24 md:w-32 border border-slate-200 dark:border-white/5 shadow-inner">
+            <div className="text-2xl md:text-3xl font-black text-slate-300 dark:text-white/20">:</div>
+            <div className="bg-slate-50 dark:bg-black/30 rounded-2xl p-4 w-24 md:w-32 border border-slate-200/80 dark:border-white/5 shadow-xs">
               <p className="text-4xl md:text-6xl font-black italic text-slate-900 dark:text-white leading-none">{timeLeft.hours}</p>
               <p className="text-[10px] text-slate-400 dark:text-white/40 uppercase tracking-wider font-bold mt-2">ชั่วโมง</p>
             </div>
-            <div className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white/20">:</div>
-            <div className="bg-slate-100 dark:bg-black/40 rounded-xl p-4 w-24 md:w-32 border border-slate-200 dark:border-white/5 shadow-inner">
+            <div className="text-2xl md:text-3xl font-black text-slate-300 dark:text-white/20">:</div>
+            <div className="bg-slate-50 dark:bg-black/30 rounded-2xl p-4 w-24 md:w-32 border border-slate-200/80 dark:border-white/5 shadow-xs">
               <p className="text-4xl md:text-6xl font-black italic text-slate-900 dark:text-white leading-none">{timeLeft.minutes}</p>
               <p className="text-[10px] text-slate-400 dark:text-white/40 uppercase tracking-wider font-bold mt-2">นาที</p>
             </div>
-            <div className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white/20">:</div>
-            <div className="bg-slate-100 dark:bg-black/40 rounded-xl p-4 w-24 md:w-32 border border-slate-200 dark:border-white/5 shadow-inner">
-              <p className="text-4xl md:text-6xl font-black italic text-blue-400 leading-none">{timeLeft.seconds}</p>
-              <p className="text-[10px] text-slate-400 dark:text-white/40 uppercase tracking-wider font-bold mt-2">วินาที</p>
+            <div className="text-2xl md:text-3xl font-black text-slate-300 dark:text-white/20">:</div>
+            <div className="bg-slate-50 dark:bg-black/30 rounded-2xl p-4 w-24 md:w-32 border border-slate-200/80 dark:border-white/5 shadow-xs">
+              <p className="text-4xl md:text-6xl font-black italic text-orange-500 leading-none">{timeLeft.seconds}</p>
+              <p className="text-[10px] text-orange-600/70 dark:text-orange-400/70 uppercase tracking-wider font-bold mt-2">วินาที</p>
             </div>
           </div>
         </div>
@@ -265,54 +280,56 @@ export default function LandingPage({ onRegisterClick, onCheckStatusClick, onChe
       {/* Distance Categories */}
       <section className="space-y-8" id="distances">
         <div className="text-center max-w-2xl mx-auto space-y-2">
-          <h2 className="text-4xl font-black italic tracking-tight uppercase text-[#7F1D1D] flex items-center justify-center gap-2">
-            <Sparkles className="w-6 h-6 text-[#E25B45] shrink-0 animate-pulse" /> ประเภทกิจกรรม / สมทบทุนบริจาค <Sparkles className="w-6 h-6 text-[#E25B45] shrink-0 animate-pulse" />
+          <h2 className="text-3xl sm:text-4xl font-black italic tracking-tight uppercase text-slate-900 dark:text-white flex items-center justify-center gap-2">
+            <Sparkles className="w-6 h-6 text-teal-500 shrink-0 animate-pulse" /> 
+            ประเภทกิจกรรม & สมทบทุนบริจาค 
+            <Sparkles className="w-6 h-6 text-orange-500 shrink-0 animate-pulse" />
           </h2>
           <p className="text-slate-500 dark:text-white/60 text-sm font-light">เลือกร่วมวิ่งตามระยะทางที่เหมาะสมกับเป้าหมายสุขภาพ หรือร่วมบริจาคสนับสนุนทุนการศึกษาคณะ</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
           {distances.map((dist, idx) => (
             <div 
               key={idx} 
-              className={`bg-white/90 dark:bg-neutral-950/60 backdrop-blur-md border rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 flex flex-col hover:-translate-y-1 ${dist.borderColor}`}
+              className={`bg-white/90 dark:bg-[#0E151D]/90 backdrop-blur-md border rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col hover:-translate-y-1 ${dist.borderColor}`}
               id={`distance-card-${dist.type}`}
             >
-              <div className={`p-6 sm:p-8 bg-gradient-to-b ${dist.color} text-slate-900 dark:text-white space-y-3 border-b border-slate-200 dark:border-white/5`}>
+              <div className={`p-6 bg-gradient-to-b ${dist.color} text-slate-900 dark:text-white space-y-3 border-b border-slate-100 dark:border-white/5`}>
                 <div className="flex flex-col gap-2 items-start">
-                  <span className="text-3xl sm:text-4xl font-black italic tracking-tighter uppercase leading-none">{typeLabels[dist.type]}</span>
-                  <span className={`bg-slate-100 dark:bg-white/10 border ${dist.type === 'donation' ? 'border-purple-500/20 text-purple-300' : 'border-white/20 text-slate-900 dark:text-white'} font-black text-[10px] px-2.5 py-1 rounded-full whitespace-nowrap inline-block`}>
+                  <span className="text-2xl sm:text-3xl font-black italic tracking-tighter uppercase leading-none">{typeLabels[dist.type]}</span>
+                  <span className="bg-white/80 dark:bg-white/10 border border-slate-200/50 dark:border-white/10 text-slate-800 dark:text-white font-extrabold text-[10px] px-2.5 py-1 rounded-full whitespace-nowrap inline-block">
                     {dist.time}
                   </span>
                 </div>
-                <h3 className="text-base sm:text-lg font-extrabold tracking-tight mt-2 min-h-[56px] flex items-center leading-snug">{dist.title}</h3>
-                <p className="text-xs text-slate-400 dark:text-white/50 tracking-wide font-medium min-h-[32px] flex items-start">{dist.subtitle}</p>
+                <h3 className="text-base font-extrabold tracking-tight min-h-[48px] flex items-center leading-snug">{dist.title}</h3>
+                <p className="text-xs text-slate-500 dark:text-white/50 tracking-wide font-medium min-h-[32px] flex items-start">{dist.subtitle}</p>
               </div>
 
-              <div className="p-6 sm:p-8 flex-grow flex flex-col justify-between space-y-6 bg-slate-50 dark:bg-black/20">
-                <div className="space-y-4 text-sm text-slate-600 dark:text-white/70 leading-relaxed font-light">
-                  <p className="min-h-[80px] md:min-h-[100px] text-sm sm:text-base leading-relaxed">{dist.desc}</p>
+              <div className="p-6 flex-grow flex flex-col justify-between space-y-6 bg-slate-50/50 dark:bg-black/20">
+                <div className="space-y-4 text-xs text-slate-600 dark:text-white/70 leading-relaxed font-light">
+                  <p className="min-h-[70px] leading-relaxed">{dist.desc}</p>
                   
-                  <div className="pt-4 border-t border-slate-200 dark:border-white/5 space-y-2">
-                    <p className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider">{dist.type === 'donation' ? 'สิทธิประโยชน์ทางภาษี:' : 'สิ่งที่จะได้รับ:'}</p>
-                    <p className="text-sm sm:text-base text-slate-600 dark:text-white/70 leading-relaxed font-medium min-h-[80px] md:min-h-[90px]">{dist.gift}</p>
+                  <div className="pt-3 border-t border-slate-200/60 dark:border-white/5 space-y-1.5">
+                    <p className="font-bold text-slate-900 dark:text-white text-[11px] uppercase tracking-wider">{dist.type === 'donation' ? 'สิทธิประโยชน์ทางภาษี:' : 'สิ่งที่จะได้รับ:'}</p>
+                    <p className="text-xs text-slate-600 dark:text-white/70 leading-relaxed font-medium min-h-[60px]">{dist.gift}</p>
                   </div>
                 </div>
 
-                <div className="pt-6 border-t border-slate-200 dark:border-white/5 flex flex-col justify-between gap-4 mt-auto">
+                <div className="pt-5 border-t border-slate-200/60 dark:border-white/5 flex flex-col justify-between gap-4 mt-auto">
                   <div>
-                    <span className="text-sm sm:text-base text-slate-500 dark:text-white/60 block font-bold uppercase tracking-wider mb-3">{dist.type === 'donation' ? 'การร่วมสมทบทุน' : 'ค่าสมัครเข้าร่วม'}</span>
+                    <span className="text-xs text-slate-400 dark:text-white/50 block font-bold uppercase tracking-wider mb-1.5">{dist.type === 'donation' ? 'การร่วมสมทบทุน' : 'ค่าสมัครเข้าร่วม'}</span>
                     {dist.type === 'donation' ? (
-                      <span className={`text-4xl sm:text-5xl font-black leading-tight tracking-tight block ${dist.textColor}`}>ไม่มีขั้นต่ำ</span>
+                      <span className={`text-3xl font-black leading-tight tracking-tight block ${dist.textColor}`}>ไม่มีขั้นต่ำ</span>
                     ) : (
-                      <span className={`text-6xl sm:text-7xl font-black font-mono leading-none tracking-tight block ${dist.textColor}`}>{dist.price} <span className="text-xl sm:text-2xl font-medium text-slate-400 dark:text-white/50">THB</span></span>
+                      <span className={`text-4xl sm:text-5xl font-black font-mono leading-none tracking-tight block ${dist.textColor}`}>{dist.price} <span className="text-lg font-medium text-slate-400 dark:text-white/50">THB</span></span>
                     )}
                   </div>
                   <button
                     onClick={() => onRegisterClick(dist.type)}
-                    className={`w-full py-4 ${dist.type === 'donation' ? 'bg-purple-600 hover:bg-purple-500 shadow-purple-500/25' : 'bg-blue-600 hover:bg-blue-500 shadow-blue-500/25'} text-white font-black uppercase tracking-widest text-base rounded-xl shadow-lg transition duration-200 cursor-pointer text-center`}
+                    className={`w-full py-3.5 ${dist.buttonColor} text-white font-extrabold uppercase tracking-wider text-xs rounded-xl shadow-md transition duration-200 cursor-pointer text-center`}
                   >
-                    {dist.type === 'donation' ? 'ร่วมบริจาคสนับสนุน' : dist.type === 'souvenir' ? 'ซื้อของที่ระลึก' : 'สมัครระยะนี้'}
+                    {dist.type === 'donation' ? 'ร่วมบริจาคสนับสนุน' : dist.type === 'souvenir' ? 'สั่งซื้อของที่ระลึก' : 'สมัครประเภทนี้'}
                   </button>
                 </div>
               </div>
@@ -322,25 +339,25 @@ export default function LandingPage({ onRegisterClick, onCheckStatusClick, onChe
       </section>
 
       {/* Runner Shirt Jersey Section */}
-      <section className="flex flex-col gap-12 bg-gradient-to-br from-indigo-50 via-white to-indigo-50 dark:from-neutral-950 dark:via-zinc-900 dark:to-indigo-950 border border-slate-200 dark:border-white/10 rounded-3xl p-8 md:p-12 shadow-2xl" id="shirts">
+      <section className="flex flex-col gap-12 bg-gradient-to-br from-teal-50/30 via-white to-orange-50/30 dark:from-[#0B1319] dark:via-[#0E1720] dark:to-[#141210] border border-teal-500/15 dark:border-white/10 rounded-3xl p-8 md:p-12 shadow-xl" id="shirts">
         <div className="w-full space-y-6">
-          <div className="inline-flex items-center gap-1.5 bg-blue-500/10 border border-blue-500/20 text-blue-400 px-3.5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider">
-            <Shirt className="w-3.5 h-3.5" /> LSEd Running Jersey 2569 <Sparkle className="w-3 h-3 text-[#E25B45] animate-spin" style={{ animationDuration: '4s' }} />
+          <div className="inline-flex items-center gap-1.5 bg-teal-500/10 border border-teal-500/20 text-teal-700 dark:text-teal-300 px-3.5 py-1.5 rounded-full text-xs font-bold tracking-wider">
+            <Shirt className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" /> LSEd Running Jersey 2569 <Sparkle className="w-3 h-3 text-orange-500 animate-spin" style={{ animationDuration: '4s' }} />
           </div>
-          <h2 className="text-4xl font-black italic tracking-tight uppercase text-slate-900 dark:text-white leading-tight flex items-center gap-2">
-            เสื้อที่ระลึกสุดพรีเมียม <Sparkles className="w-7 h-7 text-[#E25B45] shrink-0 animate-pulse" />
+          <h2 className="text-3xl sm:text-4xl font-black italic tracking-tight uppercase text-slate-900 dark:text-white leading-tight flex items-center gap-2">
+            เสื้อที่ระลึกสุดพรีเมียม <Sparkles className="w-7 h-7 text-orange-500 shrink-0 animate-pulse" />
           </h2>
           <div className="text-slate-600 dark:text-white/70 leading-relaxed font-light text-sm space-y-4">
             <p>
               เสื้อวิ่งที่ตัดเย็บจาก <strong>ผ้าดาวกระจาย (หรือผ้าไมโครลายดาวกระจาย)</strong> เป็นตัวเลือกยอดนิยมสำหรับสายวิ่งและคนออกกำลังกาย เนื่องจากเนื้อผ้ามีลายทอเป็นจุดรูตาข่ายเล็กๆ ช่วยระบายอากาศและความร้อนได้ดีเยี่ยม แห้งไว น้ำหนักเบา และสวมใส่สบายในราคาย่อมเยา
             </p>
             <div className="space-y-2">
-              <strong className="text-slate-900 dark:text-white block">คุณสมบัติเด่นของผ้าดาวกระจาย</strong>
-              <ul className="list-disc pl-5 space-y-1 text-slate-500 dark:text-white/60">
+              <strong className="text-slate-900 dark:text-white block font-bold">คุณสมบัติเด่นของผ้าดาวกระจาย</strong>
+              <ul className="list-disc pl-5 space-y-1 text-slate-500 dark:text-white/60 text-xs">
                 <li><strong className="text-slate-800 dark:text-white/90">ระบายอากาศดี:</strong> มีโครงสร้างลายรูเล็กๆ ช่วยให้ลมผ่านได้ดี ลดความอับชื้นจากเหงื่อ</li>
                 <li><strong className="text-slate-800 dark:text-white/90">แห้งไว ไม่อับชื้น:</strong> ซับเหงื่อได้ดีและแห้งเร็ว เหมาะกับสภาพอากาศร้อน</li>
                 <li><strong className="text-slate-800 dark:text-white/90">น้ำหนักเบา:</strong> สวมใส่แล้วรู้สึกสบายตัว ไม่ถ่วงหรืออึดอัดขณะเคลื่อนไหว</li>
-                <li><strong className="text-slate-800 dark:text-white/90">สัมผัสนุ่มลื่น:</strong> ผิวผ้าไม่ยับง่าย ไม่ย้วย และไม่ค่อยระคายเคืองผิว</li>
+                <li><strong className="text-slate-800 dark:text-white/90">สัมผัสนุ่มลื่น:</strong> ผิวผ้าไม่ยับง่าย ไม่ย้วย และไม่ระคายเคืองผิว</li>
               </ul>
             </div>
           </div>
@@ -483,37 +500,37 @@ export default function LandingPage({ onRegisterClick, onCheckStatusClick, onChe
 
       {/* General Rules & Routes */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-8" id="info">
-        <div className="bg-white/90 dark:bg-neutral-950/60 border border-slate-200 dark:border-white/5 rounded-3xl p-6 md:p-8 shadow-xl space-y-6">
+        <div className="bg-white/90 dark:bg-[#0E151D]/90 border border-teal-500/15 dark:border-white/5 rounded-3xl p-6 md:p-8 shadow-xl space-y-6">
           <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Shield className="w-5 h-5 text-blue-500" /> กฎกติกาและการเข้าร่วมกิจกรรม
+            <Shield className="w-5 h-5 text-teal-600 dark:text-teal-400" /> กฎกติกาและการเข้าร่วมกิจกรรม
           </h3>
           <ul className="space-y-4 text-sm text-slate-600 dark:text-white/70 leading-relaxed font-light">
             <li className="flex items-start gap-3">
-              <span className="inline-block mt-1.5 w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0"></span>
+              <span className="inline-block mt-1.5 w-1.5 h-1.5 bg-teal-500 rounded-full flex-shrink-0"></span>
               <span>ผู้เข้าร่วมแข่งขันจะต้องวิ่งไปตามแนวเส้นทางการแข่งขันที่ผู้จัดกำหนดไว้เท่านั้น ห้ามใช้เส้นทางลัด</span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="inline-block mt-1.5 w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0"></span>
+              <span className="inline-block mt-1.5 w-1.5 h-1.5 bg-teal-500 rounded-full flex-shrink-0"></span>
               <span>ผู้เข้าแข่งขันต้องติดหมายเลขประจำตัววิ่ง (บิ๊บ) ไว้ที่หน้าอกด้านหน้าให้เห็นได้อย่างชัดเจนตลอดการแข่งขัน</span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="inline-block mt-1.5 w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0"></span>
+              <span className="inline-block mt-1.5 w-1.5 h-1.5 bg-orange-500 rounded-full flex-shrink-0"></span>
               <span>บริการซุ้มน้ำดื่มทุกๆ ระยะ 2 กิโลเมตร และซุ้มเครื่องดื่มเกลือแร่ ผลไม้ บริเวณเส้นชัย</span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="inline-block mt-1.5 w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0"></span>
+              <span className="inline-block mt-1.5 w-1.5 h-1.5 bg-orange-500 rounded-full flex-shrink-0"></span>
               <span>มีหน่วยพยาบาลเคลื่อนที่เร็วและรถฉุกเฉินสแตนด์บายดูแลตลอดระยะเวลาการดำเนินกิจกรรม</span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="inline-block mt-1.5 w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0"></span>
+              <span className="inline-block mt-1.5 w-1.5 h-1.5 bg-teal-500 rounded-full flex-shrink-0"></span>
               <span>เงินค่าสมัครหลังหักค่าใช้จ่ายจะสมทบเข้ากองทุนคณะวิทยาการเรียนรู้และศึกษาศาสตร์ มธ. เพื่อช่วยเหลือเป็นทุนการศึกษาและสนับสนุนการเรียนรู้ให้นักศึกษาในคณะ</span>
             </li>
           </ul>
         </div>
 
-        <div className="bg-white/90 dark:bg-neutral-950/60 border border-slate-200 dark:border-white/5 rounded-3xl p-6 md:p-8 shadow-xl space-y-4">
+        <div className="bg-white/90 dark:bg-[#0E151D]/90 border border-teal-500/15 dark:border-white/5 rounded-3xl p-6 md:p-8 shadow-xl space-y-4">
           <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Award className="w-5 h-5 text-blue-500" /> เส้นทางวิ่งและจุดปล่อยตัว/เข้าเส้นชัย
+            <Award className="w-5 h-5 text-orange-500" /> เส้นทางวิ่งและจุดปล่อยตัว/เข้าเส้นชัย
           </h3>
           
           {routeMapImage ? (
@@ -524,30 +541,30 @@ export default function LandingPage({ onRegisterClick, onCheckStatusClick, onChe
             <div className="relative rounded-xl overflow-hidden bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 aspect-video flex items-center justify-center">
             {/* Visual Route Representation via SVG */}
             <svg className="w-full h-full" viewBox="0 0 400 220">
-              <rect width="400" height="220" fill="#18181b" />
+              <rect width="400" height="220" fill="#0f172a" />
               {/* Grid lines */}
-              <path d="M0,50 L400,50 M0,100 L400,100 M0,150 L400,150 M0,200 L400,200 M50,0 L50,220 M100,0 L100,220 M150,0 L150,220 M200,0 L200,220 M250,0 L250,220 M300,0 L300,220 M350,0 L350,220" stroke="#27272a" strokeWidth="0.5" />
+              <path d="M0,50 L400,50 M0,100 L400,100 M0,150 L400,150 M0,200 L400,200 M50,0 L50,220 M100,0 L100,220 M150,0 L150,220 M200,0 L200,220 M250,0 L250,220 M300,0 L300,220 M350,0 L350,220" stroke="#1e293b" strokeWidth="0.5" />
               
-              {/* TU Buildings & Parks (represented nicely) */}
-              <rect x="30" y="30" width="100" height="40" rx="4" fill="#1e3a8a" stroke="#3b82f6" />
+              {/* TU Buildings & Parks (represented nicely in Turquoise & Orange) */}
+              <rect x="30" y="30" width="100" height="40" rx="4" fill="#0d9488" stroke="#14b8a6" fillOpacity="0.3" strokeWidth="1" />
               <text x="80" y="54" fontSize="8" fill="#ffffff" fontWeight="bold" textAnchor="middle">อาคารเรียนรวม (SC3)</text>
 
-              <rect x="230" y="140" width="150" height="50" rx="4" fill="#065f46" stroke="#10b981" />
+              <rect x="230" y="140" width="150" height="50" rx="4" fill="#f97316" stroke="#fb923c" fillOpacity="0.25" strokeWidth="1" />
               <text x="305" y="161" fontSize="8" fill="#ffffff" fontWeight="black" textAnchor="middle">จุดปล่อยตัว & เส้นชัย</text>
-              <text x="305" y="174" fontSize="7" fill="#a7f3d0" fontWeight="bold" textAnchor="middle">อาคารสิริวิทยาลักษณ์ LSEd</text>
+              <text x="305" y="174" fontSize="7" fill="#fdba74" fontWeight="bold" textAnchor="middle">อาคารสิริวิทยาลักษณ์ LSEd</text>
 
               {/* Park Lake */}
-              <ellipse cx="200" cy="110" rx="40" ry="25" fill="#1e293b" stroke="#475569" strokeWidth="1" />
-              <text x="200" y="113" fontSize="8" fill="#94a3b8" fontWeight="bold" textAnchor="middle">สวนป๋วยฯ / แกนกลาง</text>
+              <ellipse cx="200" cy="110" rx="40" ry="25" fill="#134e4a" stroke="#2dd4bf" strokeWidth="1" fillOpacity="0.4" />
+              <text x="200" y="113" fontSize="8" fill="#99f6e4" fontWeight="bold" textAnchor="middle">สวนป๋วยฯ / แกนกลาง</text>
 
               {/* Running Route path */}
-              <path d="M 80,70 L 80,140 Q 80,185 180,185 L 250,185 L 250,110 L 170,110 L 170,70 Z" fill="none" stroke="#2563eb" strokeWidth="3" strokeLinecap="round" strokeDasharray="6 4" />
+              <path d="M 80,70 L 80,140 Q 80,185 180,185 L 250,185 L 250,110 L 170,110 L 170,70 Z" fill="none" stroke="#14b8a6" strokeWidth="3" strokeLinecap="round" strokeDasharray="6 4" />
               
               {/* Release badges */}
-              <circle cx="80" cy="70" r="5" fill="#3b82f6" stroke="#ffffff" strokeWidth="1.5" />
-              <circle cx="250" cy="185" r="5" fill="#10b981" stroke="#ffffff" strokeWidth="1.5" />
-              <text x="80" y="24" fontSize="8" fill="#3b82f6" fontWeight="bold" textAnchor="middle">CHECKPOINT (SC3)</text>
-              <text x="305" y="130" fontSize="8" fill="#10b981" fontWeight="black" textAnchor="middle">START / FINISH</text>
+              <circle cx="80" cy="70" r="5" fill="#14b8a6" stroke="#ffffff" strokeWidth="1.5" />
+              <circle cx="250" cy="185" r="5" fill="#f97316" stroke="#ffffff" strokeWidth="1.5" />
+              <text x="80" y="24" fontSize="8" fill="#5eead4" fontWeight="bold" textAnchor="middle">CHECKPOINT (SC3)</text>
+              <text x="305" y="130" fontSize="8" fill="#fb923c" fontWeight="black" textAnchor="middle">START / FINISH</text>
             </svg>
             <div className="absolute bottom-2 right-2 bg-white/80 dark:bg-black/80 text-[10px] text-slate-400 dark:text-white/50 px-2 py-0.5 rounded border border-slate-200 dark:border-white/5 font-mono">
               MAP: Siriwiyhalai Building Loop, TU RANGSIT
@@ -556,7 +573,7 @@ export default function LandingPage({ onRegisterClick, onCheckStatusClick, onChe
           )}
 
           {/* 11 Checkpoints Text Instructions */}
-          <div className="bg-slate-100 dark:bg-black/30 border border-slate-200 dark:border-white/5 rounded-2xl p-6 mt-6">
+          <div className="bg-slate-50 dark:bg-black/30 border border-slate-200/60 dark:border-white/5 rounded-2xl p-6 mt-6">
             <h4 className="text-slate-900 dark:text-white font-bold mb-4 flex items-center gap-2">
               <MapPin className="w-4 h-4 text-orange-500" />
               รายละเอียดจุดเช็คพอยต์ 11 จุด (5 KM)
@@ -576,10 +593,10 @@ export default function LandingPage({ onRegisterClick, onCheckStatusClick, onChe
                 "จุดที่ 11: เข้าเส้นชัย (Finish) ที่ลานหน้าคณะวิทยาการเรียนรู้ฯ"
               ].map((text, idx) => (
                 <div key={idx} className="flex items-start gap-3">
-                  <div className="w-5 h-5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 flex items-center justify-center text-[10px] font-black flex-shrink-0 mt-0.5">
+                  <div className="w-5 h-5 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-700 dark:text-teal-300 flex items-center justify-center text-[10px] font-black flex-shrink-0 mt-0.5">
                     {idx + 1}
                   </div>
-                  <p className="text-sm text-slate-600 dark:text-white/70 font-light leading-relaxed">{text}</p>
+                  <p className="text-xs text-slate-600 dark:text-white/70 font-light leading-relaxed">{text}</p>
                 </div>
               ))}
             </div>

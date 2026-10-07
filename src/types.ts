@@ -3,7 +3,7 @@ export type ShirtSizeType = 'XS' | 'S' | 'M' | 'L' | 'XL' | 'XXL' | '3XL' | '4XL
 export type RegistrationStatus = 'pending_payment' | 'pending_verification' | 'approved' | 'rejected';
 
 export interface Registration {
-  id: string; // Dynamic reference e.g., LSED-XXXXXX
+  id: string; // Dynamic reference e.g., LSEd-XXXXXX
   firstName: string;
   lastName: string;
   email: string;
@@ -45,6 +45,22 @@ export interface Registration {
   paymentAccountNo?: string;
   paymentAccountName?: string;
   paymentQrImage?: string;
+  emailPreviewUrl?: string;
+  reminderSentAt?: string;
+}
+
+export type EmailType = 'registration' | 'payment_received' | 'approval' | 'rejection' | 'shipping' | 'reminder';
+
+export interface EmailLog {
+  id: string;
+  recipient: string;
+  recipientName?: string;
+  subject: string;
+  type: EmailType;
+  sentAt: string;
+  previewUrl?: string;
+  html?: string;
+  status: 'sent' | 'simulated' | 'failed';
 }
 
 export interface EventStats {

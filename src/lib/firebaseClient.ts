@@ -1,5 +1,8 @@
 import { initializeApp } from "firebase/app";
-import { initializeFirestore } from "firebase/firestore";
+import { initializeFirestore, setLogLevel } from "firebase/firestore";
+
+// Suppress benign stream cancellation noise
+setLogLevel("error");
 
 const firebaseConfig = {
   apiKey: "AIzaSyBWtJ0COzNmGKWmbGotCDvVbgLiCJnFRnI",
@@ -12,5 +15,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const db = initializeFirestore(app, {
-  ignoreUndefinedProperties: true
+  ignoreUndefinedProperties: true,
+  experimentalAutoDetectLongPolling: true
 }, "ai-studio-lsedrunning2569-a9736ca5-e9f6-446e-8815-2ce4dfe58c8a");

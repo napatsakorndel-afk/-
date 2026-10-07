@@ -22,10 +22,42 @@ import {
   ArrowRight,
   Truck,
   User,
-  QrCode
-, Image, Save, CheckCircle2, ShieldCheck, LogOut, Package, CreditCard } from "lucide-react";
-import { Registration, EventStats, DistanceType, ShirtSizeType, RegistrationStatus } from "../types.js";
+  QrCode,
+  Image,
+  Save,
+  CheckCircle2,
+  ShieldCheck,
+  LogOut,
+  Package,
+  CreditCard,
+  Mail,
+  Send,
+  Smartphone,
+  Monitor,
+  Calendar,
+  MapPin,
+  Backpack,
+  ExternalLink,
+  History,
+  Sparkles
+} from "lucide-react";
+import { Registration, EventStats, DistanceType, ShirtSizeType, RegistrationStatus, EmailLog } from "../types.js";
 import { generatePromptPayPayload } from "../lib/promptpay.js";
+import { 
+  adminFetchRegistrations, 
+  adminApproveRunner, 
+  adminRejectRunner, 
+  adminEditRunner, 
+  adminDeleteRunner, 
+  adminCheckinRunner,
+  fetchPaymentSettings as apiFetchPaymentSettings,
+  fetchRecentEmails,
+  fetchEmailPreview,
+  adminSendRunnerEmail,
+  fetchReminderStatus,
+  sendBatchReminder
+} from "../lib/dataService.js";
+import { PRESET_LOGOS } from "../lib/presetLogos.js";
 
 interface AdminPortalProps {
   stats: EventStats | null;
@@ -65,9 +97,33 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
   // Inline edit state
   const [editingReg, setEditingReg] = useState<Registration | null>(null);
 
-  // Sub tab: runners vs shipping vs payment
-  const [subTab, setSubTab] = useState<"runners" | "shipping" | "payment" | "assets">("runners");
+  // Sub tab: runners vs shipping vs payment vs assets vs emails
+  const [subTab, setSubTab] = useState<"runners" | "shipping" | "payment" | "assets" | "emails">("runners");
   const [filterShippingStatus, setFilterShippingStatus] = useState<string>("all");
+
+  // Email & 3-Day Reminder System State
+  const [reminderStatus, setReminderStatus] = useState<{
+    totalApproved: number;
+    reminderSentCount: number;
+    reminderPendingCount: number;
+    daysUntilRace: number;
+    isThreeDaysBefore: boolean;
+    recommendedSendDate: string;
+  } | null>(null);
+  const [selectedEmailTemplate, setSelectedEmailTemplate] = useState<string>("reminder");
+  const [emailViewport, setEmailViewport] = useState<"desktop" | "mobile">("desktop");
+  const [emailPreviewHtml, setEmailPreviewHtml] = useState<string>("");
+  const [emailPreviewSubject, setEmailPreviewSubject] = useState<string>("");
+  const [loadingPreview, setLoadingPreview] = useState<boolean>(false);
+  const [testEmailAddress, setTestEmailAddress] = useState<string>("Napatsakorn.del@gmail.com");
+  const [sendingTestEmail, setSendingTestEmail] = useState<boolean>(false);
+  const [sendingBatch, setSendingBatch] = useState<boolean>(false);
+  const [batchModalOpen, setBatchModalOpen] = useState<boolean>(false);
+  const [batchSkipSent, setBatchSkipSent] = useState<boolean>(true);
+  const [recentEmails, setRecentEmails] = useState<EmailLog[]>([]);
+  const [loadingRecentEmails, setLoadingRecentEmails] = useState<boolean>(false);
+  const [previewRunnerId, setPreviewRunnerId] = useState<string>("sample");
+  const [emailSearch, setEmailSearch] = useState<string>("");
 
   const handleQrUpload = (e: React.ChangeEvent<HTMLInputElement>, type: "regular" | "tax") => {
     const file = e.target.files?.[0];
@@ -282,21 +338,18 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
   // Fetch Payment Settings
   const fetchPaymentSettings = async () => {
     try {
-      const response = await fetch("/api/payment/settings");
-      if (response.ok) {
-        const data = await response.json();
-        if (data.regular) {
-          setRegBankName(data.regular.bankName || "ทหารไทยธนชาต (ttb)");
-          setRegAccountNo(data.regular.accountNo || "");
-          setRegAccountName(data.regular.accountName || "");
-          setRegQrImage(data.regular.qrImage || "");
-        }
-        if (data.taxDeduct) {
-          setTaxBankName(data.taxDeduct.bankName || "ธนาคารกรุงไทย (มธ.)");
-          setTaxAccountNo(data.taxDeduct.accountNo || "");
-          setTaxAccountName(data.taxDeduct.accountName || "");
-          setTaxQrImage(data.taxDeduct.qrImage || "");
-        }
+      const data = await apiFetchPaymentSettings();
+      if (data.regular) {
+        setRegBankName(data.regular.bankName || "ทหารไทยธนชาต (ttb)");
+        setRegAccountNo(data.regular.accountNo || "");
+        setRegAccountName(data.regular.accountName || "");
+        setRegQrImage(data.regular.qrImage || "");
+      }
+      if (data.taxDeduct) {
+        setTaxBankName(data.taxDeduct.bankName || "ธนาคารกรุงไทย (มธ.)");
+        setTaxAccountNo(data.taxDeduct.accountNo || "");
+        setTaxAccountName(data.taxDeduct.accountName || "");
+        setTaxQrImage(data.taxDeduct.qrImage || "");
       }
     } catch (err) {
       console.error("Error fetching payment settings:", err);
@@ -307,21 +360,17 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
   const fetchRegistrations = async () => {
     setLoading(true);
     try {
-      const url = `/api/registrations?search=${encodeURIComponent(filterSearch)}&distance=${filterDistance}&status=${filterStatus}`;
-      const response = await fetch(url);
-      const data = await response.json();
-      if (response.ok) {
-        setRegistrations(data);
-        // Pre-populate tracking inputs and carrier inputs
-        const inputs: {[id: string]: string} = {};
-        const carriers: {[id: string]: string} = {};
-        data.forEach((r: Registration) => {
-          inputs[r.id] = r.shippingTrackingNumber || "";
-          carriers[r.id] = r.shippingCarrier || "thailandpost";
-        });
-        setTrackingInputs(inputs);
-        setCarrierInputs(carriers);
-      }
+      const data = await adminFetchRegistrations(filterSearch, filterDistance, filterStatus);
+      setRegistrations(data);
+      // Pre-populate tracking inputs and carrier inputs
+      const inputs: {[id: string]: string} = {};
+      const carriers: {[id: string]: string} = {};
+      data.forEach((r: Registration) => {
+        inputs[r.id] = r.shippingTrackingNumber || "";
+        carriers[r.id] = r.shippingCarrier || "thailandpost";
+      });
+      setTrackingInputs(inputs);
+      setCarrierInputs(carriers);
     } catch (err) {
       console.error("Error fetching registrations:", err);
     } finally {
@@ -476,22 +525,12 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
   // Quick Action: Approve Runner
   const handleApprove = async (id: string) => {
     try {
-      const response = await fetch("/api/admin/approve", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
-      const data = await response.json();
-      
-      if (!response.ok) {
-        alert(data.error || "ไม่สามารถอนุมัติได้");
-        return;
-      }
+      const data = await adminApproveRunner(id);
 
-      if (data.emailPreviewUrl) {
+      if (data && (data as any).emailPreviewUrl) {
         setLastEmailPreview({
           type: "approve",
-          url: data.emailPreviewUrl,
+          url: (data as any).emailPreviewUrl,
           recipient: data.email,
           runnerName: `${data.firstName} ${data.lastName}`
         });
@@ -503,8 +542,9 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
       // Refresh local list and metrics
       fetchRegistrations();
       onRefresh();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Approve error:", err);
+      alert(err.message || "ไม่สามารถอนุมัติได้");
     }
   };
 
@@ -514,22 +554,12 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
     if (!selectedReg || !rejectionReason.trim()) return;
 
     try {
-      const response = await fetch("/api/admin/reject", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: selectedReg.id, reason: rejectionReason.trim() }),
-      });
-      const data = await response.json();
+      const data = await adminRejectRunner(selectedReg.id, rejectionReason.trim());
 
-      if (!response.ok) {
-        alert(data.error || "ไม่สามารถส่งคำปฏิเสธได้");
-        return;
-      }
-
-      if (data.emailPreviewUrl) {
+      if (data && (data as any).emailPreviewUrl) {
         setLastEmailPreview({
           type: "reject",
-          url: data.emailPreviewUrl,
+          url: (data as any).emailPreviewUrl,
           recipient: data.email,
           runnerName: `${data.firstName} ${data.lastName}`
         });
@@ -543,8 +573,9 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
       // Refresh list
       fetchRegistrations();
       onRefresh();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Reject error:", err);
+      alert(err.message || "ไม่สามารถส่งคำปฏิเสธได้");
     }
   };
 
@@ -554,22 +585,13 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
     if (!editingReg) return;
 
     try {
-      const response = await fetch("/api/admin/edit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editingReg),
-      });
-      
-      if (response.ok) {
-        setEditingReg(null);
-        fetchRegistrations();
-        onRefresh();
-      } else {
-        const errData = await response.json();
-        alert(errData.error || "ไม่สามารถแก้ไขข้อมูลได้");
-      }
-    } catch (err) {
+      await adminEditRunner(editingReg);
+      setEditingReg(null);
+      fetchRegistrations();
+      onRefresh();
+    } catch (err: any) {
       console.error("Edit error:", err);
+      alert(err.message || "ไม่สามารถแก้ไขข้อมูลได้");
     }
   };
 
@@ -578,18 +600,32 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
     if (!confirm("คุณต้องการลบผู้สมัครรายนี้ออกจากระบบถาวรใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้")) return;
 
     try {
-      const response = await fetch("/api/admin/delete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
-      
-      if (response.ok) {
-        fetchRegistrations();
-        onRefresh();
-      }
-    } catch (err) {
+      await adminDeleteRunner(id);
+      fetchRegistrations();
+      onRefresh();
+    } catch (err: any) {
       console.error("Delete error:", err);
+      alert(err.message || "ไม่สามารถลบข้อมูลผู้สมัครได้");
+    }
+  };
+
+  // Quick Action: Checkin Toggle
+  const handleCheckinToggle = async (reg: Registration) => {
+    try {
+      if (!reg.checkedIn) {
+        await adminCheckinRunner(reg.id);
+      } else {
+        await adminEditRunner({
+          ...reg,
+          checkedIn: false,
+          checkedInAt: undefined
+        });
+      }
+      fetchRegistrations();
+      onRefresh();
+    } catch (err: any) {
+      console.error("Check-in error:", err);
+      alert(err.message || "เกิดข้อผิดพลาดในการปรับสถานะเช็คอิน");
     }
   };
 
@@ -597,6 +633,143 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
     navigator.clipboard.writeText(address);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  // Email & 3-Day Reminder System Handlers
+  const loadReminderStats = async () => {
+    try {
+      const data = await fetchReminderStatus();
+      setReminderStatus(data);
+    } catch (e) {
+      console.error("Error loading reminder status:", e);
+    }
+  };
+
+  const loadPreview = async (template = selectedEmailTemplate, runnerId = previewRunnerId) => {
+    setLoadingPreview(true);
+    try {
+      const data = await fetchEmailPreview(template, runnerId === "sample" ? undefined : runnerId);
+      setEmailPreviewHtml(data.html);
+      setEmailPreviewSubject(data.subject);
+    } catch (e) {
+      console.error("Error loading email preview:", e);
+    } finally {
+      setLoadingPreview(false);
+    }
+  };
+
+  const loadRecent = async () => {
+    setLoadingRecentEmails(true);
+    try {
+      const data = await fetchRecentEmails();
+      setRecentEmails(data);
+    } catch (e) {
+      console.error("Error loading recent emails:", e);
+    } finally {
+      setLoadingRecentEmails(false);
+    }
+  };
+
+  useEffect(() => {
+    if (subTab === "emails") {
+      loadReminderStats();
+      loadPreview(selectedEmailTemplate, previewRunnerId);
+      loadRecent();
+    }
+  }, [subTab]);
+
+  const handleSendTest = async () => {
+    if (!testEmailAddress) {
+      alert("กรุณากรอกอีเมลสำหรับรับข้อความทดสอบ");
+      return;
+    }
+    setSendingTestEmail(true);
+    try {
+      const res = await adminSendRunnerEmail(previewRunnerId === "sample" ? "LSEd-SAMPLE" : previewRunnerId, selectedEmailTemplate, testEmailAddress);
+      if (res.success) {
+        alert(`ส่งอีเมลทดสอบแม่แบบไปยัง ${testEmailAddress} เรียบร้อยแล้ว!`);
+        if (res.emailPreviewUrl) {
+          setLastEmailPreview({
+            type: selectedEmailTemplate as any,
+            url: res.emailPreviewUrl,
+            recipient: testEmailAddress,
+            runnerName: "ทดสอบระบบ"
+          });
+        }
+        loadRecent();
+      } else {
+        alert(res.message || "ไม่สามารถส่งอีเมลทดสอบได้");
+      }
+    } catch (e: any) {
+      alert("เกิดข้อผิดพลาด: " + e.message);
+    } finally {
+      setSendingTestEmail(false);
+    }
+  };
+
+  const handleBatchSendReminder = async () => {
+    setSendingBatch(true);
+    try {
+      const res = await sendBatchReminder({ skipAlreadySent: batchSkipSent });
+      setBatchModalOpen(false);
+      loadReminderStats();
+      loadRecent();
+      fetchRegistrations();
+      onRefresh();
+      alert(`ส่งอีเมลแจ้งเตือนล่วงหน้า 3 วันสำเร็จทั้งหมด ${res.count} ท่าน!`);
+    } catch (e: any) {
+      alert("เกิดข้อผิดพลาดในการส่ง: " + e.message);
+    } finally {
+      setSendingBatch(false);
+    }
+  };
+
+  const handleSendDirectReminder = async (runnerId: string) => {
+    try {
+      const runner = registrations.find(r => r.id === runnerId);
+      const res = await adminSendRunnerEmail(runnerId, "reminder");
+      if (res.success) {
+        alert(`ส่งอีเมลแจ้งเตือนล่วงหน้า 3 วันให้คุณ ${runner?.firstName || ""} เรียบร้อยแล้ว!`);
+        if (res.emailPreviewUrl) {
+          setLastEmailPreview({
+            type: "reminder",
+            url: res.emailPreviewUrl,
+            recipient: runner?.email || "",
+            runnerName: `${runner?.firstName} ${runner?.lastName}`
+          });
+        }
+        fetchRegistrations();
+        onRefresh();
+        loadRecent();
+      } else {
+        alert(res.message || "ไม่สามารถส่งได้");
+      }
+    } catch (e: any) {
+      alert("เกิดข้อผิดพลาด: " + e.message);
+    }
+  };
+
+  const handleResendTicket = async (runnerId: string) => {
+    try {
+      const runner = registrations.find(r => r.id === runnerId);
+      const res = await adminSendRunnerEmail(runnerId, "approval");
+      if (res.success) {
+        alert(`ส่งบัตรเข้างาน E-BIB ให้คุณ ${runner?.firstName || ""} ซ้ำเรียบร้อยแล้ว!`);
+        if (res.emailPreviewUrl) {
+          setLastEmailPreview({
+            type: "approval" as any,
+            url: res.emailPreviewUrl,
+            recipient: runner?.email || "",
+            runnerName: `${runner?.firstName} ${runner?.lastName}`
+          });
+        }
+        loadRecent();
+      } else {
+        alert(res.message || "ไม่สามารถส่งได้");
+      }
+    } catch (e: any) {
+      alert("เกิดข้อผิดพลาด: " + e.message);
+    }
   };
 
   // Sandbox Seeder helper
@@ -793,7 +966,7 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
       case "approved": 
         return <span className="bg-green-500/10 border border-green-500/20 text-green-400 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full">อนุมัติแล้ว</span>;
       case "pending_verification": 
-        return <span className="bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full animate-pulse">ยืนยันสลิป</span>;
+        return <span className="bg-teal-500/10 border border-teal-500/20 text-teal-600 dark:text-teal-400 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full animate-pulse">ยืนยันสลิป</span>;
       case "pending_payment": 
         return <span className="bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full">รอชำระเงิน</span>;
       case "rejected": 
@@ -803,7 +976,7 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
 
   const getDistanceBadge = (dist: DistanceType) => {
     switch (dist) {
-      case "5K": return <span className="bg-blue-600/20 text-blue-400 font-extrabold text-xs px-2.5 py-0.5 rounded-md border border-blue-500/30">Standard 5K</span>;
+      case "5K": return <span className="bg-teal-600/20 text-teal-600 dark:text-teal-400 font-extrabold text-xs px-2.5 py-0.5 rounded-md border border-teal-500/30">Standard 5K</span>;
       case "vip": return <span className="bg-yellow-500/20 text-yellow-400 font-extrabold text-xs px-2.5 py-0.5 rounded-md border border-yellow-500/30">VIP 5K</span>;
       case "vip_duo": return <span className="bg-amber-500/20 text-amber-400 font-extrabold text-xs px-2.5 py-0.5 rounded-md border border-amber-500/30">VIP Duo 5K</span>;
       case "vip_trio": return <span className="bg-orange-500/20 text-orange-400 font-extrabold text-xs px-2.5 py-0.5 rounded-md border border-orange-500/30">VIP Trio 5K</span>;
@@ -813,14 +986,14 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
 
   if (!isAuthenticated) {
     return (
-      <div className="max-w-md mx-auto bg-white/90 dark:bg-neutral-950/90 border border-slate-200 dark:border-white/10 rounded-3xl shadow-2xl overflow-hidden p-6 md:p-8 space-y-6 text-center animate-fade-in text-slate-900 dark:text-slate-900 dark:text-white" id="admin-login-card">
-        <div className="w-16 h-16 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
+      <div className="max-w-md mx-auto bg-white/90 dark:bg-neutral-950/90 border border-slate-200 dark:border-white/10 rounded-3xl shadow-2xl overflow-hidden p-6 md:p-8 space-y-6 text-center animate-fade-in text-slate-900 dark:text-white" id="admin-login-card">
+        <div className="w-16 h-16 bg-teal-500/10 border border-teal-500/20 text-teal-600 dark:text-teal-400 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
           <Lock className="w-8 h-8" />
         </div>
         
         <div className="space-y-1.5">
-          <h2 className="text-xl font-bold text-slate-900 dark:text-slate-900 dark:text-white">พื้นที่หลังบ้าน (Admin Console)</h2>
-          <p className="text-xs text-slate-400 dark:text-slate-900 dark:text-white/50 leading-relaxed font-light">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">พื้นที่หลังบ้าน (Admin Console)</h2>
+          <p className="text-xs text-slate-400 dark:text-white/50 leading-relaxed font-light">
             กรุณาป้อนรหัสผ่านผู้ดูแลระบบงานวิ่ง LSEd Running 2569 เพื่อตรวจสอบสลิป พิมพ์บิ๊บ และจัดการข้อมูลนักวิ่งทุกคน
           </p>
         </div>
@@ -832,7 +1005,7 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="รหัสเข้าใช้สำหรับสาธิต: admin123"
-              className="w-full px-4 py-3 bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-center text-sm font-semibold tracking-wider placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition"
+              className="w-full px-4 py-3 bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-center text-sm font-semibold tracking-wider placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-teal-500/25 focus:border-teal-500 transition"
               id="admin-password-input"
             />
           </div>
@@ -846,7 +1019,7 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
           <div className="flex flex-col gap-2 pt-2">
             <button
               type="submit"
-              className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-widest text-xs rounded-xl transition cursor-pointer shadow-lg shadow-blue-500/20"
+              className="w-full py-3 bg-teal-600 hover:bg-teal-500 text-white font-black uppercase tracking-widest text-xs rounded-xl transition cursor-pointer shadow-lg shadow-teal-500/20"
               id="admin-login-submit"
             >
               เข้าสู่ระบบหลังบ้าน
@@ -863,15 +1036,15 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
         
         {/* HEADER */}
         <div className="bg-slate-900 dark:bg-black px-6 md:px-10 py-6 flex flex-col sm:flex-row justify-between items-center gap-4 relative overflow-hidden shrink-0">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+          <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
           
           <div className="flex items-center gap-4 relative z-10">
-            <div className="w-12 h-12 bg-blue-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-blue-600/20">
+            <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-orange-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-teal-500/20">
               <ShieldCheck className="w-6 h-6" />
             </div>
             <div>
               <h1 className="text-xl md:text-2xl font-black text-white tracking-tight">Admin Console</h1>
-              <p className="text-[10px] md:text-xs text-blue-200 font-medium uppercase tracking-widest mt-1 opacity-80">LSEd Running 2569 Management</p>
+              <p className="text-[10px] md:text-xs text-teal-700 dark:text-teal-200 font-medium tracking-widest mt-1 opacity-80">LSEd Running 2569 Management</p>
             </div>
           </div>
 
@@ -893,7 +1066,7 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
             onClick={() => setSubTab("runners")}
             className={`flex-1 md:flex-initial px-6 py-4 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 border-b-2 transition ${
               subTab === "runners"
-                ? "border-blue-500 text-blue-400 bg-white/[0.02]"
+                ? "border-teal-500 text-teal-600 dark:text-teal-400 bg-white/[0.02]"
                 : "border-transparent text-slate-400 dark:text-white/50 hover:text-white/80 hover:bg-white/[0.01]"
             }`}
           >
@@ -932,6 +1105,17 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
           >
             <Image className="w-4 h-4" /> ภาพประกอบ
           </button>
+          <button
+            type="button"
+            onClick={() => setSubTab("emails")}
+            className={`flex-1 md:flex-initial px-6 py-4 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 border-b-2 transition ${
+              subTab === "emails"
+                ? "border-orange-500 text-orange-500 bg-white/[0.02]"
+                : "border-transparent text-slate-400 dark:text-white/50 hover:text-white/80 hover:bg-white/[0.01]"
+            }`}
+          >
+            <Mail className="w-4 h-4" /> ระบบอีเมล & เตือนล่วงหน้า 3 วัน
+          </button>
         </div>
 
         {/* MAIN CONTENT AREA */}
@@ -941,8 +1125,8 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
             {/* Table Filter Options */}
             <div className="p-5 border-b border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-white/5 space-y-4">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <h3 className="font-bold text-slate-900 dark:text-slate-900 dark:text-white text-base flex items-center gap-2">
-                  <SlidersHorizontal className="w-5 h-5 text-blue-500" /> บัญชีรายชื่อผู้สมัครวิ่งและร่วมบริจาคทั้งหมด
+                <h3 className="font-bold text-slate-900 dark:text-white text-base flex items-center gap-2">
+                  <SlidersHorizontal className="w-5 h-5 text-teal-600 dark:text-teal-400" /> บัญชีรายชื่อผู้สมัครวิ่งและร่วมบริจาคทั้งหมด
                 </h3>
 
                 {/* Quick Export Button */}
@@ -959,13 +1143,13 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
               {/* Interactive filter widgets */}
               <form onSubmit={handleSearchSubmit} className="grid grid-cols-1 sm:grid-cols-12 gap-3">
                 <div className="sm:col-span-5 relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-900 dark:text-white/40" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-white/40" />
                   <input 
                     type="text" 
                     value={filterSearch}
                     onChange={(e) => setFilterSearch(e.target.value)}
                     placeholder="ค้นหาตามชื่อ, รหัสสมัคร, BIB, เบอร์โทร..."
-                    className="w-full pl-9 pr-4 py-2 bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl text-xs text-slate-900 dark:text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                    className="w-full pl-9 pr-4 py-2 bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl text-xs text-slate-900 dark:text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-teal-500/25 focus:border-teal-500 transition"
                   />
                 </div>
 
@@ -973,7 +1157,7 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                   <select
                     value={filterDistance}
                     onChange={(e) => setFilterDistance(e.target.value)}
-                    className="w-full px-3 py-2 bg-[#121214] border border-slate-200 dark:border-white/10 rounded-xl text-xs text-slate-900 dark:text-slate-900 dark:text-white/80 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition text-slate-900 dark:text-slate-900 dark:text-white"
+                    className="w-full px-3 py-2 bg-[#121214] border border-slate-200 dark:border-white/10 rounded-xl text-xs text-slate-900 dark:text-white/80 focus:outline-none focus:ring-2 focus:ring-teal-500/25 transition text-slate-900 dark:text-white"
                   >
                     <option value="all">แพ็กเกจ/ประเภท: ทั้งหมด</option>
                     <option value="REGULAR">Regular 5KM (555 บาท)</option>
@@ -986,7 +1170,7 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                   <select
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
-                    className="w-full px-3 py-2 bg-[#121214] border border-slate-200 dark:border-white/10 rounded-xl text-xs text-slate-900 dark:text-slate-900 dark:text-white/80 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition text-slate-900 dark:text-slate-900 dark:text-white"
+                    className="w-full px-3 py-2 bg-[#121214] border border-slate-200 dark:border-white/10 rounded-xl text-xs text-slate-900 dark:text-white/80 focus:outline-none focus:ring-2 focus:ring-teal-500/25 transition text-slate-900 dark:text-white"
                   >
                     <option value="all">สถานะเงิน: ทั้งหมด</option>
                     <option value="pending_payment">รอชำระเงิน</option>
@@ -999,7 +1183,7 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                 <div className="sm:col-span-1">
                   <button
                     type="submit"
-                    className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white font-black text-xs rounded-xl transition cursor-pointer"
+                    className="w-full py-2 bg-teal-600 hover:bg-teal-500 text-white font-black text-xs rounded-xl transition cursor-pointer"
                   >
                     ค้นหา
                   </button>
@@ -1011,20 +1195,20 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
             <div className="overflow-x-auto">
               {loading ? (
                 <div className="p-16 text-center space-y-3">
-                  <svg className="animate-spin h-8 w-8 text-blue-500 mx-auto" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin h-8 w-8 text-teal-600 dark:text-teal-400 mx-auto" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  <p className="text-xs text-slate-400 dark:text-slate-900 dark:text-white/40 font-bold">กำลังดึงข้อมูลรายชื่อจากหลังบ้าน...</p>
+                  <p className="text-xs text-slate-400 dark:text-white/40 font-bold">กำลังดึงข้อมูลรายชื่อจากหลังบ้าน...</p>
                 </div>
               ) : registrations.length === 0 ? (
-                <div className="p-16 text-center space-y-3 text-slate-400 dark:text-slate-900 dark:text-white/40">
-                  <AlertCircle className="w-10 h-10 text-slate-900 dark:text-slate-900 dark:text-white/20 mx-auto" />
+                <div className="p-16 text-center space-y-3 text-slate-400 dark:text-white/40">
+                  <AlertCircle className="w-10 h-10 text-slate-900 dark:text-white/20 mx-auto" />
                   <p className="text-sm font-semibold">ไม่พบข้อมูลรายชื่อนักวิ่งในระบบ</p>
                   <p className="text-xs font-light">ทดลองคลิกปุ่ม **"จำลองผู้สมัครวิ่ง"** ด้านบน เพื่อสุ่มตัวอย่างนักวิ่งจำลองมาทดลองเล่น</p>
                 </div>
               ) : (
-                <table className="w-full text-left text-sm text-slate-900 dark:text-slate-900 dark:text-white/80">
+                <table className="w-full text-left text-sm text-slate-900 dark:text-white/80">
                   <thead className="bg-slate-100 dark:bg-black/40 text-[10px] text-slate-400 dark:text-white/40 uppercase tracking-widest font-bold border-b border-slate-200 dark:border-white/5">
                     <tr>
                       <th scope="col" className="px-5 py-4">ผู้สมัคร / รหัสอ้างอิง</th>
@@ -1034,6 +1218,7 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                       <th scope="col" className="px-5 py-4 text-center">การจัดส่ง</th>
                       <th scope="col" className="px-5 py-4 text-center">สถานะ</th>
                       <th scope="col" className="px-5 py-4 text-center">หมายเลข BIB</th>
+                      <th scope="col" className="px-5 py-4 text-center">เช็คอินหน้างาน</th>
                       <th scope="col" className="px-5 py-4 text-right">ดำเนินการ</th>
                     </tr>
                   </thead>
@@ -1044,8 +1229,8 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                         {/* User Profile Info */}
                         <td className="px-5 py-4">
                           <div>
-                            <p className="font-bold text-slate-900 dark:text-slate-900 dark:text-white text-sm">{reg.firstName} {reg.lastName}</p>
-                            <p className="text-[10px] text-slate-400 dark:text-slate-900 dark:text-white/40 font-bold font-mono tracking-wider mt-0.5">{reg.id}</p>
+                            <p className="font-bold text-slate-900 dark:text-white text-sm">{reg.firstName} {reg.lastName}</p>
+                            <p className="text-[10px] text-slate-400 dark:text-white/40 font-bold font-mono tracking-wider mt-0.5">{reg.id}</p>
                           </div>
                         </td>
 
@@ -1056,12 +1241,12 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
 
                         {/* Sizing */}
                         <td className="px-5 py-4">
-                          <span className="font-extrabold text-xs text-slate-900 dark:text-slate-900 dark:text-white">{reg.shirtSize}</span>
+                          <span className="font-extrabold text-xs text-slate-900 dark:text-white">{reg.shirtSize}</span>
                         </td>
 
                         {/* Phone Number */}
                         <td className="px-5 py-4">
-                          <span className="font-mono text-xs text-slate-500 dark:text-slate-900 dark:text-white/60 font-medium">{reg.phone}</span>
+                          <span className="font-mono text-xs text-slate-500 dark:text-white/60 font-medium">{reg.phone}</span>
                         </td>
 
                         {/* Delivery Method */}
@@ -1071,7 +1256,7 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                               <Truck className="w-3 h-3" /> ไปรษณีย์
                             </span>
                           ) : (
-                            <span className="text-[10px] font-black tracking-wide text-blue-400 bg-blue-500/10 px-2 py-1 rounded-md border border-blue-500/20">
+                            <span className="text-[10px] font-black tracking-wide text-teal-600 dark:text-teal-400 bg-teal-500/10 px-2 py-1 rounded-md border border-teal-500/20">
                               รับเองหน้างาน
                             </span>
                           )}
@@ -1089,7 +1274,28 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                               {reg.bibNumber}
                             </span>
                           ) : (
-                            <span className="text-[10px] text-slate-900 dark:text-slate-900 dark:text-white/20 font-semibold">-</span>
+                            <span className="text-[10px] text-slate-900 dark:text-white/20 font-semibold">-</span>
+                          )}
+                        </td>
+
+                        {/* Check-in Status & Quick Toggle */}
+                        <td className="px-5 py-4 text-center">
+                          {reg.status === "approved" ? (
+                            <button
+                              type="button"
+                              onClick={() => handleCheckinToggle(reg)}
+                              className={`px-2.5 py-1 rounded-full text-[10px] font-black transition cursor-pointer flex items-center gap-1 mx-auto ${
+                                reg.checkedIn
+                                  ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30"
+                                  : "bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-white/60 hover:bg-slate-300 dark:hover:bg-white/20 border border-slate-300 dark:border-white/10"
+                              }`}
+                              title={reg.checkedIn ? `เช็คอินแล้วเมื่อ ${reg.checkedInAt ? new Date(reg.checkedInAt).toLocaleTimeString('th-TH') : ''} (คลิกเพื่อยกเลิก)` : "คลิกเพื่อเช็คอิน"}
+                            >
+                              <CheckCircle2 className="w-3 h-3" />
+                              {reg.checkedIn ? "เช็คอินแล้ว ✓" : "ยังไม่เช็คอิน"}
+                            </button>
+                          ) : (
+                            <span className="text-[10px] text-slate-400 dark:text-white/30">-</span>
                           )}
                         </td>
 
@@ -1102,10 +1308,26 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                               <button
                                 type="button"
                                 onClick={() => { setSelectedReg(reg); setIsRejecting(false); }}
-                                className="p-1.5 bg-blue-600/20 border border-blue-500/30 hover:bg-blue-600/30 text-blue-400 rounded-lg transition cursor-pointer"
+                                className="p-1.5 bg-teal-600/20 border border-teal-500/30 hover:bg-teal-600/30 text-teal-600 dark:text-teal-400 rounded-lg transition cursor-pointer"
                                 title="ตรวจสอบรูปสลิป / อนุมัติสิทธิ์วิ่ง"
                               >
                                 <Eye className="w-4 h-4" />
+                              </button>
+                            )}
+
+                            {/* Direct 3-day reminder trigger */}
+                            {reg.status === "approved" && (
+                              <button
+                                type="button"
+                                onClick={() => handleSendDirectReminder(reg.id)}
+                                className={`p-1.5 border rounded-lg transition cursor-pointer ${
+                                  reg.reminderSentAt 
+                                    ? "bg-emerald-500/20 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/30" 
+                                    : "bg-orange-500/20 border-orange-500/30 text-orange-400 hover:bg-orange-500/30"
+                                }`}
+                                title={reg.reminderSentAt ? `ส่งอีเมลเตือนล่วงหน้า 3 วันแล้ว (${new Date(reg.reminderSentAt).toLocaleDateString('th-TH')}) - คลิกเพื่อส่งซ้ำ` : "ส่งอีเมลแจ้งเตือนล่วงหน้า 3 วัน (สถานที่ เวลา สิ่งของที่ต้องนำมา)"}
+                              >
+                                <Mail className="w-4 h-4" />
                               </button>
                             )}
 
@@ -1113,7 +1335,7 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                             <button
                               type="button"
                               onClick={() => setEditingReg({ ...reg })}
-                              className="p-1.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-900 dark:text-white/70 rounded-lg transition cursor-pointer"
+                              className="p-1.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 dark:text-white/70 rounded-lg transition cursor-pointer"
                               title="แก้ไขข้อมูลผู้สมัครวิ่ง"
                             >
                               <Edit className="w-4 h-4" />
@@ -1144,10 +1366,10 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
             <div className="p-5 border-b border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-white/5 space-y-4">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                  <h3 className="font-bold text-slate-900 dark:text-slate-900 dark:text-white text-base flex items-center gap-2">
+                  <h3 className="font-bold text-slate-900 dark:text-white text-base flex items-center gap-2">
                     <Truck className="w-5 h-5 text-orange-500" /> จัดการเลขพัสดุสำหรับผู้สมัครทางไปรษณีย์
                   </h3>
-                  <p className="text-xs text-slate-400 dark:text-slate-900 dark:text-white/50 mt-0.5">ค้นหาที่อยู่จัดส่งเสื้อ บันทึกเลข tracking เพื่อให้ผู้สมัครตรวจสอบจากหน้าหลักได้ทันที</p>
+                  <p className="text-xs text-slate-400 dark:text-white/50 mt-0.5">ค้นหาที่อยู่จัดส่งเสื้อ บันทึกเลข tracking เพื่อให้ผู้สมัครตรวจสอบจากหน้าหลักได้ทันที</p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
@@ -1156,21 +1378,21 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                     <button
                       type="button"
                       onClick={() => setFilterShippingStatus("all")}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-black transition ${filterShippingStatus === 'all' ? 'bg-orange-600 text-white' : 'text-slate-500 dark:text-slate-900 dark:text-white/60 hover:text-slate-800 dark:text-slate-900 dark:text-white/90'}`}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-black transition ${filterShippingStatus === 'all' ? 'bg-orange-600 text-white' : 'text-slate-500 dark:text-white/60 hover:text-slate-800 dark:text-white/90'}`}
                     >
                       ทั้งหมด ({registrations.filter(r => r.deliveryMethod === 'shipping').length})
                     </button>
                     <button
                       type="button"
                       onClick={() => setFilterShippingStatus("pending")}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-black transition ${filterShippingStatus === 'pending' ? 'bg-amber-500 text-black' : 'text-slate-500 dark:text-slate-900 dark:text-white/60 hover:text-slate-800 dark:text-slate-900 dark:text-white/90'}`}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-black transition ${filterShippingStatus === 'pending' ? 'bg-amber-500 text-black' : 'text-slate-500 dark:text-white/60 hover:text-slate-800 dark:text-white/90'}`}
                     >
                       ยังไม่ใส่เลขพัสดุ ({registrations.filter(r => r.deliveryMethod === 'shipping' && !r.shippingTrackingNumber).length})
                     </button>
                     <button
                       type="button"
                       onClick={() => setFilterShippingStatus("shipped")}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-black transition ${filterShippingStatus === 'shipped' ? 'bg-emerald-600 text-white' : 'text-slate-500 dark:text-slate-900 dark:text-white/60 hover:text-slate-800 dark:text-slate-900 dark:text-white/90'}`}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-black transition ${filterShippingStatus === 'shipped' ? 'bg-emerald-600 text-white' : 'text-slate-500 dark:text-white/60 hover:text-slate-800 dark:text-white/90'}`}
                     >
                       จัดส่งแล้ว ({registrations.filter(r => r.deliveryMethod === 'shipping' && r.shippingTrackingNumber).length})
                     </button>
@@ -1198,11 +1420,11 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                   </svg>
                 </div>
               ) : registrations.filter(r => r.deliveryMethod === "shipping").length === 0 ? (
-                <div className="p-16 text-center space-y-4 text-slate-400 dark:text-slate-900 dark:text-white/40 max-w-md mx-auto">
+                <div className="p-16 text-center space-y-4 text-slate-400 dark:text-white/40 max-w-md mx-auto">
                   <Truck className="w-12 h-12 text-orange-500/30 mx-auto animate-pulse" />
                   <div className="space-y-1">
-                    <p className="text-sm font-black text-slate-900 dark:text-slate-900 dark:text-white">ไม่มีผู้สมัครคนใดเลือกจัดส่งทางไปรษณีย์</p>
-                    <p className="text-xs text-slate-400 dark:text-slate-900 dark:text-white/40 leading-relaxed font-light">ยังไม่มีผู้ลงทะเบียนที่เลือกช่องทางจัดส่งไปรษณีย์ไทยในระบบ คุณสามารถคลิกปุ่มด้านล่างเพื่อทำการสร้างข้อมูลตัวอย่างสำหรับการจัดส่งและจำลองที่อยู่ได้ทันที!</p>
+                    <p className="text-sm font-black text-slate-900 dark:text-white">ไม่มีผู้สมัครคนใดเลือกจัดส่งทางไปรษณีย์</p>
+                    <p className="text-xs text-slate-400 dark:text-white/40 leading-relaxed font-light">ยังไม่มีผู้ลงทะเบียนที่เลือกช่องทางจัดส่งไปรษณีย์ไทยในระบบ คุณสามารถคลิกปุ่มด้านล่างเพื่อทำการสร้างข้อมูลตัวอย่างสำหรับการจัดส่งและจำลองที่อยู่ได้ทันที!</p>
                   </div>
                   <button
                     type="button"
@@ -1218,12 +1440,12 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                 if (filterShippingStatus === "shipped") return !!r.shippingTrackingNumber;
                 return true;
               }).length === 0 ? (
-                <div className="p-16 text-center space-y-2 text-slate-400 dark:text-slate-900 dark:text-white/40">
-                  <AlertCircle className="w-8 h-8 text-slate-900 dark:text-slate-900 dark:text-white/10 mx-auto" />
+                <div className="p-16 text-center space-y-2 text-slate-400 dark:text-white/40">
+                  <AlertCircle className="w-8 h-8 text-slate-900 dark:text-white/10 mx-auto" />
                   <p className="text-xs font-semibold">ไม่พบผู้สมัครที่ตรงตามตัวกรองนี้</p>
                 </div>
               ) : (
-                <table className="w-full text-left text-sm text-slate-900 dark:text-slate-900 dark:text-white/80">
+                <table className="w-full text-left text-sm text-slate-900 dark:text-white/80">
                   <thead className="bg-slate-100 dark:bg-black/40 text-[10px] text-slate-400 dark:text-white/40 uppercase tracking-widest font-bold border-b border-slate-200 dark:border-white/5">
                     <tr>
                       <th scope="col" className="px-5 py-4">ผู้รับพัสดุ / รหัส BIB</th>
@@ -1244,8 +1466,8 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                       <tr key={reg.id} className="hover:bg-slate-50 dark:bg-white/5 transition">
                         <td className="px-5 py-4">
                           <div>
-                            <p className="font-bold text-slate-900 dark:text-slate-900 dark:text-white text-sm">{reg.firstName} {reg.lastName}</p>
-                            <p className="text-[10px] text-slate-400 dark:text-slate-900 dark:text-white/40 font-bold font-mono tracking-wider mt-0.5">REF: {reg.id}</p>
+                            <p className="font-bold text-slate-900 dark:text-white text-sm">{reg.firstName} {reg.lastName}</p>
+                            <p className="text-[10px] text-slate-400 dark:text-white/40 font-bold font-mono tracking-wider mt-0.5">REF: {reg.id}</p>
                             {reg.bibNumber ? (
                               <span className="inline-block mt-1 bg-white text-black font-mono font-black text-[9px] px-2 py-0.5 rounded tracking-tight">
                                 BIB: {reg.bibNumber}
@@ -1258,12 +1480,12 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                         <td className="px-5 py-4">
                           <div className="space-y-0.5">
                             {getDistanceBadge(reg.distance)}
-                            <div className="text-xs text-slate-500 dark:text-slate-900 dark:text-white/60">เสื้อไซส์: <span className="font-extrabold text-slate-900 dark:text-slate-900 dark:text-white">{reg.shirtSize}</span></div>
+                            <div className="text-xs text-slate-500 dark:text-white/60">เสื้อไซส์: <span className="font-extrabold text-slate-900 dark:text-white">{reg.shirtSize}</span></div>
                           </div>
                         </td>
                         <td className="px-5 py-4">
                           <div className="flex items-start gap-2 max-w-xs">
-                            <span className="text-xs break-words text-slate-600 dark:text-slate-900 dark:text-white/70 block bg-black/25 p-2 rounded-lg border border-slate-200 dark:border-white/5 flex-grow font-light leading-relaxed">
+                            <span className="text-xs break-words text-slate-600 dark:text-white/70 block bg-black/25 p-2 rounded-lg border border-slate-200 dark:border-white/5 flex-grow font-light leading-relaxed">
                               {reg.shippingAddress || "ไม่ได้ระบุที่อยู่จัดส่ง"}
                             </span>
                             {reg.shippingAddress && (
@@ -1273,7 +1495,7 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                                 className={`p-1.5 rounded-lg transition text-[10px] font-black uppercase tracking-wider flex-shrink-0 border cursor-pointer ${
                                   copiedId === reg.id 
                                     ? "bg-green-500/20 text-green-400 border-green-500/30" 
-                                    : "bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-900 dark:text-white/60 border-slate-200 dark:border-white/10"
+                                    : "bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-white/60 border-slate-200 dark:border-white/10"
                                 }`}
                               >
                                 {copiedId === reg.id ? "คัดลอกแล้ว" : "คัดลอก"}
@@ -1302,7 +1524,7 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                               className="px-3 py-2 bg-black/50 border border-slate-200 dark:border-white/10 focus:border-orange-500 focus:outline-none rounded-xl text-xs text-slate-900 dark:text-white font-mono tracking-wide transition"
                             />
                             {reg.shippedAt && (
-                              <span className="text-[10px] text-slate-400 dark:text-slate-900 dark:text-white/40 block font-mono">
+                              <span className="text-[10px] text-slate-400 dark:text-white/40 block font-mono">
                                 📅 ส่ง: {reg.shippedAt}
                               </span>
                             )}
@@ -1317,7 +1539,7 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                               className="w-full px-3 py-2 bg-orange-600 hover:bg-orange-500 disabled:bg-orange-600/40 text-white font-black text-xs rounded-xl transition cursor-pointer flex items-center justify-center gap-1"
                             >
                               {savingTrackingId === reg.id ? (
-                                <svg className="animate-spin h-3.5 w-3.5 text-slate-900 dark:text-slate-900 dark:text-white" fill="none" viewBox="0 0 24 24">
+                                <svg className="animate-spin h-3.5 w-3.5 text-slate-900 dark:text-white" fill="none" viewBox="0 0 24 24">
                                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                 </svg>
@@ -1330,10 +1552,10 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                                 type="button"
                                 disabled={simulatingNotificationId === reg.id}
                                 onClick={() => handleSimulateNotification(reg.id)}
-                                className="w-full px-2 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-600/40 text-slate-900 dark:text-slate-900 dark:text-white font-black text-[10px] rounded-xl transition cursor-pointer flex items-center justify-center gap-1 uppercase tracking-wider"
+                                className="w-full px-2 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-600/40 text-slate-900 dark:text-white font-black text-[10px] rounded-xl transition cursor-pointer flex items-center justify-center gap-1 uppercase tracking-wider"
                               >
                                 {simulatingNotificationId === reg.id ? (
-                                  <svg className="animate-spin h-3 w-3 text-slate-900 dark:text-slate-900 dark:text-white" fill="none" viewBox="0 0 24 24">
+                                  <svg className="animate-spin h-3 w-3 text-slate-900 dark:text-white" fill="none" viewBox="0 0 24 24">
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                   </svg>
@@ -1352,13 +1574,13 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
             </div>
           </>
         ) : subTab === "payment" ? (
-          <div className="p-8 space-y-8 animate-fade-in text-slate-900 dark:text-slate-900 dark:text-white max-w-6xl mx-auto">
+          <div className="p-8 space-y-8 animate-fade-in text-slate-900 dark:text-white max-w-6xl mx-auto">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 dark:border-white/5 pb-5">
               <div>
-                <h3 className="text-xl font-black text-slate-900 dark:text-slate-900 dark:text-white flex items-center gap-2">
+                <h3 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
                   <Coins className="w-6 h-6 text-emerald-400" /> ตั้งค่าระบบบัญชีรับเงินโอน (Payment Configuration)
                 </h3>
-                <p className="text-xs text-slate-400 dark:text-slate-900 dark:text-white/40 mt-1">
+                <p className="text-xs text-slate-400 dark:text-white/40 mt-1">
                   ตั้งค่าบัญชีโอนเงินสำหรับผู้ลงทะเบียน ปัจจุบันระบบใช้บัญชีเดียวในการรับเงินร่วมกันทั้งหมด
                 </p>
               </div>
@@ -1377,7 +1599,7 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                   
                   <div className="space-y-4">
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-900 dark:text-white/40 block">ธนาคารรับเงิน (Bank Name)</label>
+                      <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-white/40 block">ธนาคารรับเงิน (Bank Name)</label>
                       <input 
                         type="text"
                         value={regBankName}
@@ -1388,7 +1610,7 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-900 dark:text-white/40 block">เลขที่บัญชี / หมายเลขโทรศัพท์พร้อมเพย์ (Account No / PromptPay ID)</label>
+                      <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-white/40 block">เลขที่บัญชี / หมายเลขโทรศัพท์พร้อมเพย์ (Account No / PromptPay ID)</label>
                       <input 
                         type="text"
                         value={regAccountNo}
@@ -1399,7 +1621,7 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-900 dark:text-white/40 block">ชื่อบัญชีรับเงิน (Account Name)</label>
+                      <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-white/40 block">ชื่อบัญชีรับเงิน (Account Name)</label>
                       <input 
                         type="text"
                         value={regAccountName}
@@ -1411,7 +1633,7 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-900 dark:text-white/40 block">อัปโหลดภาพ QR Code สแกนจ่าย (QR Code Upload)</label>
+                      <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-white/40 block">อัปโหลดภาพ QR Code สแกนจ่าย (QR Code Upload)</label>
                       <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
                         <div className="sm:col-span-8">
                           <label className="border-2 border-dashed border-slate-200 dark:border-white/10 hover:border-emerald-500 bg-slate-50 dark:bg-white/5 hover:bg-emerald-500/5 rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer transition text-center min-h-[110px] relative overflow-hidden group">
@@ -1423,7 +1645,7 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                             />
                             <div className="space-y-1 flex flex-col items-center">
                               <span className="text-[11px] font-black text-emerald-400">คลิกเพื่อเลือกไฟล์รูปคิวอาร์โค้ด</span>
-                              <span className="text-[9px] text-slate-300 dark:text-slate-900 dark:text-white/30">แนะนำขนาดสี่เหลี่ยมจัตุรัสไม่เกิน 1.2MB</span>
+                              <span className="text-[9px] text-slate-300 dark:text-white/30">แนะนำขนาดสี่เหลี่ยมจัตุรัสไม่เกิน 1.2MB</span>
                             </div>
                           </label>
                         </div>
@@ -1441,8 +1663,8 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                               </button>
                             </div>
                           ) : (
-                            <div className="w-24 h-24 rounded-xl border border-dashed border-slate-200 dark:border-white/10 flex flex-col items-center justify-center text-[9px] text-slate-300 dark:text-slate-900 dark:text-white/30 p-2 text-center bg-black/10">
-                              <QrCode className="w-6 h-6 text-slate-900 dark:text-slate-900 dark:text-white/20 mb-1" />
+                            <div className="w-24 h-24 rounded-xl border border-dashed border-slate-200 dark:border-white/10 flex flex-col items-center justify-center text-[9px] text-slate-300 dark:text-white/30 p-2 text-center bg-black/10">
+                              <QrCode className="w-6 h-6 text-slate-900 dark:text-white/20 mb-1" />
                               <span>(ระบบจะสร้าง QR จำลองให้จากเลขบัญชี)</span>
                             </div>
                           )}
@@ -1474,7 +1696,7 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                 >
                   {savingSettings ? (
                     <>
-                      <svg className="animate-spin h-4 w-4 text-slate-900 dark:text-slate-900 dark:text-white" fill="none" viewBox="0 0 24 24">
+                      <svg className="animate-spin h-4 w-4 text-slate-900 dark:text-white" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                       </svg>
@@ -1496,7 +1718,7 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                 <h3 className="text-xl font-black text-amber-400 uppercase tracking-widest flex items-center gap-2">
                   <Image className="w-5 h-5" /> อัปโหลดภาพของที่ระลึก
                 </h3>
-                <p className="text-xs text-slate-400 dark:text-slate-900 dark:text-white/50 mt-1.5">
+                <p className="text-xs text-slate-400 dark:text-white/50 mt-1.5">
                   อัปโหลดภาพเสื้อและเหรียญที่ระลึกเพื่อให้ผู้สมัครเห็นภาพของจริงในหน้าฟอร์ม
                 </p>
               </div>
@@ -1512,7 +1734,7 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                   
                   <div className="grid grid-cols-1 gap-6">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-900 dark:text-white/40 block">
+                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-white/40 block">
                       อัปโหลดภาพเสื้อคอกลม (Crew Neck Shirt)
                     </label>
                     <label className="border-2 border-dashed border-slate-200 dark:border-white/10 hover:border-amber-500 bg-slate-50 dark:bg-white/5 hover:bg-amber-500/5 rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer transition text-center min-h-[200px] relative overflow-hidden group">
@@ -1535,8 +1757,8 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                           </button>
                         </div>
                       ) : (
-                        <div className="space-y-2 flex flex-col items-center justify-center h-full text-slate-300 dark:text-slate-900 dark:text-white/30">
-                          <Image className="w-8 h-8 text-slate-900 dark:text-slate-900 dark:text-white/20 mb-2" />
+                        <div className="space-y-2 flex flex-col items-center justify-center h-full text-slate-300 dark:text-white/30">
+                          <Image className="w-8 h-8 text-slate-900 dark:text-white/20 mb-2" />
                           <span className="text-[12px] font-black text-amber-400">คลิกเพื่อเลือกไฟล์เสื้อคอกลม</span>
                           <span className="text-[10px]">รองรับ JPG, PNG ไม่เกิน 2MB</span>
                         </div>
@@ -1545,7 +1767,7 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-900 dark:text-white/40 block">
+                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-white/40 block">
                       อัปโหลดภาพเสื้อโปโล (Polo Shirt)
                     </label>
                     <label className="border-2 border-dashed border-slate-200 dark:border-white/10 hover:border-amber-500 bg-slate-50 dark:bg-white/5 hover:bg-amber-500/5 rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer transition text-center min-h-[200px] relative overflow-hidden group">
@@ -1568,8 +1790,8 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                           </button>
                         </div>
                       ) : (
-                        <div className="space-y-2 flex flex-col items-center justify-center h-full text-slate-300 dark:text-slate-900 dark:text-white/30">
-                          <Image className="w-8 h-8 text-slate-900 dark:text-slate-900 dark:text-white/20 mb-2" />
+                        <div className="space-y-2 flex flex-col items-center justify-center h-full text-slate-300 dark:text-white/30">
+                          <Image className="w-8 h-8 text-slate-900 dark:text-white/20 mb-2" />
                           <span className="text-[12px] font-black text-amber-400">คลิกเพื่อเลือกไฟล์เสื้อโปโล</span>
                           <span className="text-[10px]">รองรับ JPG, PNG ไม่เกิน 2MB</span>
                         </div>
@@ -1666,7 +1888,7 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                   </h4>
                   
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-900 dark:text-white/40 block">
+                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-white/40 block">
                       อัปโหลดภาพแผนที่ (Route Map Image Upload)
                     </label>
                     <label className="border-2 border-dashed border-slate-200 dark:border-white/10 hover:border-amber-500 bg-slate-50 dark:bg-white/5 hover:bg-amber-500/5 rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer transition text-center min-h-[200px] relative overflow-hidden group">
@@ -1689,8 +1911,8 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                           </button>
                         </div>
                       ) : (
-                        <div className="space-y-2 flex flex-col items-center justify-center h-full text-slate-300 dark:text-slate-900 dark:text-white/30">
-                          <Image className="w-8 h-8 text-slate-900 dark:text-slate-900 dark:text-white/20 mb-2" />
+                        <div className="space-y-2 flex flex-col items-center justify-center h-full text-slate-300 dark:text-white/30">
+                          <Image className="w-8 h-8 text-slate-900 dark:text-white/20 mb-2" />
                           <span className="text-[12px] font-black text-amber-400">คลิกเพื่อเลือกไฟล์รูปแผนที่เส้นทางวิ่ง</span>
                           <span className="text-[10px]">รองรับ JPG, PNG ไม่เกิน 2MB</span>
                         </div>
@@ -1702,14 +1924,61 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                 {/* LOGO ASSET */}
                 <div className="bg-white/[0.02] border border-slate-200 dark:border-white/5 p-6 rounded-3xl space-y-6 relative overflow-hidden">
                   <h4 className="text-sm font-black text-amber-400 uppercase tracking-widest border-b border-slate-200 dark:border-white/5 pb-2">
-                    โลโก้งานวิ่ง (Logo)
+                    โลโก้งานวิ่ง (Logo - สัญลักษณ์เดียว)
                   </h4>
                   
+                  {/* Preset Single Logo Options */}
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-900 dark:text-white/40 block">
-                      อัปโหลดโลโก้ (Logo Image Upload)
+                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-white/40 block">
+                      เลือกสัญลักษณ์เดี่ยวมาตรฐาน (Run to Shine)
                     </label>
-                    <label className="border-2 border-dashed border-slate-200 dark:border-white/10 hover:border-amber-500 bg-slate-50 dark:bg-white/5 hover:bg-amber-500/5 rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer transition text-center min-h-[200px] relative overflow-hidden group">
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setLogoImage(PRESET_LOGOS.orange)}
+                        className={`p-2 rounded-xl border flex flex-col items-center gap-1.5 transition cursor-pointer ${
+                          logoImage === PRESET_LOGOS.orange
+                            ? "border-amber-500 bg-amber-500/10 ring-2 ring-amber-500/30"
+                            : "border-slate-200 dark:border-white/10 hover:border-white/20 bg-slate-50 dark:bg-white/5"
+                        }`}
+                      >
+                        <img src={PRESET_LOGOS.orange} alt="Orange Logo" className="w-10 h-10 object-contain rounded-lg" />
+                        <span className="text-[10px] font-bold text-slate-800 dark:text-white/80">สีส้ม (แนะนำ)</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setLogoImage(PRESET_LOGOS.cyan)}
+                        className={`p-2 rounded-xl border flex flex-col items-center gap-1.5 transition cursor-pointer ${
+                          logoImage === PRESET_LOGOS.cyan
+                            ? "border-cyan-500 bg-cyan-500/10 ring-2 ring-cyan-500/30"
+                            : "border-slate-200 dark:border-white/10 hover:border-white/20 bg-slate-50 dark:bg-white/5"
+                        }`}
+                      >
+                        <img src={PRESET_LOGOS.cyan} alt="Cyan Logo" className="w-10 h-10 object-contain rounded-lg" />
+                        <span className="text-[10px] font-bold text-slate-800 dark:text-white/80">สีฟ้า (Cyan)</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setLogoImage(PRESET_LOGOS.white)}
+                        className={`p-2 rounded-xl border flex flex-col items-center gap-1.5 transition cursor-pointer ${
+                          logoImage === PRESET_LOGOS.white
+                            ? "border-slate-400 bg-white/10 ring-2 ring-white/30"
+                            : "border-slate-200 dark:border-white/10 hover:border-white/20 bg-slate-50 dark:bg-white/5"
+                        }`}
+                      >
+                        <img src={PRESET_LOGOS.white} alt="White Logo" className="w-10 h-10 object-contain rounded-lg" />
+                        <span className="text-[10px] font-bold text-slate-800 dark:text-white/80">สีขาว/ดำ</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-white/40 block">
+                      หรืออัปโหลดโลโก้เอง (Custom Logo Upload)
+                    </label>
+                    <label className="border-2 border-dashed border-slate-200 dark:border-white/10 hover:border-amber-500 bg-slate-50 dark:bg-white/5 hover:bg-amber-500/5 rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer transition text-center min-h-[160px] relative overflow-hidden group">
                       <input 
                         type="file" 
                         accept="image/*" 
@@ -1718,7 +1987,7 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                       />
                       {logoImage ? (
                         <div className="relative group w-full h-auto min-h-[100px] bg-white p-2 rounded-xl border border-slate-200 flex items-center justify-center">
-                          <img src={logoImage} alt="Logo Preview" className="w-auto h-24 object-contain" />
+                          <img src={logoImage} alt="Logo Preview" className="w-auto h-20 object-contain rounded-lg" />
                           <button 
                             type="button"
                             onClick={(e) => { e.preventDefault(); setLogoImage(""); }}
@@ -1729,8 +1998,8 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                           </button>
                         </div>
                       ) : (
-                        <div className="space-y-2 flex flex-col items-center justify-center h-full text-slate-300 dark:text-slate-900 dark:text-white/30">
-                          <Image className="w-8 h-8 text-slate-900 dark:text-slate-900 dark:text-white/20 mb-2" />
+                        <div className="space-y-2 flex flex-col items-center justify-center h-full text-slate-300 dark:text-white/30">
+                          <Image className="w-8 h-8 text-slate-900 dark:text-white/20 mb-2" />
                           <span className="text-[12px] font-black text-amber-400">คลิกเพื่อเลือกไฟล์รูปโลโก้</span>
                           <span className="text-[10px]">รองรับ JPG, PNG ไม่เกิน 2MB</span>
                         </div>
@@ -1750,7 +2019,7 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                 <button
                   type="submit"
                   disabled={savingAssets}
-                  className="w-full sm:w-auto px-10 py-3.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-slate-900 dark:text-slate-900 dark:text-white font-black text-xs uppercase tracking-widest rounded-xl transition shadow-lg shadow-amber-500/20 cursor-pointer flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto px-10 py-3.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-slate-900 dark:text-white font-black text-xs uppercase tracking-widest rounded-xl transition shadow-lg shadow-amber-500/20 cursor-pointer flex items-center justify-center gap-2"
                 >
                   {savingAssets ? (
                     <><RefreshCw className="w-4 h-4 animate-spin" /> กำลังบันทึก...</>
@@ -1761,6 +2030,546 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
               </div>
             </form>
           </div>
+        ) : subTab === "emails" ? (
+          /* ======================================================== */
+          /* EMAIL & 3-DAY REMINDER SYSTEM (ศูนย์ควบคุมอีเมลและแจ้งเตือน) */
+          /* ======================================================== */
+          <div className="space-y-8 animate-fade-in text-slate-900 dark:text-white">
+            
+            {/* Top Hub Banner & Global Controls */}
+            <div className="bg-gradient-to-r from-teal-900/40 via-neutral-900 to-orange-950/40 border border-slate-200 dark:border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-md relative overflow-hidden shadow-2xl">
+              <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                <div className="space-y-2 max-w-2xl">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30 text-[10px] font-black uppercase tracking-widest">
+                    <Sparkles className="w-3.5 h-3.5 text-orange-400" /> ระบบแจ้งเตือนอัตโนมัติ • 3 วันก่อนวันงาน
+                  </div>
+                  <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
+                    ศูนย์ควบคุมระบบอีเมล & แจ้งเตือนล่วงหน้า 3 วัน
+                  </h3>
+                  <p className="text-xs md:text-sm text-slate-400 dark:text-white/60 font-light leading-relaxed">
+                    ระบบส่งอีเมลอัตโนมัติสำหรับนักวิ่งที่ได้รับการอนุมัติแล้ว เพื่อย้ำเตือนสถานที่จัดงาน (คณะ LSEd มธ.ศูนย์รังสิต), จุดจอดรถ (ยิมเนเซียม 4, 5, 6), เวลาปล่อยตัว 05:00 น. วันอาทิตย์ที่ 24 มกราคม 2570 และเช็คลิสต์สิ่งของที่ต้องนำมาในวันงาน (BIB, เสื้อ, บัตร ปชช., รองเท้า, ยาประจำตัว, กระบอกน้ำ)
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full lg:w-auto">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      loadReminderStats();
+                      loadRecent();
+                      loadPreview(selectedEmailTemplate, previewRunnerId);
+                    }}
+                    className="flex-1 sm:flex-initial px-4 py-3 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-white/80 rounded-2xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                    title="รีเฟรชข้อมูลตัวนับและประวัติ"
+                  >
+                    <RefreshCw className="w-4 h-4" /> รีเฟรชข้อมูล
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setBatchModalOpen(true)}
+                    className="flex-1 sm:flex-initial px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider transition flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-orange-500/25"
+                  >
+                    <Send className="w-4 h-4" /> ส่งแจ้งเตือนทุกคน (Broadcast 3 วัน)
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Metrics Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 sm:gap-4">
+              
+              {/* Event Date Metric */}
+              <div className="p-4 sm:p-5 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm space-y-1">
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/40 flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-teal-400" /> วันจัดแข่งขัน
+                </span>
+                <p className="text-base sm:text-lg font-black text-slate-900 dark:text-white font-mono">
+                  24 ม.ค. 2570
+                </p>
+                <p className="text-[10px] text-teal-600 dark:text-teal-400 font-bold">
+                  อีก {reminderStatus ? reminderStatus.daysUntilRace : "..."} วัน
+                </p>
+              </div>
+
+              {/* Recommended Date Metric */}
+              <div className="p-4 sm:p-5 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm space-y-1">
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/40 flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-orange-400" /> ส่งเตือนล่วงหน้า 3 วัน
+                </span>
+                <p className="text-base sm:text-lg font-black text-orange-500 font-mono">
+                  21 ม.ค. 2570
+                </p>
+                <p className="text-[10px] text-orange-400 font-bold">
+                  {reminderStatus?.isThreeDaysBefore ? "🔥 ถึงกำหนดส่งแล้ว" : "🗓️ ตั้งเวลาล่วงหน้า"}
+                </p>
+              </div>
+
+              {/* Approved Count */}
+              <div className="p-4 sm:p-5 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm space-y-1">
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/40 flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-blue-400" /> นักวิ่งอนุมัติแล้ว
+                </span>
+                <p className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-mono">
+                  {reminderStatus?.totalApproved ?? registrations.filter(r => r.status === "approved").length}
+                </p>
+                <p className="text-[10px] text-slate-400 dark:text-white/40 font-light">
+                  ผู้มีสิทธิ์รับแจ้งเตือน
+                </p>
+              </div>
+
+              {/* Sent Count */}
+              <div className="p-4 sm:p-5 bg-white dark:bg-neutral-900 border border-emerald-500/20 bg-emerald-500/5 rounded-2xl shadow-sm space-y-1">
+                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> ส่งแจ้งเตือนแล้ว
+                </span>
+                <p className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono">
+                  {reminderStatus?.reminderSentCount ?? registrations.filter(r => r.status === "approved" && r.reminderSentAt).length}
+                </p>
+                <p className="text-[10px] text-emerald-600/70 dark:text-emerald-400/70 font-light">
+                  ได้รับอีเมลแล้ว
+                </p>
+              </div>
+
+              {/* Pending Count */}
+              <div className="p-4 sm:p-5 bg-white dark:bg-neutral-900 border border-amber-500/20 bg-amber-500/5 rounded-2xl shadow-sm space-y-1 col-span-2 sm:col-span-1">
+                <span className="text-[10px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-amber-400" /> รอส่งแจ้งเตือน
+                </span>
+                <p className="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400 font-mono">
+                  {reminderStatus?.reminderPendingCount ?? registrations.filter(r => r.status === "approved" && !r.reminderSentAt).length}
+                </p>
+                <p className="text-[10px] text-amber-600/70 dark:text-amber-400/70 font-light">
+                  รอกดส่ง Broadcast
+                </p>
+              </div>
+
+            </div>
+
+            {/* LIVE INTERACTIVE EMAIL PREVIEWER & SANDBOX */}
+            <div className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-white/10 rounded-3xl p-6 md:p-8 space-y-6 shadow-xl">
+              
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200 dark:border-white/5 pb-6">
+                <div>
+                  <h4 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                    <Eye className="w-5 h-5 text-teal-400" /> ตัวอย่างอีเมลระบบแบบเสมือนจริง (Interactive Live Email Preview)
+                  </h4>
+                  <p className="text-xs text-slate-400 dark:text-white/50 font-light mt-0.5">
+                    เลือกแม่แบบอีเมล สลับมุมมอง Desktop / Mobile และทดสอบส่งอีเมลไปยังที่อยู่อีเมลของคุณ
+                  </p>
+                </div>
+
+                {/* Viewport switch: Desktop vs Mobile */}
+                <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl self-start lg:self-auto">
+                  <button
+                    type="button"
+                    onClick={() => setEmailViewport("desktop")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
+                      emailViewport === "desktop"
+                        ? "bg-teal-600 text-white shadow-xs"
+                        : "text-slate-400 dark:text-white/50 hover:text-white"
+                    }`}
+                  >
+                    <Monitor className="w-3.5 h-3.5" /> คอมพิวเตอร์ (Desktop)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEmailViewport("mobile")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
+                      emailViewport === "mobile"
+                        ? "bg-teal-600 text-white shadow-xs"
+                        : "text-slate-400 dark:text-white/50 hover:text-white"
+                    }`}
+                  >
+                    <Smartphone className="w-3.5 h-3.5" /> มือถือ (Mobile)
+                  </button>
+                </div>
+              </div>
+
+              {/* Template Tabs & Selection Bar */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+                {[
+                  { id: "reminder", label: "เตือนล่วงหน้า 3 วัน", icon: "⏰", desc: "วัน เวลา สถานที่ สิ่งของที่ต้องนำมา" },
+                  { id: "approval", label: "อนุมัติบัตรเข้างาน & BIB", icon: "🎟️", desc: "Runner Pass & QR เช็คอิน" },
+                  { id: "payment_received", label: "ได้รับสลิปแล้ว", icon: "💳", desc: "ยืนยันรับเงิน & รอตรวจ" },
+                  { id: "registration", label: "ยืนยันการลงทะเบียน", icon: "📝", desc: "ข้อมูลบัญชี & QR โอน" },
+                  { id: "shipping", label: "แจ้งเลขพัสดุ", icon: "🚚", desc: "Tracking ไปรษณีย์ไทย" },
+                  { id: "rejection", label: "สลิปมีปัญหา", icon: "⚠️", desc: "แจ้งให้อัปโหลดใหม่" }
+                ].map((tpl) => (
+                  <button
+                    key={tpl.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedEmailTemplate(tpl.id);
+                      loadPreview(tpl.id, previewRunnerId);
+                    }}
+                    className={`p-3 rounded-2xl border text-left transition flex flex-col justify-between cursor-pointer ${
+                      selectedEmailTemplate === tpl.id
+                        ? "border-teal-500 bg-teal-500/10 text-slate-900 dark:text-white shadow-md ring-2 ring-teal-500/20"
+                        : "border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20 bg-slate-50 dark:bg-white/[0.02] text-slate-600 dark:text-white/60"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 font-bold text-xs">
+                      <span>{tpl.icon}</span>
+                      <span className="truncate">{tpl.label}</span>
+                    </div>
+                    <span className="text-[10px] text-slate-400 dark:text-white/40 mt-1 line-clamp-1">{tpl.desc}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Controls bar: Runner data source & Test email input */}
+              <div className="p-4 bg-slate-50 dark:bg-black/30 border border-slate-200 dark:border-white/5 rounded-2xl flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+                
+                {/* Select Runner Data */}
+                <div className="flex items-center gap-2 flex-1">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 dark:text-white/50 shrink-0">
+                    ข้อมูลผู้สมัครในตัวอย่าง:
+                  </span>
+                  <select
+                    value={previewRunnerId}
+                    onChange={(e) => {
+                      setPreviewRunnerId(e.target.value);
+                      loadPreview(selectedEmailTemplate, e.target.value);
+                    }}
+                    className="flex-1 max-w-xs px-3 py-2 bg-white dark:bg-neutral-800 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-teal-500"
+                  >
+                    <option value="sample">ข้อมูลจำลอง (คุณธนภัทร • BIB: LSE-1024)</option>
+                    {registrations.filter(r => r.status === "approved").map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.firstName} {r.lastName} (BIB: {r.bibNumber || r.id}) - {r.distance}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Send Test Email to specific inbox */}
+                <div className="flex items-center gap-2 flex-1 justify-end">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 dark:text-white/50 shrink-0">
+                    ทดสอบส่งจริง:
+                  </span>
+                  <input
+                    type="email"
+                    value={testEmailAddress}
+                    onChange={(e) => setTestEmailAddress(e.target.value)}
+                    placeholder="ระบุอีเมลผู้รับทดสอบ"
+                    className="flex-1 max-w-xs px-3 py-2 bg-white dark:bg-neutral-800 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-teal-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSendTest}
+                    disabled={sendingTestEmail}
+                    className="px-4 py-2 bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer shadow-sm"
+                  >
+                    {sendingTestEmail ? (
+                      <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> ส่ง...</>
+                    ) : (
+                      <><Send className="w-3.5 h-3.5" /> ส่งทดสอบ</>
+                    )}
+                  </button>
+                </div>
+
+              </div>
+
+              {/* Subject Bar */}
+              <div className="p-3.5 bg-slate-100 dark:bg-black/50 border border-slate-200 dark:border-white/5 rounded-xl flex items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2 truncate">
+                  <span className="font-bold text-slate-400 dark:text-white/40 shrink-0 uppercase tracking-wider text-[10px]">หัวข้ออีเมล (Subject):</span>
+                  <span className="font-bold text-slate-900 dark:text-white truncate">{emailPreviewSubject || "กำลังโหลด..."}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(emailPreviewSubject);
+                    alert("คัดลอกหัวข้ออีเมลเรียบร้อยแล้ว");
+                  }}
+                  className="text-[11px] text-teal-600 dark:text-teal-400 font-bold hover:underline shrink-0"
+                >
+                  คัดลอกหัวข้อ
+                </button>
+              </div>
+
+              {/* Live Render Container */}
+              <div className="border border-slate-200 dark:border-white/10 rounded-2xl bg-neutral-100 dark:bg-black/60 p-4 md:p-8 flex justify-center min-h-[500px] overflow-x-auto relative">
+                {loadingPreview && (
+                  <div className="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-xs flex items-center justify-center z-10">
+                    <div className="flex items-center gap-2 text-teal-400 font-bold text-sm">
+                      <RefreshCw className="w-5 h-5 animate-spin" /> กำลังประมวลผลตัวอย่างอีเมล...
+                    </div>
+                  </div>
+                )}
+
+                <div 
+                  className={`transition-all duration-300 w-full ${
+                    emailViewport === "mobile" 
+                      ? "max-w-[390px] border-4 border-neutral-700 rounded-[32px] p-2 bg-white shadow-2xl" 
+                      : "max-w-[650px] shadow-xl rounded-2xl overflow-hidden bg-white"
+                  }`}
+                >
+                  {/* Email Client Header Mockup */}
+                  <div className="bg-slate-50 border-b border-slate-200 p-3 text-[11px] text-slate-500 font-sans space-y-1">
+                    <div className="flex justify-between items-center text-slate-400 text-[10px]">
+                      <span>จาก: <strong>LSEd Running 2569</strong> &lt;noreply@lsed-running.web.app&gt;</span>
+                      <span>{new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.</span>
+                    </div>
+                    <div className="truncate text-slate-800 font-bold">
+                      ถึง: {previewRunnerId === "sample" ? "คุณธนภัทร รุ่งเรืองฉาย (runner.sample@example.com)" : registrations.find(r => r.id === previewRunnerId)?.email || "ผู้สมัคร"}
+                    </div>
+                  </div>
+
+                  {/* Rendered HTML */}
+                  <div 
+                    className="overflow-y-auto max-h-[700px] p-2 sm:p-4 bg-white"
+                    dangerouslySetInnerHTML={{ __html: emailPreviewHtml }}
+                  />
+                </div>
+              </div>
+
+            </div>
+
+            {/* APPROVED RUNNERS 3-DAY REMINDER DISPATCH TABLE */}
+            <div className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-white/10 rounded-3xl p-6 md:p-8 space-y-6 shadow-xl">
+              
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-white/5 pb-5">
+                <div>
+                  <h4 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                    <Users className="w-5 h-5 text-orange-400" /> รายชื่อนักวิ่งที่อนุมัติแล้ว & สถานะการส่งแจ้งเตือน 3 วัน
+                  </h4>
+                  <p className="text-xs text-slate-400 dark:text-white/50 font-light mt-0.5">
+                    ตรวจสอบสถานะการรับอีเมลเตือนล่วงหน้า 3 วันของนักวิ่งแต่ละท่าน หรือคลิกส่งเฉพาะบุคคล
+                  </p>
+                </div>
+
+                <div className="relative w-full sm:w-64">
+                  <Search className="w-4 h-4 text-slate-400 dark:text-white/40 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={emailSearch}
+                    onChange={(e) => setEmailSearch(e.target.value)}
+                    placeholder="ค้นหาชื่อ, BIB, อีเมล..."
+                    className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-teal-500"
+                  />
+                </div>
+              </div>
+
+              {/* Table */}
+              <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/5">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="bg-slate-50 dark:bg-white/[0.02] text-slate-400 dark:text-white/50 font-bold border-b border-slate-200 dark:border-white/5 uppercase tracking-wider text-[10px]">
+                      <th className="py-3.5 px-4">นักวิ่ง</th>
+                      <th className="py-3.5 px-4">หมายเลข BIB</th>
+                      <th className="py-3.5 px-4">ระยะ / ไซส์</th>
+                      <th className="py-3.5 px-4">วิธีรับอุปกรณ์</th>
+                      <th className="py-3.5 px-4">สถานะแจ้งเตือน 3 วัน</th>
+                      <th className="py-3.5 px-4 text-right">ดำเนินการ</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-white/5 text-slate-700 dark:text-white/80">
+                    {registrations
+                      .filter(r => r.status === "approved")
+                      .filter(r => {
+                        if (!emailSearch) return true;
+                        const q = emailSearch.toLowerCase();
+                        return (
+                          r.firstName.toLowerCase().includes(q) ||
+                          r.lastName.toLowerCase().includes(q) ||
+                          r.email.toLowerCase().includes(q) ||
+                          (r.bibNumber && r.bibNumber.toLowerCase().includes(q)) ||
+                          r.id.toLowerCase().includes(q)
+                        );
+                      })
+                      .map((runner) => (
+                        <tr key={runner.id} className="hover:bg-slate-50/50 dark:hover:bg-white/[0.01] transition">
+                          
+                          {/* Runner Info */}
+                          <td className="py-3.5 px-4">
+                            <div className="font-bold text-slate-900 dark:text-white">
+                              {runner.firstName} {runner.lastName}
+                            </div>
+                            <div className="text-[11px] text-slate-400 dark:text-white/40 font-mono">
+                              {runner.email} • {runner.phone}
+                            </div>
+                            <span className="text-[9px] text-slate-400 dark:text-white/30 font-mono">
+                              REF: {runner.id}
+                            </span>
+                          </td>
+
+                          {/* BIB */}
+                          <td className="py-3.5 px-4">
+                            <span className="font-mono font-black text-xs px-2.5 py-1 rounded-md bg-teal-500/10 border border-teal-500/30 text-teal-600 dark:text-teal-400">
+                              {runner.bibNumber || "-"}
+                            </span>
+                          </td>
+
+                          {/* Distance & Size */}
+                          <td className="py-3.5 px-4">
+                            <div className="font-bold text-slate-900 dark:text-white">
+                              {runner.distance === "VIP" ? "VIP 5K" : "Regular 5K"}
+                            </div>
+                            <div className="text-[10px] text-slate-400 dark:text-white/40">
+                              ไซส์: {runner.shirtSize}
+                            </div>
+                          </td>
+
+                          {/* Delivery Method */}
+                          <td className="py-3.5 px-4">
+                            {runner.deliveryMethod === "shipping" ? (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-500">
+                                <Truck className="w-3 h-3" /> ไปรษณีย์ ({runner.shippingTrackingNumber || "รอจัดส่ง"})
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-teal-600 dark:text-teal-400">
+                                <MapPin className="w-3 h-3" /> รับหน้างาน
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Reminder Status */}
+                          <td className="py-3.5 px-4">
+                            {runner.reminderSentAt ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-[10px] font-black">
+                                <CheckCircle2 className="w-3 h-3" /> ส่งแล้ว ({new Date(runner.reminderSentAt).toLocaleDateString('th-TH')})
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-400 dark:text-white/40 text-[10px] font-bold">
+                                <Clock className="w-3 h-3" /> ยังไม่ส่ง
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Actions */}
+                          <td className="py-3.5 px-4 text-right">
+                            <div className="inline-flex items-center gap-1.5">
+                              
+                              {/* Preview this runner's email */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setPreviewRunnerId(runner.id);
+                                  setSelectedEmailTemplate("reminder");
+                                  loadPreview("reminder", runner.id);
+                                }}
+                                className="p-1.5 rounded-lg bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-white/70 transition cursor-pointer"
+                                title="เปิดดูตัวอย่างอีเมลเตือน 3 วันของท่านนี้"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+
+                              {/* Send direct reminder */}
+                              <button
+                                type="button"
+                                onClick={() => handleSendDirectReminder(runner.id)}
+                                className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
+                                  runner.reminderSentAt
+                                    ? "bg-slate-100 dark:bg-white/5 hover:bg-orange-500/20 text-slate-600 dark:text-white/70 hover:text-orange-400 border border-slate-200 dark:border-white/10"
+                                    : "bg-orange-500 hover:bg-orange-600 text-white shadow-xs"
+                                }`}
+                                title={runner.reminderSentAt ? "ส่งอีเมลเตือนล่วงหน้า 3 วันซ้ำอีกครั้ง" : "ส่งอีเมลแจ้งเตือนล่วงหน้า 3 วัน"}
+                              >
+                                <Mail className="w-3.5 h-3.5" />
+                                <span>{runner.reminderSentAt ? "ส่งเตือนซ้ำ" : "ส่งเตือน 3 วัน"}</span>
+                              </button>
+
+                              {/* Resend E-BIB */}
+                              <button
+                                type="button"
+                                onClick={() => handleResendTicket(runner.id)}
+                                className="p-1.5 rounded-lg bg-teal-600/10 hover:bg-teal-600/20 text-teal-600 dark:text-teal-400 border border-teal-500/20 transition cursor-pointer"
+                                title="ส่งบัตรเข้างาน E-BIB ซ้ำ"
+                              >
+                                <QrCode className="w-4 h-4" />
+                              </button>
+
+                            </div>
+                          </td>
+
+                        </tr>
+                      ))}
+                    {registrations.filter(r => r.status === "approved").length === 0 && (
+                      <tr>
+                        <td colSpan={6} className="text-center py-12 text-slate-400 dark:text-white/40">
+                          ยังไม่มีนักวิ่งที่ผ่านการอนุมัติในระบบ
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+            </div>
+
+            {/* RECENT EMAIL DELIVERY LOGS */}
+            <div className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-white/10 rounded-3xl p-6 md:p-8 space-y-4 shadow-xl">
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/5 pb-4">
+                <div>
+                  <h4 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                    <History className="w-5 h-5 text-teal-400" /> ประวัติการส่งอีเมลจริงของระบบ (Recent Email Logs)
+                  </h4>
+                  <p className="text-xs text-slate-400 dark:text-white/50 font-light mt-0.5">
+                    บันทึกรายการอีเมลที่ระบบเพิ่งจัดส่งไป เพื่อความโปร่งใสและตรวจสอบได้
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={loadRecent}
+                  className="p-2 rounded-xl bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 dark:text-white/70 transition"
+                  title="รีเฟรชประวัติ"
+                >
+                  <RefreshCw className={`w-4 h-4 ${loadingRecentEmails ? "animate-spin" : ""}`} />
+                </button>
+              </div>
+
+              {recentEmails.length > 0 ? (
+                <div className="divide-y divide-slate-100 dark:divide-white/5 text-xs">
+                  {recentEmails.slice(0, 8).map((log) => (
+                    <div key={log.id} className="py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                      <div className="flex items-center gap-3">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                          log.type === "reminder"
+                            ? "bg-orange-500/20 text-orange-400 border border-orange-500/30"
+                            : log.type === "approval"
+                            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                            : log.type === "payment_received"
+                            ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                            : "bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-white/70"
+                        }`}>
+                          {log.type === "reminder" ? "⏰ เตือน 3 วัน" : log.type === "approval" ? "🎟️ บัตร BIB" : log.type === "payment_received" ? "💳 รับสลิป" : log.type}
+                        </span>
+                        <div>
+                          <p className="font-bold text-slate-900 dark:text-white truncate max-w-md">
+                            {log.subject}
+                          </p>
+                          <p className="text-[11px] text-slate-400 dark:text-white/40">
+                            ถึง: <strong>{log.recipientName || log.recipient}</strong> ({log.recipient})
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 self-end sm:self-auto text-[11px] text-slate-400 dark:text-white/40">
+                        <span>{new Date(log.sentAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.</span>
+                        {log.previewUrl && (
+                          <a
+                            href={log.previewUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 text-teal-600 dark:text-teal-400 hover:underline font-bold"
+                          >
+                            <ExternalLink className="w-3 h-3" /> เปิดดูอีเมล
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center py-8 text-slate-400 dark:text-white/40 text-xs">
+                  ยังไม่มีประวัติการส่งอีเมลในเซสชันนี้
+                </p>
+              )}
+            </div>
+
+          </div>
         ) : null}
       </section>
 
@@ -1768,15 +2577,15 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
       {/* MODAL 1: SLIP LIGHTBOX & APPROVAL CONSOLE */}
       {selectedReg && (
         <div className="fixed inset-0 z-50 bg-white/80 dark:bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fade-in" id="slip-lightbox">
-          <div className="bg-white dark:bg-neutral-950 border border-slate-200 dark:border-white/10 rounded-3xl overflow-hidden shadow-2xl max-w-4xl w-full grid grid-cols-1 md:grid-cols-12 max-h-[90vh] text-slate-900 dark:text-slate-900 dark:text-white">
+          <div className="bg-white dark:bg-neutral-950 border border-slate-200 dark:border-white/10 rounded-3xl overflow-hidden shadow-2xl max-w-4xl w-full grid grid-cols-1 md:grid-cols-12 max-h-[90vh] text-slate-900 dark:text-white">
             
             {/* Left Col: slip visual representation */}
             <div className="md:col-span-6 bg-black p-6 flex flex-col justify-between items-center relative min-h-[300px]">
-              <p className="text-[10px] text-slate-400 dark:text-slate-900 dark:text-white/40 font-bold uppercase tracking-widest absolute top-4 left-4 font-mono">SLIP ATTACHMENT</p>
+              <p className="text-[10px] text-slate-400 dark:text-white/40 font-bold uppercase tracking-widest absolute top-4 left-4 font-mono">SLIP ATTACHMENT</p>
               
               <button 
                 onClick={() => setSelectedReg(null)}
-                className="md:hidden absolute top-4 right-4 bg-slate-100 dark:bg-white/10 hover:bg-white/20 text-slate-900 dark:text-slate-900 dark:text-white rounded-full p-1.5 transition"
+                className="md:hidden absolute top-4 right-4 bg-slate-100 dark:bg-white/10 hover:bg-white/20 text-slate-900 dark:text-white rounded-full p-1.5 transition"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1790,16 +2599,16 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                   />
                 ) : (
                   /* Safe fallback representation if image not structured */
-                  <div className="bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-white/10 rounded-2xl p-6 text-center text-slate-400 dark:text-slate-900 dark:text-white/40 w-full max-w-xs space-y-3">
-                    <AlertCircle className="w-10 h-10 text-blue-500 mx-auto" />
-                    <p className="text-xs font-bold text-slate-900 dark:text-slate-900 dark:text-white">พบหลักฐานแบบข้อความจำลอง</p>
+                  <div className="bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-white/10 rounded-2xl p-6 text-center text-slate-400 dark:text-white/40 w-full max-w-xs space-y-3">
+                    <AlertCircle className="w-10 h-10 text-teal-600 dark:text-teal-400 mx-auto" />
+                    <p className="text-xs font-bold text-slate-900 dark:text-white">พบหลักฐานแบบข้อความจำลอง</p>
                     <p className="text-[10px] opacity-80 leading-relaxed font-mono truncate">{selectedReg.slipUrl}</p>
                   </div>
                 )}
               </div>
 
               <div className="w-full text-center border-t border-slate-200 dark:border-white/5 pt-4">
-                <p className="text-[10px] text-slate-400 dark:text-slate-900 dark:text-white/40 font-mono">SUBMITTED: {new Date(selectedReg.createdAt).toLocaleString("th-TH")}</p>
+                <p className="text-[10px] text-slate-400 dark:text-white/40 font-mono">SUBMITTED: {new Date(selectedReg.createdAt).toLocaleString("th-TH")}</p>
               </div>
             </div>
 
@@ -1808,56 +2617,56 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
               <div className="space-y-6">
                 <div className="flex justify-between items-start">
                   <div>
-                    <span className="text-[10px] text-slate-400 dark:text-slate-900 dark:text-white/40 font-bold uppercase tracking-wider font-mono">{selectedReg.id}</span>
-                    <h3 className="text-lg font-black text-slate-900 dark:text-slate-900 dark:text-white leading-tight mt-0.5 uppercase tracking-tight">{selectedReg.firstName} {selectedReg.lastName}</h3>
+                    <span className="text-[10px] text-slate-400 dark:text-white/40 font-bold uppercase tracking-wider font-mono">{selectedReg.id}</span>
+                    <h3 className="text-lg font-black text-slate-900 dark:text-white leading-tight mt-0.5 uppercase tracking-tight">{selectedReg.firstName} {selectedReg.lastName}</h3>
                   </div>
                   <button 
                     onClick={() => setSelectedReg(null)}
-                    className="hidden md:block bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-slate-900 dark:text-white rounded-full p-1.5 transition cursor-pointer"
+                    className="hidden md:block bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-full p-1.5 transition cursor-pointer"
                   >
                     <X className="w-4.5 h-4.5" />
                   </button>
                 </div>
 
                 {/* Runner data card summary */}
-                <div className="bg-slate-50 dark:bg-white/5 rounded-2xl p-4 text-xs space-y-2.5 text-slate-600 dark:text-slate-900 dark:text-white/70 border border-slate-200 dark:border-white/5">
+                <div className="bg-slate-50 dark:bg-white/5 rounded-2xl p-4 text-xs space-y-2.5 text-slate-600 dark:text-white/70 border border-slate-200 dark:border-white/5">
                   <div className="flex justify-between">
                     <span>ระยะวิ่งที่สมัคร:</span>
-                    <strong className="text-slate-900 dark:text-slate-900 dark:text-white font-bold">{selectedReg.distance} ({selectedReg.distance === "10K" ? "Mini" : selectedReg.distance === "5K" ? "Micro" : "Fun Run"})</strong>
+                    <strong className="text-slate-900 dark:text-white font-bold">{selectedReg.distance} ({selectedReg.distance === "10K" ? "Mini" : selectedReg.distance === "5K" ? "Micro" : "Fun Run"})</strong>
                   </div>
                   <div className="flex justify-between items-baseline">
                     <span>ยอดโอนค่าสมัคร:</span>
-                    <strong className="text-blue-400 font-black text-sm">{selectedReg.price} THB</strong>
+                    <strong className="text-teal-600 dark:text-teal-400 font-black text-sm">{selectedReg.price} THB</strong>
                   </div>
                   <div className="flex justify-between">
                     <span>เบอร์โทรศัพท์:</span>
-                    <strong className="text-slate-900 dark:text-slate-900 dark:text-white font-mono font-semibold">{selectedReg.phone}</strong>
+                    <strong className="text-slate-900 dark:text-white font-mono font-semibold">{selectedReg.phone}</strong>
                   </div>
                   <div className="flex justify-between">
                     <span>อีเมลสมัคร:</span>
-                    <strong className="text-slate-900 dark:text-slate-900 dark:text-white font-semibold">{selectedReg.email}</strong>
+                    <strong className="text-slate-900 dark:text-white font-semibold">{selectedReg.email}</strong>
                   </div>
                   <div className="flex justify-between">
                     <span>เพศ / อายุ / ขนาดเสื้อ:</span>
-                    <strong className="text-slate-900 dark:text-slate-900 dark:text-white font-semibold">{selectedReg.gender === "male" ? "ชาย" : "หญิง"} / {selectedReg.age} ปี / ไซส์ {selectedReg.shirtSize}</strong>
+                    <strong className="text-slate-900 dark:text-white font-semibold">{selectedReg.gender === "male" ? "ชาย" : "หญิง"} / {selectedReg.age} ปี / ไซส์ {selectedReg.shirtSize}</strong>
                   </div>
                 </div>
 
                 {/* AI SLIP CHECKER CONSOLE */}
-                <div className="bg-blue-950/20 border border-blue-500/20 rounded-2xl p-4 space-y-3">
+                <div className="bg-teal-950/20 border border-teal-500/20 rounded-2xl p-4 space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-xs font-black text-blue-400 flex items-center gap-1.5">
+                    <span className="text-xs font-black text-teal-600 dark:text-teal-400 flex items-center gap-1.5">
                       ✨ ระบบ AI ตรวจสลิปอัตโนมัติ
                     </span>
                     <button
                       type="button"
                       disabled={analyzingSlipId !== null}
                       onClick={() => handleAnalyzeSlip(selectedReg.id)}
-                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-600/40 text-white font-black text-[10px] uppercase tracking-wider rounded-lg transition-all flex items-center gap-1 cursor-pointer disabled:cursor-not-allowed"
+                      className="px-3 py-1.5 bg-teal-600 hover:bg-teal-500 disabled:bg-teal-600/40 text-white font-black text-[10px] uppercase tracking-wider rounded-lg transition-all flex items-center gap-1 cursor-pointer disabled:cursor-not-allowed"
                     >
                       {analyzingSlipId === selectedReg.id ? (
                         <>
-                          <svg className="animate-spin h-3.5 w-3.5 text-slate-900 dark:text-slate-900 dark:text-white" fill="none" viewBox="0 0 24 24">
+                          <svg className="animate-spin h-3.5 w-3.5 text-slate-900 dark:text-white" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                           </svg>
@@ -1870,16 +2679,16 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                   </div>
 
                   {aiAnalysisResult ? (
-                    <div className="space-y-2.5 animate-fade-in text-[11px] border-t border-blue-500/10 pt-2.5">
+                    <div className="space-y-2.5 animate-fade-in text-[11px] border-t border-teal-500/10 pt-2.5">
                       <div className="grid grid-cols-2 gap-2">
                         <div className="bg-slate-100 dark:bg-black/30 p-2 border border-slate-200 dark:border-white/5 rounded-xl">
-                          <span className="text-slate-400 dark:text-slate-900 dark:text-white/40 block text-[9px] uppercase font-black">ความแท้ของสลิป</span>
+                          <span className="text-slate-400 dark:text-white/40 block text-[9px] uppercase font-black">ความแท้ของสลิป</span>
                           <span className={`font-black text-xs ${aiAnalysisResult.isValidSlip ? 'text-green-400' : 'text-red-400'}`}>
                             {aiAnalysisResult.isValidSlip ? "✅ สลิปธนาคารของจริง" : "❌ สลิปไม่สมบูรณ์ / ไม่ใช่สลิป"}
                           </span>
                         </div>
                         <div className="bg-slate-100 dark:bg-black/30 p-2 border border-slate-200 dark:border-white/5 rounded-xl">
-                          <span className="text-slate-400 dark:text-slate-900 dark:text-white/40 block text-[9px] uppercase font-black">ยอดโอนบนสลิป</span>
+                          <span className="text-slate-400 dark:text-white/40 block text-[9px] uppercase font-black">ยอดโอนบนสลิป</span>
                           <span className={`font-black text-xs ${aiAnalysisResult.isAmountCorrect ? 'text-green-400' : 'text-yellow-400'}`}>
                             {aiAnalysisResult.amount} บาท {aiAnalysisResult.isAmountCorrect ? "(ครบถ้วน)" : `(ไม่ตรงกับ ${selectedReg.price})`}
                           </span>
@@ -1887,16 +2696,16 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                       </div>
 
                       <div className="bg-slate-100 dark:bg-black/30 p-2.5 border border-slate-200 dark:border-white/5 rounded-xl space-y-1.5">
-                        <span className="text-slate-400 dark:text-slate-900 dark:text-white/40 block text-[9px] uppercase font-black">รายละเอียดสลิปที่ตรวจพบ</span>
-                        <div className="flex justify-between text-slate-900 dark:text-slate-900 dark:text-white/80">
+                        <span className="text-slate-400 dark:text-white/40 block text-[9px] uppercase font-black">รายละเอียดสลิปที่ตรวจพบ</span>
+                        <div className="flex justify-between text-slate-900 dark:text-white/80">
                           <span>วัน-เวลาโอน:</span>
                           <span className="font-semibold font-mono">{aiAnalysisResult.date} {aiAnalysisResult.time}</span>
                         </div>
-                        <div className="flex justify-between text-slate-900 dark:text-slate-900 dark:text-white/80">
+                        <div className="flex justify-between text-slate-900 dark:text-white/80">
                           <span>ชื่อบัญชีผู้โอน:</span>
                           <span className="font-semibold text-right truncate max-w-[150px]">{aiAnalysisResult.senderName || "ไม่ระบุ"}</span>
                         </div>
-                        <div className="flex justify-between text-slate-900 dark:text-slate-900 dark:text-white/80">
+                        <div className="flex justify-between text-slate-900 dark:text-white/80">
                           <span>บัญชีผู้รับ:</span>
                           <span className="font-semibold text-right truncate max-w-[150px]">{aiAnalysisResult.receiverName || "ไม่ระบุ"}</span>
                         </div>
@@ -1923,7 +2732,7 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                       ❌ {aiAnalysisError}
                     </div>
                   ) : (
-                    <p className="text-[10px] text-slate-400 dark:text-slate-900 dark:text-white/40 leading-relaxed font-light">
+                    <p className="text-[10px] text-slate-400 dark:text-white/40 leading-relaxed font-light">
                       ยังไม่ได้ทำการตรวจสอบสลิปนี้ด้วย AI คุณสามารถคลิกปุ่มด้านบนเพื่อใช้ AI ตรวจสอบความถูกต้องของสลิป วันที่โอน ยอดเงินที่โอน และชื่อบัญชีได้ทันที
                     </p>
                   )}
@@ -1945,7 +2754,7 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                       <button
                         type="button"
                         onClick={() => setIsRejecting(false)}
-                        className="px-3.5 py-2 bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-900 dark:text-white/70 font-semibold text-xs rounded-lg transition"
+                        className="px-3.5 py-2 bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-white/70 font-semibold text-xs rounded-lg transition"
                       >
                         ยกเลิก
                       </button>
@@ -1960,7 +2769,7 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                 ) : (
                   selectedReg.status !== "approved" && (
                     <div className="flex flex-col gap-2 border-t border-slate-200 dark:border-white/5 pt-5">
-                      <p className="text-xs font-bold text-slate-400 dark:text-slate-900 dark:text-white/50 uppercase tracking-wider">ตรวจสอบความถูกต้องสลิปโอนเงิน:</p>
+                      <p className="text-xs font-bold text-slate-400 dark:text-white/50 uppercase tracking-wider">ตรวจสอบความถูกต้องสลิปโอนเงิน:</p>
                       <div className="grid grid-cols-2 gap-3">
                         <button
                           onClick={() => setIsRejecting(true)}
@@ -1971,7 +2780,7 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                         
                         <button
                           onClick={() => handleApprove(selectedReg.id)}
-                          className="py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 shadow-md shadow-blue-600/20 transition cursor-pointer"
+                          className="py-3 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 shadow-md shadow-teal-500/20 transition cursor-pointer"
                         >
                           <CheckCircle className="w-4 h-4" /> อนุมัติสิทธิ์ & ออกบิ๊บวิ่ง
                         </button>
@@ -1988,10 +2797,10 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
               </div>
 
               {/* Lookup helper */}
-              <div className="pt-4 mt-6 border-t border-slate-200 dark:border-white/5 flex justify-between items-center text-xs text-slate-400 dark:text-slate-900 dark:text-white/40">
+              <div className="pt-4 mt-6 border-t border-slate-200 dark:border-white/5 flex justify-between items-center text-xs text-slate-400 dark:text-white/40">
                 <button
                   onClick={() => { onSearchLookup(selectedReg.id); setSelectedReg(null); }}
-                  className="hover:text-blue-400 font-bold transition flex items-center gap-1 cursor-pointer"
+                  className="hover:text-teal-600 dark:text-teal-400 font-bold transition flex items-center gap-1 cursor-pointer"
                 >
                   ค้นหาในหน้าแรก <ArrowRight className="w-3.5 h-3.5" />
                 </button>
@@ -2009,13 +2818,13 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
           <form onSubmit={handleEditSave} className="bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-white/10 rounded-3xl overflow-hidden shadow-2xl max-w-lg w-full p-6 md:p-8 space-y-6 text-slate-900 dark:text-white">
             <div className="flex justify-between items-center border-b border-slate-200 dark:border-white/5 pb-3">
               <div>
-                <h3 className="text-lg font-black text-slate-900 dark:text-slate-900 dark:text-white">แก้ไขข้อมูลผู้เข้าร่วมงานวิ่ง</h3>
-                <p className="text-[10px] text-slate-400 dark:text-slate-900 dark:text-white/40 font-mono">EDIT RUNNER: {editingReg.id}</p>
+                <h3 className="text-lg font-black text-slate-900 dark:text-white">แก้ไขข้อมูลผู้เข้าร่วมงานวิ่ง</h3>
+                <p className="text-[10px] text-slate-400 dark:text-white/40 font-mono">EDIT RUNNER: {editingReg.id}</p>
               </div>
               <button 
                 type="button"
                 onClick={() => setEditingReg(null)}
-                className="bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-slate-900 dark:text-white rounded-full p-1 transition cursor-pointer border border-slate-200 dark:border-white/10"
+                className="bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-white rounded-full p-1 transition cursor-pointer border border-slate-200 dark:border-white/10"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -2023,51 +2832,51 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
 
             <div className="grid grid-cols-2 gap-4 text-xs">
               <div className="space-y-1">
-                <label className="font-bold text-slate-400 dark:text-slate-900 dark:text-white/50 block text-[10px] uppercase tracking-wider">ชื่อจริง</label>
+                <label className="font-bold text-slate-400 dark:text-white/50 block text-[10px] uppercase tracking-wider">ชื่อจริง</label>
                 <input 
                   type="text"
                   value={editingReg.firstName}
                   onChange={(e) => setEditingReg({ ...editingReg, firstName: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                  className="w-full px-3 py-2 border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-teal-500 text-xs"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-400 dark:text-slate-900 dark:text-white/50 block text-[10px] uppercase tracking-wider">นามสกุล</label>
+                <label className="font-bold text-slate-400 dark:text-white/50 block text-[10px] uppercase tracking-wider">นามสกุล</label>
                 <input 
                   type="text"
                   value={editingReg.lastName}
                   onChange={(e) => setEditingReg({ ...editingReg, lastName: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                  className="w-full px-3 py-2 border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-teal-500 text-xs"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-400 dark:text-slate-900 dark:text-white/50 block text-[10px] uppercase tracking-wider">เบอร์มือถือ</label>
+                <label className="font-bold text-slate-400 dark:text-white/50 block text-[10px] uppercase tracking-wider">เบอร์มือถือ</label>
                 <input 
                   type="text"
                   value={editingReg.phone}
                   onChange={(e) => setEditingReg({ ...editingReg, phone: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                  className="w-full px-3 py-2 border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-teal-500 text-xs"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-400 dark:text-slate-900 dark:text-white/50 block text-[10px] uppercase tracking-wider">อีเมล</label>
+                <label className="font-bold text-slate-400 dark:text-white/50 block text-[10px] uppercase tracking-wider">อีเมล</label>
                 <input 
                   type="email"
                   value={editingReg.email}
                   onChange={(e) => setEditingReg({ ...editingReg, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                  className="w-full px-3 py-2 border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-teal-500 text-xs"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-400 dark:text-slate-900 dark:text-white/50 block text-[10px] uppercase tracking-wider">ระยะวิ่ง</label>
+                <label className="font-bold text-slate-400 dark:text-white/50 block text-[10px] uppercase tracking-wider">ระยะวิ่ง</label>
                 <select
                   value={editingReg.distance}
                   onChange={(e) => setEditingReg({ ...editingReg, distance: e.target.value as DistanceType })}
-                  className="w-full px-3 py-2 bg-[#121214] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                  className="w-full px-3 py-2 bg-[#121214] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-teal-500 text-xs"
                 >
                   <option value="5K">Standard 5KM</option>
                   <option value="vip">VIP 5KM</option>
@@ -2078,11 +2887,11 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-400 dark:text-slate-900 dark:text-white/50 block text-[10px] uppercase tracking-wider">ขนาดเสื้อยืด</label>
+                <label className="font-bold text-slate-400 dark:text-white/50 block text-[10px] uppercase tracking-wider">ขนาดเสื้อยืด</label>
                 <select
                   value={editingReg.shirtSize}
                   onChange={(e) => setEditingReg({ ...editingReg, shirtSize: e.target.value as ShirtSizeType })}
-                  className="w-full px-3 py-2 bg-[#121214] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                  className="w-full px-3 py-2 bg-[#121214] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-teal-500 text-xs"
                 >
                   <option value="XS">XS (รอบอก 34\")</option>
                   <option value="S">S (รอบอก 36\")</option>
@@ -2099,35 +2908,35 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
               </div>
 
               <div className="col-span-2 space-y-1">
-                <label className="font-bold text-slate-400 dark:text-slate-900 dark:text-white/50 block text-[10px] uppercase tracking-wider">หมายเลขบิ๊บวิ่ง (BIB Number)</label>
+                <label className="font-bold text-slate-400 dark:text-white/50 block text-[10px] uppercase tracking-wider">หมายเลขบิ๊บวิ่ง (BIB Number)</label>
                 <input 
                   type="text"
                   value={editingReg.bibNumber || ""}
                   onChange={(e) => setEditingReg({ ...editingReg, bibNumber: e.target.value || undefined })}
                   placeholder="ระบบจะสุ่มเมื่อกดอนุมัติ หรือกรอกเพื่อแต่งบิ๊บแบบแมนนวล"
-                  className="w-full px-3 py-2 border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono text-xs"
+                  className="w-full px-3 py-2 border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-teal-500 font-mono text-xs"
                 />
               </div>
 
               <div className="col-span-2 space-y-1">
-                <label className="font-bold text-slate-400 dark:text-slate-900 dark:text-white/50 block text-[10px] uppercase tracking-wider">สิทธิ์ลดหย่อนภาษี</label>
+                <label className="font-bold text-slate-400 dark:text-white/50 block text-[10px] uppercase tracking-wider">สิทธิ์ลดหย่อนภาษี</label>
                 <label className="flex items-center gap-2 cursor-pointer pt-1">
                   <input
                     type="checkbox"
                     checked={editingReg.taxDeduction || false}
                     onChange={(e) => setEditingReg({ ...editingReg, taxDeduction: e.target.checked })}
-                    className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-200 dark:border-white/10 bg-[#121214]"
+                    className="w-4 h-4 rounded text-teal-600 dark:text-teal-400 focus:ring-teal-500 border-slate-200 dark:border-white/10 bg-[#121214]"
                   />
-                  <span className="text-slate-900 dark:text-slate-900 dark:text-white text-xs">ขอใช้สิทธิ์ลดหย่อนภาษี 2 เท่า (e-Donation)</span>
+                  <span className="text-slate-900 dark:text-white text-xs">ขอใช้สิทธิ์ลดหย่อนภาษี 2 เท่า (e-Donation)</span>
                 </label>
               </div>
 
               <div className="col-span-2 sm:col-span-1 space-y-1">
-                <label className="font-bold text-slate-400 dark:text-slate-900 dark:text-white/50 block text-[10px] uppercase tracking-wider">ช่องทางการรับเสื้อ</label>
+                <label className="font-bold text-slate-400 dark:text-white/50 block text-[10px] uppercase tracking-wider">ช่องทางการรับเสื้อ</label>
                 <select
                   value={editingReg.deliveryMethod || "pickup"}
                   onChange={(e) => setEditingReg({ ...editingReg, deliveryMethod: e.target.value as "pickup" | "shipping" })}
-                  className="w-full px-3 py-2 bg-[#121214] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                  className="w-full px-3 py-2 bg-[#121214] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-teal-500 text-xs"
                 >
                   <option value="pickup">รับหน้างานเอง</option>
                   <option value="shipping">จัดส่งไปรษณีย์ (+60 บาท)</option>
@@ -2135,25 +2944,25 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
               </div>
 
               <div className="col-span-2 sm:col-span-1 space-y-1">
-                <label className="font-bold text-slate-400 dark:text-slate-900 dark:text-white/50 block text-[10px] uppercase tracking-wider">เลขพัสดุ (Tracking Number)</label>
+                <label className="font-bold text-slate-400 dark:text-white/50 block text-[10px] uppercase tracking-wider">เลขพัสดุ (Tracking Number)</label>
                 <input
                   type="text"
                   value={editingReg.shippingTrackingNumber || ""}
                   onChange={(e) => setEditingReg({ ...editingReg, shippingTrackingNumber: e.target.value })}
                   placeholder="เช่น TH123456789TH"
-                  className="w-full px-3 py-2 border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono text-xs"
+                  className="w-full px-3 py-2 border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-teal-500 font-mono text-xs"
                 />
               </div>
 
               {editingReg.deliveryMethod === "shipping" && (
                 <div className="col-span-2 space-y-1">
-                  <label className="font-bold text-slate-400 dark:text-slate-900 dark:text-white/50 block text-[10px] uppercase tracking-wider">ที่อยู่จัดส่ง</label>
+                  <label className="font-bold text-slate-400 dark:text-white/50 block text-[10px] uppercase tracking-wider">ที่อยู่จัดส่ง</label>
                   <textarea
                     value={editingReg.shippingAddress || ""}
                     onChange={(e) => setEditingReg({ ...editingReg, shippingAddress: e.target.value })}
                     placeholder="ระบุบ้านเลขที่ ถนน ตำบล อำเภอ จังหวัด รหัสไปรษณีย์"
                     rows={2}
-                    className="w-full px-3 py-2 border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                    className="w-full px-3 py-2 border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-teal-500 text-xs"
                   />
                 </div>
               )}
@@ -2163,13 +2972,13 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
               <button
                 type="button"
                 onClick={() => setEditingReg(null)}
-                className="px-4 py-2.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-900 dark:text-white/70 font-bold text-xs rounded-xl transition cursor-pointer"
+                className="px-4 py-2.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-white/70 font-bold text-xs rounded-xl transition cursor-pointer"
               >
                 ยกเลิก
               </button>
               <button
                 type="submit"
-                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-black text-xs rounded-xl transition cursor-pointer shadow-md shadow-blue-500/20"
+                className="px-6 py-2.5 bg-teal-600 hover:bg-teal-500 text-white font-black text-xs rounded-xl transition cursor-pointer shadow-md shadow-teal-500/20"
               >
                 บันทึกการแก้ไข
               </button>
@@ -2189,21 +2998,21 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                 <span className="inline-flex items-center gap-1.5 bg-indigo-500/20 text-indigo-300 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-indigo-500/20">
                   ⚡ จำลองการแจ้งเตือนพัสดุเรียบร้อย!
                 </span>
-                <h3 className="text-xl font-black text-slate-900 dark:text-slate-900 dark:text-white leading-tight">
+                <h3 className="text-xl font-black text-slate-900 dark:text-white leading-tight">
                   ระบบแจ้งเลขพัสดุสำหรับ คุณ {simulationData.recipientName}
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-900 dark:text-white/60 leading-relaxed font-light">
+                <p className="text-xs text-slate-500 dark:text-white/60 leading-relaxed font-light">
                   ระบบได้เตรียมและจัดส่งข้อความจำลองไปยังผู้สมัครสำเร็จ เพื่ออำนวยความสะดวกในการใช้งานจริงใน Sandbox คุณสามารถคลิกแถบต่าง ๆ บนโทรศัพท์ด้านข้างเพื่อตรวจเช็คหน้าตาการแจ้งเตือนจริงของลูกค้าได้ทันที
                 </p>
                 
                 <div className="space-y-2 pt-2 text-xs">
                   <div className="p-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-xl space-y-1">
-                    <p className="text-slate-400 dark:text-slate-900 dark:text-white/40 font-bold font-mono text-[9px] uppercase tracking-wider">Recipient Name (ผู้รับ)</p>
-                    <p className="text-slate-900 dark:text-slate-900 dark:text-white font-semibold">{simulationData.recipientName}</p>
+                    <p className="text-slate-400 dark:text-white/40 font-bold font-mono text-[9px] uppercase tracking-wider">Recipient Name (ผู้รับ)</p>
+                    <p className="text-slate-900 dark:text-white font-semibold">{simulationData.recipientName}</p>
                   </div>
                   <div className="p-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-xl space-y-1">
-                    <p className="text-slate-400 dark:text-slate-900 dark:text-white/40 font-bold font-mono text-[9px] uppercase tracking-wider">Email (อีเมลผู้รับ)</p>
-                    <p className="text-slate-900 dark:text-slate-900 dark:text-white font-mono break-all">{simulationData.email}</p>
+                    <p className="text-slate-400 dark:text-white/40 font-bold font-mono text-[9px] uppercase tracking-wider">Email (อีเมลผู้รับ)</p>
+                    <p className="text-slate-900 dark:text-white font-mono break-all">{simulationData.email}</p>
                   </div>
                 </div>
               </div>
@@ -2214,14 +3023,14 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                     href={simulationData.emailPreviewUrl} 
                     target="_blank" 
                     rel="noreferrer" 
-                    className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-slate-900 dark:text-slate-900 dark:text-white font-black text-xs uppercase tracking-widest rounded-xl transition text-center cursor-pointer shadow-lg shadow-indigo-600/20"
+                    className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-slate-900 dark:text-white font-black text-xs uppercase tracking-widest rounded-xl transition text-center cursor-pointer shadow-lg shadow-indigo-600/20"
                   >
                     เปิดดูอีเมลฉบับเต็ม ↗
                   </a>
                 )}
                 <button 
                   onClick={() => setSimulationData(null)}
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-slate-900 dark:text-white font-bold text-xs rounded-xl border border-slate-200 dark:border-white/10 transition cursor-pointer"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-white font-bold text-xs rounded-xl border border-slate-200 dark:border-white/10 transition cursor-pointer"
                 >
                   ปิดหน้าต่างจำลอง
                 </button>
@@ -2239,7 +3048,7 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                       className={`flex-1 py-1.5 rounded-xl font-bold text-[10px] uppercase tracking-wider transition cursor-pointer ${
                         activeNotifyTab === tab
                           ? "bg-white text-black shadow-md"
-                          : "text-slate-400 dark:text-slate-900 dark:text-white/50 hover:text-slate-900 dark:hover:text-slate-900 dark:text-white"
+                          : "text-slate-400 dark:text-white/50 hover:text-slate-900 dark:hover:text-white"
                       }`}
                     >
                       {tab === "sms" ? "💬 SMS Preview" : "🟢 LINE Official"}
@@ -2260,19 +3069,19 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                       /* SMS PREVIEW DISPLAY */
                       <div className="space-y-4 flex-grow flex flex-col justify-between">
                         <div>
-                          <div className="flex items-center justify-between text-slate-400 dark:text-slate-900 dark:text-white/40 text-[9px] pb-3 border-b border-slate-200 dark:border-white/5 mb-3 font-mono">
+                          <div className="flex items-center justify-between text-slate-400 dark:text-white/40 text-[9px] pb-3 border-b border-slate-200 dark:border-white/5 mb-3 font-mono">
                             <span>LSEd-RUNNING</span>
                             <span>ตอนนี้</span>
                           </div>
                           
                           <div className="bg-[#242426] border border-slate-200 dark:border-white/5 p-3 rounded-2xl rounded-tl-none space-y-2 shadow-lg max-w-[90%]">
-                            <p className="text-slate-900 dark:text-slate-900 dark:text-white text-[11px] leading-relaxed whitespace-pre-wrap">
+                            <p className="text-slate-900 dark:text-white text-[11px] leading-relaxed whitespace-pre-wrap">
                               {simulationData.smsText}
                             </p>
                           </div>
                         </div>
                         <div className="text-center pb-2">
-                          <span className="text-[9px] text-slate-900 dark:text-slate-900 dark:text-white/25">จำลองรูปแบบการแจ้งเตือนผ่าน SMS ข้อความสั้น</span>
+                          <span className="text-[9px] text-slate-900 dark:text-white/25">จำลองรูปแบบการแจ้งเตือนผ่าน SMS ข้อความสั้น</span>
                         </div>
                       </div>
                     ) : (
@@ -2285,7 +3094,7 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                               LS
                             </div>
                             <div>
-                              <p className="text-[10px] font-black text-slate-900 dark:text-slate-900 dark:text-white">LSEd Running 2569</p>
+                              <p className="text-[10px] font-black text-slate-900 dark:text-white">LSEd Running 2569</p>
                               <p className="text-[8px] text-green-400 flex items-center gap-0.5 font-bold">● LINE Official Account</p>
                             </div>
                           </div>
@@ -2294,14 +3103,14 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                           <div className="bg-[#1c2c3c] border border-indigo-500/20 p-3 rounded-2xl rounded-tl-none space-y-3 shadow-lg max-w-[95%]">
                             <div className="border-b border-indigo-500/10 pb-2 flex justify-between items-center">
                               <span className="text-[8px] bg-indigo-500/20 text-indigo-300 font-black px-1.5 py-0.5 rounded uppercase tracking-wider">พัสดุถูกจัดส่งแล้ว</span>
-                              <span className="text-[8px] text-slate-400 dark:text-slate-900 dark:text-white/40 font-mono">10:30</span>
+                              <span className="text-[8px] text-slate-400 dark:text-white/40 font-mono">10:30</span>
                             </div>
-                            <p className="text-slate-800 dark:text-slate-900 dark:text-white/90 text-[11px] leading-relaxed whitespace-pre-wrap font-light">
+                            <p className="text-slate-800 dark:text-white/90 text-[11px] leading-relaxed whitespace-pre-wrap font-light">
                               {simulationData.lineText}
                             </p>
                             <div className="bg-slate-100 dark:bg-black/30 rounded-xl p-2.5 border border-slate-200 dark:border-white/5 flex items-center justify-between gap-1">
                               <div className="space-y-0.5">
-                                <p className="text-[8px] text-slate-400 dark:text-slate-900 dark:text-white/40">เลขพัสดุของคุณ</p>
+                                <p className="text-[8px] text-slate-400 dark:text-white/40">เลขพัสดุของคุณ</p>
                                 <p className="text-[11px] font-mono font-bold text-orange-400 tracking-wider">
                                   {simulationData.smsText.split("เลขพัสดุ ")[1]?.split(" ")[0] || "ตรวจสอบในระบบ"}
                                 </p>
@@ -2311,7 +3120,7 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
                           </div>
                         </div>
                         <div className="text-center pb-2">
-                          <span className="text-[9px] text-slate-900 dark:text-slate-900 dark:text-white/25">จำลองรูปแบบการแจ้งเตือนผ่านบัญชีทางการ LINE OA</span>
+                          <span className="text-[9px] text-slate-900 dark:text-white/25">จำลองรูปแบบการแจ้งเตือนผ่านบัญชีทางการ LINE OA</span>
                         </div>
                       </div>
                     )}
@@ -2321,6 +3130,123 @@ export default function AdminPortal({ stats, onRefresh, onSearchLookup }: AdminP
             </div>
 
           </div>
+        </div>
+      )}
+
+      {/* MODAL 4: 3-DAY REMINDER BROADCAST CONFIRMATION MODAL */}
+      {batchModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+          <div className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-white/10 rounded-3xl overflow-hidden shadow-2xl max-w-xl w-full text-slate-900 dark:text-white p-6 md:p-8 space-y-6">
+            
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-orange-500/20 border border-orange-500/30 flex items-center justify-center text-orange-500 shrink-0">
+                <Send className="w-6 h-6" />
+              </div>
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-widest text-orange-500">
+                  Broadcast Reminder System
+                </span>
+                <h3 className="text-xl font-black text-slate-900 dark:text-white leading-tight">
+                  ยืนยันส่งอีเมลแจ้งเตือนล่วงหน้า 3 วัน
+                </h3>
+              </div>
+            </div>
+
+            <div className="p-4 bg-orange-500/10 border border-orange-500/20 rounded-2xl text-xs space-y-2 text-slate-700 dark:text-white/90">
+              <p className="font-bold text-orange-500 text-sm">
+                🏃‍♂️ สู่วันวิ่งฉายแสง วันอาทิตย์ที่ 24 มกราคม 2570
+              </p>
+              <p className="text-[11px] leading-relaxed text-slate-600 dark:text-white/70">
+                ระบบจะสร้างและส่งอีเมลแจ้งเตือนพร้อมบัตรประจำตัวนักวิ่ง (E-BIB), QR Code สแกนเข้างาน, แผนที่และจุดจอดรถฟรี (ยิมเนเซียม 4, 5, 6), กำหนดการปล่อยตัว 05:00 น. และเช็คลิสต์สิ่งของที่ต้องนำมาในวันงาน ไปยังกล่องข้อความอีเมลของนักวิ่งทุกคนที่ได้รับการอนุมัติแล้ว
+              </p>
+            </div>
+
+            <div className="space-y-3 pt-1">
+              <label className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 rounded-xl cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={batchSkipSent}
+                  onChange={(e) => setBatchSkipSent(e.target.checked)}
+                  className="w-4 h-4 rounded text-orange-500 focus:ring-orange-500 border-slate-300 dark:border-white/20"
+                />
+                <div className="text-xs">
+                  <span className="font-bold text-slate-900 dark:text-white block">
+                    ข้ามผู้ที่ได้รับอีเมลแจ้งเตือนไปแล้ว (แนะนำ)
+                  </span>
+                  <span className="text-[11px] text-slate-400 dark:text-white/40">
+                    ป้องกันการส่งอีเมลซ้ำซ้อนไปยังนักวิ่งที่เคยได้รับแจ้งเตือนแล้ว
+                  </span>
+                </div>
+              </label>
+
+              <div className="p-3 bg-slate-50 dark:bg-black/30 border border-slate-200 dark:border-white/5 rounded-xl flex items-center justify-between text-xs">
+                <span className="text-slate-400 dark:text-white/50">จำนวนผู้ที่จะได้รับอีเมลรอบนี้:</span>
+                <span className="font-mono font-black text-sm text-orange-500">
+                  {batchSkipSent 
+                    ? registrations.filter(r => r.status === "approved" && !r.reminderSentAt).length 
+                    : registrations.filter(r => r.status === "approved").length} ท่าน
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-white/5">
+              <button
+                type="button"
+                onClick={() => setBatchModalOpen(false)}
+                disabled={sendingBatch}
+                className="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-white/70 font-bold text-xs transition cursor-pointer"
+              >
+                ยกเลิก
+              </button>
+              <button
+                type="button"
+                onClick={handleBatchSendReminder}
+                disabled={sendingBatch}
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 disabled:opacity-50 text-white font-black text-xs uppercase tracking-wider transition shadow-lg shadow-orange-500/25 flex items-center gap-2 cursor-pointer"
+              >
+                {sendingBatch ? (
+                  <><RefreshCw className="w-4 h-4 animate-spin" /> กำลังส่งอีเมลแจ้งเตือน...</>
+                ) : (
+                  <><Send className="w-4 h-4" /> ยืนยันส่งอีเมลแจ้งเตือนทันที</>
+                )}
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* FLOATING TOAST: LAST SENT EMAIL PREVIEW */}
+      {lastEmailPreview && (
+        <div className="fixed bottom-6 right-6 z-50 max-w-sm w-full bg-slate-900 border border-teal-500/40 rounded-2xl p-4 text-white shadow-2xl animate-fade-in space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 text-[10px] font-black uppercase tracking-wider border border-teal-500/30">
+              <CheckCircle2 className="w-3 h-3 text-teal-400" /> ส่งอีเมลสำเร็จ
+            </span>
+            <button
+              type="button"
+              onClick={() => setLastEmailPreview(null)}
+              className="text-slate-400 hover:text-white text-xs p-1"
+            >
+              ✕
+            </button>
+          </div>
+          <p className="text-xs font-bold text-white">
+            ส่งไปยัง: {lastEmailPreview.runnerName || lastEmailPreview.recipient}
+          </p>
+          <p className="text-[11px] text-slate-400 truncate">
+            {lastEmailPreview.recipient}
+          </p>
+          {lastEmailPreview.url && (
+            <a
+              href={lastEmailPreview.url}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs text-teal-400 hover:text-teal-300 font-bold underline pt-1"
+            >
+              <ExternalLink className="w-3.5 h-3.5" /> เปิดดูหน้าตาอีเมลจริงที่เพิ่งส่งไป ↗
+            </a>
+          )}
         </div>
       )}
 

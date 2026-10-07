@@ -45,7 +45,8 @@ const firebaseConfig = {
 
 const firebaseApp = initializeApp(firebaseConfig);
 const db = initializeFirestore(firebaseApp, {
-  ignoreUndefinedProperties: true
+  ignoreUndefinedProperties: true,
+  experimentalAutoDetectLongPolling: true
 }, "ai-studio-lsedrunning2569-a9736ca5-e9f6-446e-8815-2ce4dfe58c8a");
 
 // Helper to get active payment settings
@@ -185,17 +186,54 @@ const getTransporter = async () => {
   }
 };
 
-const sendEmail = async (to: string, subject: string, html: string): Promise<string | null> => {
+interface EmailLogEntry {
+  id: string;
+  recipient: string;
+  recipientName?: string;
+  subject: string;
+  type: 'registration' | 'payment_received' | 'approval' | 'rejection' | 'shipping' | 'reminder';
+  sentAt: string;
+  previewUrl?: string;
+  html?: string;
+  status: 'sent' | 'simulated' | 'failed';
+}
+
+const recentEmailLogs: EmailLogEntry[] = [];
+
+const recordEmailLog = (entry: Omit<EmailLogEntry, 'id'>) => {
+  const log: EmailLogEntry = {
+    id: 'email-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
+    ...entry
+  };
+  recentEmailLogs.unshift(log);
+  if (recentEmailLogs.length > 50) {
+    recentEmailLogs.pop();
+  }
+  return log;
+};
+
+const sendEmail = async (to: string, subject: string, html: string, meta?: { type: EmailLogEntry['type']; recipientName?: string }): Promise<string | null> => {
   try {
     const transporter = await getTransporter();
     if (!transporter) {
       console.log("No SMTP Transporter available. Simulating email send to:", to);
       console.log("Subject:", subject);
+      if (meta) {
+        recordEmailLog({
+          recipient: to,
+          recipientName: meta.recipientName,
+          subject,
+          type: meta.type,
+          sentAt: new Date().toISOString(),
+          html,
+          status: 'simulated'
+        });
+      }
       return null;
     }
     
     const info = await transporter.sendMail({
-      from: process.env.SMTP_FROM || '"วิ่ง-ฉาย-แสง (LSEd Running)" <noreply@lsed-run69.com>',
+      from: process.env.SMTP_FROM || '"วิ่ง-ฉาย-แสง (LSEd Running)" <noreply@lsed-running.com>',
       to,
       subject,
       html,
@@ -205,234 +243,468 @@ const sendEmail = async (to: string, subject: string, html: string): Promise<str
     const previewUrl = nodemailer.getTestMessageUrl(info);
     if (previewUrl) {
       console.log("Ethereal Email Preview URL:", previewUrl);
-      return previewUrl;
     }
-    return "SENT";
+
+    if (meta) {
+      recordEmailLog({
+        recipient: to,
+        recipientName: meta.recipientName,
+        subject,
+        type: meta.type,
+        sentAt: new Date().toISOString(),
+        previewUrl: previewUrl || undefined,
+        html,
+        status: 'sent'
+      });
+    }
+
+    return previewUrl || "SENT";
   } catch (err) {
     console.error("Error sending email:", err);
+    if (meta) {
+      recordEmailLog({
+        recipient: to,
+        recipientName: meta.recipientName,
+        subject,
+        type: meta.type,
+        sentAt: new Date().toISOString(),
+        html,
+        status: 'failed'
+      });
+    }
     return null;
   }
 };
 
-// Email templates
+// ==========================================
+// EMAIL TEMPLATES & DESIGN SYSTEM
+// Color Theme: Turquoise (#0d9488, #14b8a6) & Warm Orange (#f97316, #ea580c)
+// Brand: LSEd (small 'd'), คณะวิทยาการเรียนรู้และศึกษาศาสตร์ ม.ธรรมศาสตร์
+// Date: 24 มกราคม 2570
+// ==========================================
 
-const getRegistrationEmailHtml = (reg: Registration) => {
-  const isDonation = reg.distance === "donation";
+const getEmailHeaderHtml = (badgeLabel: string, badgeBg: string = "#f0fdfa", badgeTextColor: string = "#0f766e", badgeBorder: string = "#ccfbf1") => {
   return `
-    <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 20px; overflow: hidden; background-color: #ffffff; color: #1e293b; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);">
-${`
-      <div style="background-color: #ffffff; padding: 32px 32px 24px; text-align: center; border-bottom: 4px solid #E25B45;">
-        <div style="display: inline-block; padding: 8px 16px; background-color: rgba(226, 91, 69, 0.1); border: 1px solid rgba(226, 91, 69, 0.2); border-radius: 12px; margin-bottom: 12px;">
-          <span style="font-size: 28px; font-weight: 900; font-style: italic; color: #2563eb; letter-spacing: 1px;">LSEd</span>
-          <span style="font-size: 16px; font-weight: 900; color: #0f172a; letter-spacing: 2px; margin-left: 4px;">RUNNING 2569</span>
-        </div>
-        <div style="font-size: 14px; font-weight: 800; color: #7F1D1D; text-transform: uppercase; letter-spacing: 2px;">
-          Run to Shine <span style="color: #E25B45;">✨</span>
-        </div>
-        <div style="font-size: 12px; font-weight: 700; color: #64748b; margin-top: 4px;">โครงการวิ่งฉายแสง</div>
+    <div style="background: linear-gradient(135deg, #0f766e 0%, #0d9488 60%, #14b8a6 100%); padding: 36px 32px 30px; text-align: center; position: relative;">
+      <div style="display: inline-block; background-color: rgba(255, 255, 255, 0.15); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 9999px; padding: 6px 18px; margin-bottom: 12px;">
+        <span style="font-family: 'Poppins', 'Helvetica Neue', Arial, sans-serif; font-size: 20px; font-weight: 900; color: #ffffff; letter-spacing: 1px; font-style: italic;">LSEd</span>
+        <span style="font-family: 'Poppins', 'Helvetica Neue', Arial, sans-serif; font-size: 15px; font-weight: 800; color: #fed7aa; letter-spacing: 2px; margin-left: 6px;">RUNNING 2569</span>
       </div>
-`}
-      <div style="padding: 40px 32px; line-height: 1.7;">
-        <div style="text-align: center; margin-bottom: 32px;">
-          <div style="display: inline-block; background-color: #eff6ff; color: #2563eb; font-size: 13px; font-weight: 800; padding: 6px 16px; border-radius: 20px; letter-spacing: 1px; margin-bottom: 12px;">ขั้นตอนที่ 1 / 2</div>
-          <h2 style="margin: 0; font-size: 22px; font-weight: 800; color: #0f172a;">รอการชำระเงินของคุณ</h2>
-          <p style="color: #64748b; margin-top: 8px; font-size: 15px;">สวัสดีคุณ <strong>${reg.firstName} ${reg.lastName}</strong>, ขอบคุณสำหรับการสมัครเข้าร่วมกิจกรรม!</p>
+      <div style="font-size: 14px; font-weight: 800; color: #ffedd5; letter-spacing: 2px; text-transform: uppercase;">
+        RUN TO SHINE <span style="color: #fdba74;">✨</span> โครงการวิ่งฉายแสง
+      </div>
+      <div style="font-size: 12px; font-weight: 600; color: rgba(255, 255, 255, 0.85); margin-top: 6px; letter-spacing: 0.5px;">
+        คณะวิทยาการเรียนรู้และศึกษาศาสตร์ มหาวิทยาลัยธรรมศาสตร์
+      </div>
+    </div>
+    <div style="background-color: #f97316; height: 4px; width: 100%;"></div>
+    <div style="padding: 24px 32px 0; text-align: center;">
+      <div style="display: inline-block; background-color: ${badgeBg}; color: ${badgeTextColor}; border: 1px solid ${badgeBorder}; font-size: 12px; font-weight: 800; padding: 6px 18px; border-radius: 9999px; letter-spacing: 0.5px;">
+        ${badgeLabel}
+      </div>
+    </div>
+  `;
+};
+
+const getEmailFooterHtml = () => {
+  return `
+    <div style="background-color: #f8fafc; padding: 32px 24px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0; line-height: 1.7;">
+      <div style="display: inline-block; width: 36px; height: 3px; background-color: #14b8a6; border-radius: 2px; margin-bottom: 16px;"></div>
+      <p style="margin: 0 0 6px; font-weight: 800; color: #0f766e; font-size: 13px;">คณะวิทยาการเรียนรู้และศึกษาศาสตร์ มหาวิทยาลัยธรรมศาสตร์ (LSEd)</p>
+      <p style="margin: 0 0 10px; color: #64748b;">อาคารเรียนและปฏิบัติการรวม มหาวิทยาลัยธรรมศาสตร์ ศูนย์รังสิต ต.คลองหนึ่ง อ.คลองหลวง จ.ปทุมธานี 12120</p>
+      <p style="margin: 0 0 16px; font-size: 11px; color: #94a3b8;">
+        ขอบพระคุณที่ร่วมเป็นส่วนหนึ่งในการสนับสนุนกองทุนพัฒนาการเรียนรู้และทุนการศึกษาแก่นักศึกษาธรรมศาสตร์<br/>
+        การบริจาคผ่านระบบ e-Donation สามารถนำไปหักลดหย่อนภาษีได้ 2 เท่า ตามหลักเกณฑ์กรมสรรพากร
+      </p>
+      <div style="border-top: 1px dashed #e2e8f0; padding-top: 14px; font-size: 11px; color: #94a3b8;">
+        © 2570 (2027) LSEd Running • โครงการวิ่งฉายแสง มหาวิทยาลัยธรรมศาสตร์
+      </div>
+    </div>
+  `;
+};
+
+// 1. อีเมลยืนยันการลงทะเบียน & รอชำระเงิน (Registration Received & Payment Pending)
+const getRegistrationEmailHtml = (reg: Registration, settings?: any, appUrl: string = "https://lsed-running.web.app") => {
+  const isDonation = reg.distance === "donation";
+  const acct = settings?.regular || {
+    bankName: "ทหารไทยธนชาต (ttb)",
+    accountNo: "083-013-1768",
+    accountName: "นภัสกร กลิ่นเฟื่อง (LSEd RUNNING)"
+  };
+  const cleanNo = acct.accountNo.replace(/[^0-9]/g, "");
+  const qrPayload = generatePromptPayPayload(cleanNo, reg.price);
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrPayload)}&margin=10`;
+
+  return `
+    <div style="font-family: 'Poppins', 'Prompt', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 620px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 24px; overflow: hidden; background-color: #ffffff; color: #1e293b; box-shadow: 0 12px 30px -8px rgba(13, 148, 136, 0.12);">
+      ${getEmailHeaderHtml("ขั้นตอนที่ 1 / 2 : รอการชำระเงิน", "#fff7ed", "#ea580c", "#ffedd5")}
+      
+      <div style="padding: 24px 32px 36px; line-height: 1.7;">
+        <div style="text-align: center; margin-bottom: 28px;">
+          <h2 style="margin: 0 0 8px; font-size: 22px; font-weight: 800; color: #0f172a;">ขอบคุณสำหรับการลงทะเบียน</h2>
+          <p style="color: #64748b; margin: 0; font-size: 15px;">สวัสดีคุณ <strong>${reg.firstName} ${reg.lastName}</strong>, บัญชีการสมัครของท่านถูกบันทึกเข้าระบบเรียบร้อยแล้ว</p>
         </div>
 
-        <div style="background-color: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 16px; padding: 20px; text-align: center; margin: 0 0 32px 0;">
-          <p style="margin: 0 0 8px; font-size: 12px; font-weight: bold; color: #64748b; text-transform: uppercase; letter-spacing: 1px;">รหัสลงทะเบียน (Ref ID)</p>
-          <span style="font-family: monospace; font-size: 28px; font-weight: 900; color: #E25B45; letter-spacing: 2px;">${reg.id}</span>
+        <!-- Ref ID Box -->
+        <div style="background: linear-gradient(135deg, #f0fdfa 0%, #fff7ed 100%); border: 1px dashed #14b8a6; border-radius: 18px; padding: 20px; text-align: center; margin-bottom: 28px;">
+          <p style="margin: 0 0 6px; font-size: 11px; font-weight: 800; color: #0f766e; text-transform: uppercase; letter-spacing: 1.5px;">รหัสการลงทะเบียน (Reference ID)</p>
+          <span style="font-family: 'Courier New', Courier, monospace; font-size: 30px; font-weight: 900; color: #ea580c; letter-spacing: 2px;">${reg.id}</span>
+          <p style="margin: 6px 0 0; font-size: 12px; color: #64748b;">(โปรดเก็บรหัสนี้ไว้สำหรับตรวจสอบสถานะหรือแนบสลิป)</p>
         </div>
 
-        <h3 style="color: #0f172a; font-size: 16px; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 16px;">สรุปรายละเอียดการสมัคร</h3>
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 32px; font-size: 14px;">
+        <!-- Summary Table -->
+        <h3 style="color: #0f766e; font-size: 16px; border-bottom: 2px solid #ccfbf1; padding-bottom: 8px; margin: 0 0 16px; font-weight: 800; display: flex; align-items: center;">
+          📋 สรุปรายการลงทะเบียน
+        </h3>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 28px; font-size: 14px;">
           <tr>
-            <td style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; color: #64748b;">ประเภท:</td>
-            <td style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #0f172a; text-align: right;">${isDonation ? "บริจาคเพื่อการศึกษา" : reg.distance}</td>
+            <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; color: #64748b;">ประเภทที่สมัคร:</td>
+            <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-weight: 700; color: #0f172a; text-align: right;">${isDonation ? "บริจาคเพื่อการศึกษา (e-Donation)" : reg.distance}</td>
           </tr>
           <tr>
-            <td style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; color: #64748b;">ไซส์เสื้อ:</td>
-            <td style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #0f172a; text-align: right;">${reg.shirtSize === "NONE" ? "ไม่รับเสื้อ" : reg.shirtSize}</td>
+            <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; color: #64748b;">ไซส์เสื้อ:</td>
+            <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-weight: 700; color: #0f172a; text-align: right;">${reg.shirtSize === "NONE" ? "ไม่รับเสื้อ" : reg.shirtSize}</td>
           </tr>
           <tr>
-            <td style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; color: #64748b;">ยอดชำระสุทธิ:</td>
-            <td style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; font-weight: 900; color: #E25B45; font-size: 18px; text-align: right;">${reg.price} บาท</td>
+            <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; color: #64748b;">วิธีรับอุปกรณ์:</td>
+            <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-weight: 700; color: #0f172a; text-align: right;">${reg.deliveryMethod === 'shipping' ? "🚚 จัดส่งพัสดุถึงบ้าน" : "🎪 รับด้วยตนเองหน้างาน"}</td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; color: #0f766e; font-weight: 800;">ยอดเงินที่ต้องชำระ:</td>
+            <td style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; font-weight: 900; color: #ea580c; font-size: 22px; text-align: right;">${reg.price.toLocaleString()} บาท</td>
           </tr>
         </table>
 
-        <div style="background-color: #eff6ff; border-left: 4px solid #2563eb; padding: 20px; border-radius: 0 12px 12px 0; margin-bottom: 32px; font-size: 14px;">
-          <p style="margin: 0 0 12px; font-weight: 800; color: #1e3a8a; font-size: 15px;">บัญชีสำหรับการโอนเงินชำระค่าสมัคร</p>
-          <div style="background-color: #ffffff; padding: 16px; border-radius: 8px; border: 1px solid #bfdbfe; margin-bottom: 12px;">
-            <p style="margin: 0 0 8px; color: #1e40af;"><span style="color: #64748b; font-size: 12px; display: block;">ธนาคาร</span> <strong>ทหารไทยธนชาต (ttb)</strong></p>
-            <p style="margin: 0 0 8px; color: #1e40af;"><span style="color: #64748b; font-size: 12px; display: block;">เลขบัญชี</span> <strong style="font-size: 18px; letter-spacing: 1px;">123-4-56789-0</strong></p>
-            <p style="margin: 0; color: #1e40af;"><span style="color: #64748b; font-size: 12px; display: block;">ชื่อบัญชี</span> <strong>คณะวิทยาการเรียนรู้และศึกษาศาสตร์ มหาวิทยาลัยธรรมศาสตร์</strong></p>
+        <!-- Payment Details & QR -->
+        <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 20px; padding: 24px; margin-bottom: 28px; text-align: center;">
+          <h4 style="margin: 0 0 14px; font-size: 15px; font-weight: 800; color: #0f172a;">ช่องทางชำระเงินผ่าน PromptPay QR</h4>
+          <div style="display: inline-block; padding: 12px; background-color: #ffffff; border-radius: 16px; border: 1px solid #cbd5e1; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 16px;">
+            <img src="${qrUrl}" alt="PromptPay QR Code" style="display: block; width: 180px; height: 180px; border-radius: 8px;" />
           </div>
-          <p style="margin: 0; color: #1e40af; font-size: 12px; font-weight: bold;">*หลังจากโอนเงินแล้ว โปรดไปที่หน้าเว็บไซต์เพื่อแนบสลิปการโอนเงิน</p>
+          <div style="text-align: left; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 18px; font-size: 13px; line-height: 1.8;">
+            <div><span style="color: #64748b;">ธนาคาร:</span> <strong style="color: #0f172a;">${acct.bankName}</strong></div>
+            <div><span style="color: #64748b;">เลขที่บัญชี / PromptPay:</span> <strong style="color: #0d9488; font-size: 15px; font-family: monospace;">${acct.accountNo}</strong></div>
+            <div><span style="color: #64748b;">ชื่อบัญชี:</span> <strong style="color: #0f172a;">${acct.accountName}</strong></div>
+            <div><span style="color: #64748b;">ยอดเงิน:</span> <strong style="color: #ea580c; font-size: 15px;">${reg.price.toLocaleString()} บาท</strong></div>
+          </div>
         </div>
 
-        ${!isDonation ? `
-        <div style="text-align: center; margin-top: 32px;">
-          <div style="font-size: 13px; color: #64748b; font-weight: bold;">พบกันวันอาทิตย์ที่ 13 ธันวาคม 2569</div>
-          <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">ณ คณะ LSEd มธ.ศูนย์รังสิต • ปล่อยตัว 05:00 น.</div>
+        <!-- Action Button -->
+        <div style="text-align: center; margin-bottom: 24px;">
+          <a href="${appUrl}?checkRef=${reg.id}" target="_blank" style="background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); color: #ffffff; padding: 15px 32px; text-decoration: none; border-radius: 14px; font-weight: 800; font-size: 15px; display: inline-block; box-shadow: 0 6px 18px rgba(13, 148, 136, 0.35); letter-spacing: 0.5px;">
+            แนบสลิปโอนเงิน / ตรวจสอบสิทธิ์ ↗
+          </a>
         </div>
-        ` : `
-        <div style="text-align: center; margin-top: 32px; font-size: 13px; color: #166534; font-weight: bold; background-color: #f0fdf4; padding: 12px; border-radius: 8px;">
-          ท่านสามารถนำไปลดหย่อนภาษีได้ 2 เท่า (ระบบจะส่งข้อมูลอัตโนมัติ)
-        </div>
-        `}
+
+        <p style="margin: 0; font-size: 12px; color: #64748b; text-align: center;">
+          *หลังจากท่านแนบสลิปโอนเงินแล้ว เจ้าหน้าที่จะทำการตรวจสอบและส่งอีเมลแจ้งเลข BIB พร้อมบัตรเข้างานให้ท่านทันที
+        </p>
       </div>
-${`
-      <div style="background-color: #f8fafc; padding: 32px 24px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0;">
-        <p style="margin: 0 0 8px; font-weight: bold; color: #64748b;">คณะวิทยาการเรียนรู้และศึกษาศาสตร์ มหาวิทยาลัยธรรมศาสตร์</p>
-        <p style="margin: 0 0 16px;">ขอบพระคุณที่ร่วมเป็นส่วนหนึ่งในการสนับสนุนกองทุนการเรียนรู้และทุนการศึกษา</p>
-        <p style="margin: 0; font-size: 11px;">© 2026 LSEd TU. All rights reserved.</p>
-      </div>
-`}
+
+      ${getEmailFooterHtml()}
     </div>
   `;
 };
 
-const getApprovalEmailHtml = (reg: Registration, appUrl: string) => {
+// 2. อีเมลแจ้งหลังชำระเงินเสร็จ: ได้รับสลิปแล้ว อยู่ระหว่างรออนุมัติ [USER REQUEST 1]
+const getPaymentReceivedEmailHtml = (reg: Registration, appUrl: string = "https://lsed-running.web.app") => {
   const isDonation = reg.distance === "donation";
   return `
-    <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 20px; overflow: hidden; background-color: #ffffff; color: #1e293b; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);">
-${`
-      <div style="background-color: #ffffff; padding: 32px 32px 24px; text-align: center; border-bottom: 4px solid #E25B45;">
-        <div style="display: inline-block; padding: 8px 16px; background-color: rgba(226, 91, 69, 0.1); border: 1px solid rgba(226, 91, 69, 0.2); border-radius: 12px; margin-bottom: 12px;">
-          <span style="font-size: 28px; font-weight: 900; font-style: italic; color: #2563eb; letter-spacing: 1px;">LSEd</span>
-          <span style="font-size: 16px; font-weight: 900; color: #0f172a; letter-spacing: 2px; margin-left: 4px;">RUNNING 2569</span>
+    <div style="font-family: 'Poppins', 'Prompt', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 620px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 24px; overflow: hidden; background-color: #ffffff; color: #1e293b; box-shadow: 0 12px 30px -8px rgba(13, 148, 136, 0.12);">
+      ${getEmailHeaderHtml("⏳ ชำระเงินเรียบร้อยแล้ว • อยู่ระหว่างรออนุมัติ", "#f0fdfa", "#0f766e", "#ccfbf1")}
+      
+      <div style="padding: 24px 32px 36px; line-height: 1.7;">
+        <div style="text-align: center; margin-bottom: 28px;">
+          <div style="display: inline-block; width: 64px; height: 64px; line-height: 64px; border-radius: 50%; background-color: #f0fdfa; border: 2px solid #14b8a6; font-size: 30px; margin-bottom: 12px;">
+            📨
+          </div>
+          <h2 style="margin: 0 0 8px; font-size: 22px; font-weight: 800; color: #0f172a;">ได้รับหลักฐานการชำระเงินเรียบร้อยแล้ว</h2>
+          <p style="color: #64748b; margin: 0; font-size: 15px;">สวัสดีคุณ <strong>${reg.firstName} ${reg.lastName}</strong>, ระบบได้รับสลิปโอนเงินของท่านแล้ว และได้ส่งต่อให้ฝ่ายตรวจสอบความถูกต้อง</p>
         </div>
-        <div style="font-size: 14px; font-weight: 800; color: #7F1D1D; text-transform: uppercase; letter-spacing: 2px;">
-          Run to Shine <span style="color: #E25B45;">✨</span>
+
+        <!-- Highlight Card -->
+        <div style="background-color: #f0fdfa; border: 1.5px solid #5eead4; border-radius: 18px; padding: 22px; margin-bottom: 28px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #99f6e4; padding-bottom: 12px; margin-bottom: 12px;">
+            <span style="font-size: 13px; font-weight: 700; color: #0f766e;">รหัสการลงทะเบียน (Ref ID):</span>
+            <span style="font-family: monospace; font-size: 18px; font-weight: 900; color: #0f766e; letter-spacing: 1px;">${reg.id}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #99f6e4; padding-bottom: 12px; margin-bottom: 12px;">
+            <span style="font-size: 13px; font-weight: 700; color: #0f766e;">ยอดชำระที่แจ้ง:</span>
+            <span style="font-size: 18px; font-weight: 900; color: #ea580c;">${reg.price.toLocaleString()} บาท</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 13px; font-weight: 700; color: #0f766e;">สถานะปัจจุบัน:</span>
+            <span style="font-size: 13px; font-weight: 800; background-color: #fff7ed; color: #ea580c; border: 1px solid #fed7aa; padding: 3px 12px; border-radius: 9999px;">
+              รอการอนุมัติ (Pending Verification)
+            </span>
+          </div>
         </div>
-        <div style="font-size: 12px; font-weight: 700; color: #64748b; margin-top: 4px;">โครงการวิ่งฉายแสง</div>
+
+        <!-- Next Steps Timeline -->
+        <h3 style="color: #0f766e; font-size: 16px; border-bottom: 2px solid #ccfbf1; padding-bottom: 8px; margin: 0 0 16px; font-weight: 800;">
+          📌 สิ่งที่จะเกิดขึ้นต่อไป
+        </h3>
+        <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 18px; padding: 20px; margin-bottom: 28px;">
+          <div style="margin-bottom: 16px; display: flex; align-items: flex-start;">
+            <span style="background-color: #0d9488; color: #ffffff; font-weight: 800; font-size: 12px; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0;">1</span>
+            <div>
+              <strong style="color: #0f172a; font-size: 14px; display: block;">การตรวจสอบสลิปและยอดเงิน</strong>
+              <span style="font-size: 13px; color: #64748b;">เจ้าหน้าที่จะตรวจสอบความถูกต้องของสลิป โดยทั่วไปใช้เวลาประมาณ 12 - 24 ชั่วโมง</span>
+            </div>
+          </div>
+          <div style="margin-bottom: 16px; display: flex; align-items: flex-start;">
+            <span style="background-color: #f97316; color: #ffffff; font-weight: 800; font-size: 12px; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0;">2</span>
+            <div>
+              <strong style="color: #0f172a; font-size: 14px; display: block;">ส่งอีเมลบัตรเข้างาน E-Ticket & หมายเลข BIB</strong>
+              <span style="font-size: 13px; color: #64748b;">เมื่อได้รับการอนุมัติเรียบร้อย ระบบจะส่งอีเมลแจ้งเลข BIB และ QR Code สำหรับเข้างานให้ท่านโดยอัตโนมัติ</span>
+            </div>
+          </div>
+          <div style="display: flex; align-items: flex-start;">
+            <span style="background-color: #64748b; color: #ffffff; font-weight: 800; font-size: 12px; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0;">3</span>
+            <div>
+              <strong style="color: #0f172a; font-size: 14px; display: block;">การรับอุปกรณ์และเตรียมตัวสำหรับวันงาน</strong>
+              <span style="font-size: 13px; color: #64748b;">รับอุปกรณ์ตามวิธีที่ท่านเลือก (จัดส่งพัสดุ หรือ รับหน้างาน) และพบกันวันอาทิตย์ที่ 24 มกราคม 2570</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status Button -->
+        <div style="text-align: center; margin-bottom: 24px;">
+          <a href="${appUrl}?checkRef=${reg.id}" target="_blank" style="background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); color: #ffffff; padding: 14px 30px; text-decoration: none; border-radius: 14px; font-weight: 800; font-size: 14px; display: inline-block; box-shadow: 0 4px 14px rgba(13, 148, 136, 0.3);">
+            ตรวจสอบสถานะบนเว็บไซต์ ↗
+          </a>
+        </div>
+
+        <div style="background-color: #fff7ed; border-left: 4px solid #f97316; padding: 14px 16px; border-radius: 0 12px 12px 0; font-size: 12px; color: #9a3412;">
+          💡 <strong>ข้อแนะนำ:</strong> หากท่านโอนเงินถูกต้องเรียบร้อยแล้ว ไม่จำเป็นต้องโอนเงินซ้ำหรือส่งข้อมูลซ้ำ ระบบจะรักษาคิวของท่านตามลำดับเวลาที่แนบสลิป
+        </div>
       </div>
-`}
-      <div style="padding: 40px 32px; line-height: 1.7;">
-        <div style="text-align: center; margin-bottom: 32px;">
-          <div style="display: inline-block; background-color: #ecfdf5; color: #059669; font-size: 13px; font-weight: 800; padding: 6px 16px; border-radius: 20px; letter-spacing: 1px; margin-bottom: 12px;">✅ อนุมัติสำเร็จ</div>
-          <h2 style="margin: 0; font-size: 22px; font-weight: 800; color: #0f172a;">การชำระเงินเสร็จสมบูรณ์</h2>
-          <p style="color: #64748b; margin-top: 8px; font-size: 15px;">สวัสดีคุณ <strong>${reg.firstName} ${reg.lastName}</strong>, สิทธิ์ของคุณได้รับการยืนยันแล้ว!</p>
+
+      ${getEmailFooterHtml()}
+    </div>
+  `;
+};
+
+// 3. อีเมลแจ้งอนุมัติสิทธิ์ & บัตรเข้างาน E-Ticket / E-BIB Pass [USER REQUEST 2]
+const getApprovalEmailHtml = (reg: Registration, appUrl: string = "https://lsed-running.web.app") => {
+  const isDonation = reg.distance === "donation";
+  const bib = reg.bibNumber || "LSE-1001";
+  const entryQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(reg.id)}&margin=10`;
+
+  return `
+    <div style="font-family: 'Poppins', 'Prompt', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 620px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 24px; overflow: hidden; background-color: #ffffff; color: #1e293b; box-shadow: 0 12px 35px -8px rgba(13, 148, 136, 0.16);">
+      ${getEmailHeaderHtml("🎉 อนุมัติสิทธิ์สำเร็จ • ยืนยันการเข้าร่วมงานวิ่ง", "#ecfdf5", "#047857", "#a7f3d0")}
+      
+      <div style="padding: 24px 32px 36px; line-height: 1.7;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <h2 style="margin: 0 0 6px; font-size: 24px; font-weight: 900; color: #0f172a;">ยินดีต้อนรับสู่ขบวนวิ่งฉายแสง</h2>
+          <p style="color: #64748b; margin: 0; font-size: 15px;">สวัสดีคุณ <strong>${reg.firstName} ${reg.lastName}</strong>, สิทธิ์ของท่านได้รับการอนุมัติเรียบร้อยแล้ว!</p>
         </div>
 
-        <div style="background-color: #f0fdf4; border: 2px solid #34d399; border-radius: 16px; padding: 24px; text-align: center; margin-bottom: 32px; position: relative; overflow: hidden;">
-          <div style="position: absolute; top: -10px; right: -10px; opacity: 0.1; font-size: 80px;">🏆</div>
-          <p style="margin: 0 0 8px; font-size: 12px; font-weight: bold; color: #047857; text-transform: uppercase; letter-spacing: 1px; position: relative; z-index: 1;">
-            ${isDonation ? "หมายเลขผู้บริจาค (Donor ID)" : "หมายเลขบิ๊บ (BIB) ของคุณ"}
-          </p>
-          <span style="font-family: monospace; font-size: 40px; font-weight: 900; color: #047857; letter-spacing: 2px; display: block; position: relative; z-index: 1;">${reg.bibNumber}</span>
+        <!-- ================= OFFICIAL RUNNER PASS / E-TICKET ================= -->
+        <div style="background: linear-gradient(135deg, #042f2e 0%, #0f766e 50%, #0d9488 100%); border-radius: 22px; padding: 24px; color: #ffffff; margin-bottom: 30px; box-shadow: 0 10px 25px -5px rgba(15, 118, 110, 0.35); position: relative; overflow: hidden;">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.2); padding-bottom: 14px; margin-bottom: 18px;">
+            <div>
+              <span style="font-size: 11px; font-weight: 800; color: #fed7aa; text-transform: uppercase; letter-spacing: 1.5px; display: block;">OFFICIAL RUNNER PASS</span>
+              <span style="font-size: 16px; font-weight: 900; color: #ffffff;">โครงการวิ่ง-ฉาย-แสง (LSEd RUNNING 2569)</span>
+            </div>
+            <div style="background-color: #ea580c; color: #ffffff; font-size: 11px; font-weight: 900; padding: 4px 12px; border-radius: 9999px; letter-spacing: 0.5px;">
+              ${reg.distance.toUpperCase()}
+            </div>
+          </div>
+
+          <!-- BIB Display -->
+          <div style="text-align: center; background-color: rgba(255, 255, 255, 0.1); border: 1.5px dashed rgba(255, 255, 255, 0.35); border-radius: 16px; padding: 20px 14px; margin-bottom: 18px;">
+            <p style="margin: 0 0 4px; font-size: 12px; font-weight: 800; color: #fed7aa; text-transform: uppercase; letter-spacing: 2px;">
+              ${isDonation ? "หมายเลขผู้บริจาค (DONOR ID)" : "หมายเลขบิ๊บประจำตัวนักวิ่ง (BIB NUMBER)"}
+            </p>
+            <div style="font-family: 'Poppins', 'Courier New', monospace; font-size: 44px; font-weight: 900; color: #ffffff; letter-spacing: 3px; line-height: 1.1; text-shadow: 0 2px 8px rgba(0,0,0,0.3);">
+              ${bib}
+            </div>
+          </div>
+
+          <!-- QR Code Entry Ticket -->
+          <div style="background-color: #ffffff; border-radius: 16px; padding: 18px; text-align: center; color: #0f172a; margin-bottom: 18px;">
+            <p style="margin: 0 0 10px; font-size: 13px; font-weight: 800; color: #0f766e;">
+              📱 QR Code สำหรับเช็คอินเข้างาน & รับอุปกรณ์
+            </p>
+            <div style="display: inline-block; padding: 8px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
+              <img src="${entryQrUrl}" alt="Entry QR Code" style="display: block; width: 150px; height: 150px; border-radius: 8px;" />
+            </div>
+            <p style="margin: 10px 0 0; font-size: 11px; font-weight: 700; color: #64748b;">
+              โปรดบันทึกภาพหน้าจอนี้ หรือเปิดอีเมลแสดงต่อเจ้าหน้าที่ ณ จุดลงทะเบียน
+            </p>
+          </div>
+
+          <!-- Runner Info Grid -->
+          <table style="width: 100%; font-size: 12px; color: #e0f2fe; line-height: 1.8;">
+            <tr>
+              <td style="color: #99f6e4;">ชื่อ-นามสกุล:</td>
+              <td style="text-align: right; font-weight: 700; color: #ffffff;">${reg.firstName} ${reg.lastName}</td>
+            </tr>
+            <tr>
+              <td style="color: #99f6e4;">รหัสลงทะเบียน (Ref ID):</td>
+              <td style="text-align: right; font-family: monospace; font-weight: 700; color: #ffffff;">${reg.id}</td>
+            </tr>
+            <tr>
+              <td style="color: #99f6e4;">ไซส์เสื้อ:</td>
+              <td style="text-align: right; font-weight: 700; color: #ffffff;">${reg.shirtSize === "NONE" ? "ไม่รับเสื้อ" : reg.shirtSize}</td>
+            </tr>
+            <tr>
+              <td style="color: #99f6e4;">วิธีรับอุปกรณ์:</td>
+              <td style="text-align: right; font-weight: 700; color: #fed7aa;">${reg.deliveryMethod === 'shipping' ? "จัดส่งทางไปรษณีย์" : "รับด้วยตนเองหน้างาน"}</td>
+            </tr>
+          </table>
         </div>
 
-        ${!isDonation ? `
-        <div style="background-color: #ffffff; border: 1px dashed #cbd5e1; border-radius: 16px; padding: 24px; text-align: center; margin-bottom: 32px;">
-          <h3 style="color: #0f172a; margin: 0 0 16px; font-size: 16px;">QR Code สำหรับสแกนเข้างาน</h3>
-          <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${reg.id}&margin=10" alt="QR Code" style="border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);" />
-          <p style="font-size: 12px; font-weight: bold; color: #64748b; margin: 12px 0 0;">โปรดแสดง QR Code นี้ หรือบอกเลขบิ๊บ ที่จุดลงทะเบียน</p>
-        </div>
-        ` : ''}
-
-        <h3 style="color: #0f172a; font-size: 16px; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 16px;">ข้อมูลสรุปสิทธิ์ของคุณ</h3>
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 32px; font-size: 14px;">
+        <!-- ================= ESSENTIAL RACE DAY INFORMATION ================= -->
+        <h3 style="color: #0f766e; font-size: 17px; border-bottom: 2px solid #ccfbf1; padding-bottom: 8px; margin: 0 0 16px; font-weight: 800;">
+          🗓️ ข้อมูลสำคัญในวันจัดงาน (Race Day Guide)
+        </h3>
+        
+        <table style="width: 100%; border-collapse: separate; border-spacing: 0 10px; margin-bottom: 26px; font-size: 13px;">
           <tr>
-            <td style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; color: #64748b;">รหัสลงทะเบียน:</td>
-            <td style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #0f172a; text-align: right;">${reg.id}</td>
+            <td style="background-color: #f0fdfa; border-left: 4px solid #0d9488; padding: 14px 16px; border-radius: 0 12px 12px 0;">
+              <strong style="color: #0f766e; font-size: 14px; display: block; margin-bottom: 4px;">📅 วันจัดกิจกรรม</strong>
+              <span style="color: #0f172a; font-weight: 700; font-size: 15px;">วันอาทิตย์ที่ 24 มกราคม พ.ศ. 2570</span>
+            </td>
           </tr>
           <tr>
-            <td style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; color: #64748b;">ประเภท:</td>
-            <td style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #2563eb; text-align: right;">${isDonation ? "บริจาคเพื่อการศึกษา" : reg.distance}</td>
+            <td style="background-color: #f0fdfa; border-left: 4px solid #0d9488; padding: 14px 16px; border-radius: 0 12px 12px 0;">
+              <strong style="color: #0f766e; font-size: 14px; display: block; margin-bottom: 4px;">📍 สถานที่จัดงาน</strong>
+              <span style="color: #0f172a; font-weight: 700;">ลานกิจกรรม คณะวิทยาการเรียนรู้และศึกษาศาสตร์ (LSEd) มหาวิทยาลัยธรรมศาสตร์ ศูนย์รังสิต</span>
+            </td>
           </tr>
           <tr>
-            <td style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; color: #64748b;">ไซส์เสื้อ:</td>
-            <td style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #0f172a; text-align: right;">${reg.shirtSize === "NONE" ? "-" : reg.shirtSize}</td>
+            <td style="background-color: #fff7ed; border-left: 4px solid #ea580c; padding: 14px 16px; border-radius: 0 12px 12px 0;">
+              <strong style="color: #ea580c; font-size: 14px; display: block; margin-bottom: 6px;">⏰ กำหนดการปล่อยตัว (Flag-off Schedule)</strong>
+              <div style="color: #334155; line-height: 1.8;">
+                • <strong>04:00 น.</strong> เปิดจุดลงทะเบียน รายงานตัว และรับฝากสัมภาระ<br/>
+                • <strong>04:40 น.</strong> รวมพลวอร์มอัพยืดเหยียดร่างกาย โดยทีมผู้เชี่ยวชาญ<br/>
+                • <strong>05:00 น.</strong> สัญญาณแตรปล่อยตัวนักวิ่งระยะ 5 กิโลเมตร (Flag-off)<br/>
+                • <strong>06:30 น.</strong> ร่วมรับประทานอาหารเช้า ข้าวต้ม และเครื่องดื่มสุขภาพ<br/>
+                • <strong>07:15 น.</strong> พิธีมอบของที่ระลึก ถ่ายภาพร่วมกัน และปิดงาน
+              </div>
+            </td>
           </tr>
         </table>
 
-        ${!isDonation ? `
-        <div style="background-color: #f8fafc; padding: 20px; border-radius: 12px; margin-bottom: 32px;">
-          <p style="margin: 0 0 12px; font-weight: 800; color: #0f172a; font-size: 15px;">การรับอุปกรณ์ (บิ๊บและเสื้อ)</p>
-          ${reg.deliveryMethod === 'shipping' 
-            ? `<div style="display: flex; align-items: flex-start; gap: 12px;">
-                 <span style="font-size: 20px;">🚚</span>
-                 <div>
-                   <p style="margin: 0 0 4px; font-weight: bold; color: #334155; font-size: 14px;">จัดส่งทางไปรษณีย์</p>
-                   <p style="margin: 0; color: #64748b; font-size: 13px;">ระบบจะจัดส่งพัสดุตามที่อยู่ของท่าน และส่งอีเมลแจ้งเลข Tracking เมื่อเริ่มจัดส่งแล้ว</p>
-                 </div>
-               </div>`
-            : `<div style="display: flex; align-items: flex-start; gap: 12px;">
-                 <span style="font-size: 20px;">🎪</span>
-                 <div>
-                   <p style="margin: 0 0 4px; font-weight: bold; color: #334155; font-size: 14px;">รับด้วยตนเองหน้างาน</p>
-                   <p style="margin: 0; color: #64748b; font-size: 13px;">โปรดเตรียม QR Code นี้มาแสดงตนที่จุดรับอุปกรณ์ในวันเสาร์ก่อนวันแข่งขัน หรือเช้าวันแข่งขัน</p>
-                 </div>
-               </div>`
-          }
+        <!-- ================= RACE KIT COLLECTION ================= -->
+        <h3 style="color: #0f766e; font-size: 17px; border-bottom: 2px solid #ccfbf1; padding-bottom: 8px; margin: 0 0 14px; font-weight: 800;">
+          📦 การรับอุปกรณ์วิ่ง (เสื้อ & หมายเลขบิ๊บ)
+        </h3>
+        <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 18px; margin-bottom: 26px; font-size: 13px; line-height: 1.8;">
+          ${reg.deliveryMethod === 'shipping' ? `
+            <div style="display: flex; align-items: flex-start;">
+              <span style="font-size: 24px; margin-right: 12px;">🚚</span>
+              <div>
+                <strong style="color: #0f172a; font-size: 14px; display: block;">ท่านเลือก: จัดส่งทางไปรษณีย์ถึงบ้าน</strong>
+                <p style="margin: 4px 0 0; color: #475569;">
+                  ทางโครงการจะจัดส่งพัสดุอุปกรณ์วิ่งถึงที่อยู่ของท่านล่วงหน้า 7 - 10 วันก่อนวันแข่งขัน 
+                  และระบบจะส่งอีเมลแจ้งหมายเลขพัสดุ (Tracking Number) ให้ท่านโดยอัตโนมัติเมื่อเริ่มจัดส่ง
+                </p>
+              </div>
+            </div>
+          ` : `
+            <div style="display: flex; align-items: flex-start;">
+              <span style="font-size: 24px; margin-right: 12px;">🎪</span>
+              <div>
+                <strong style="color: #0f172a; font-size: 14px; display: block;">ท่านเลือก: รับด้วยตนเองหน้างาน</strong>
+                <p style="margin: 4px 0 0; color: #475569;">
+                  สามารถมารับอุปกรณ์ได้ 2 ช่วงเวลาดังนี้:<br/>
+                  1. <strong>วันเสาร์ที่ 23 มกราคม 2570</strong> เวลา 10:00 - 18:00 น. ณ โถงกิจกรรม คณะ LSEd มธ.ศูนย์รังสิต<br/>
+                  2. <strong>เช้าวันแข่งขัน 24 มกราคม 2570</strong> เวลา 04:00 - 04:45 น. ณ จุดรับอุปกรณ์หน้างาน<br/>
+                  <span style="color: #0f766e; font-weight: 700;">*โปรดเตรียม QR Code ในอีเมลนี้หรือบัตรประชาชนมาแสดงตน</span>
+                </p>
+              </div>
+            </div>
+          `}
         </div>
-        ` : ''}
 
-        <div style="text-align: center; margin-top: 40px; margin-bottom: 8px;">
-          <a href="${appUrl}" style="background-color: #2563eb; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 12px; font-weight: 800; display: inline-block; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);">ตรวจสอบสถานะบนเว็บไซต์</a>
+        <!-- ================= RUNNER ENTITLEMENTS & PARKING ================= -->
+        <h3 style="color: #0f766e; font-size: 17px; border-bottom: 2px solid #ccfbf1; padding-bottom: 8px; margin: 0 0 14px; font-weight: 800;">
+          ✨ สิทธิประโยชน์ & ข้อมูลการเดินทาง
+        </h3>
+        <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 18px; margin-bottom: 28px; font-size: 13px; line-height: 1.8;">
+          <strong style="color: #0f172a; display: block; margin-bottom: 6px;">🎁 สิ่งที่ท่านจะได้รับ:</strong>
+          <ul style="margin: 0 0 14px; padding-left: 20px; color: #475569;">
+            <li>เสื้อวิ่งที่ระลึกผ้าไมโครดาวกระจาย นุ่ม เบา ระบายอากาศดีเยี่ยม</li>
+            <li>เหรียญรางวัลที่ระลึก Run to Shine (เมื่อเข้าเส้นชัย)</li>
+            <li>จุดบริการน้ำดื่มเกลือแร่ทุก 2 กิโลเมตร และหน่วยปฐมพยาบาลตลอดเส้นทาง</li>
+            <li>อาหารเช้าเพื่อสุขภาพ ผลไม้ และเครื่องดื่มไม่อั้นหลังเข้าเส้นชัย</li>
+            <li>ประกันอุบัติเหตุคุ้มครองตลอดช่วงเวลาจัดกิจกรรม</li>
+            ${isDonation ? "<li>สิทธิ์ลดหย่อนภาษี 2 เท่า (e-Donation กรมสรรพากรอัตโนมัติ)</li>" : ""}
+          </ul>
+
+          <strong style="color: #0f172a; display: block; margin-bottom: 6px;">🚗 จุดจอดรถ (ที่จอดรถฟรี):</strong>
+          <p style="margin: 0; color: #475569;">
+            ท่านสามารถนำรถยนต์เข้าจอดได้ฟรี ณ ลานจอดรถยิมเนเซียม 4, 5, 6 และอาคารจอดรถรอบคณะ LSEd มหาวิทยาลัยธรรมศาสตร์ ศูนย์รังสิต (เดินมายังจุดสตาร์ทประมาณ 300 เมตร)
+          </p>
         </div>
+
+        <!-- ================= BUTTONS ================= -->
+        <div style="text-align: center; margin-bottom: 28px;">
+          <a href="${appUrl}?checkRef=${reg.id}" target="_blank" style="background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); color: #ffffff; padding: 15px 32px; text-decoration: none; border-radius: 14px; font-weight: 800; font-size: 15px; display: inline-block; box-shadow: 0 6px 18px rgba(13, 148, 136, 0.35); margin-right: 8px; margin-bottom: 10px;">
+            เปิดดูบัตร E-BIB บนเว็บไซต์ ↗
+          </a>
+          <a href="https://maps.google.com/?q=Faculty+of+Learning+Sciences+and+Education+Thammasat+University" target="_blank" style="background-color: #ffffff; color: #0f766e; border: 1.5px solid #14b8a6; padding: 14px 24px; text-decoration: none; border-radius: 14px; font-weight: 800; font-size: 14px; display: inline-block;">
+            📍 แผนที่ Google Maps
+          </a>
+        </div>
+
+        <p style="margin: 0; font-size: 12px; color: #94a3b8; text-align: center;">
+          หากท่านมีข้อสงสัยหรือต้องการสอบถามข้อมูลเพิ่มเติม สามารถติดต่อสอบถามได้ทางอีเมลนี้ หรือโทรติดต่อคณะ LSEd มธ.
+        </p>
       </div>
-${`
-      <div style="background-color: #f8fafc; padding: 32px 24px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0;">
-        <p style="margin: 0 0 8px; font-weight: bold; color: #64748b;">คณะวิทยาการเรียนรู้และศึกษาศาสตร์ มหาวิทยาลัยธรรมศาสตร์</p>
-        <p style="margin: 0 0 16px;">ขอบพระคุณที่ร่วมเป็นส่วนหนึ่งในการสนับสนุนกองทุนการเรียนรู้และทุนการศึกษา</p>
-        <p style="margin: 0; font-size: 11px;">© 2026 LSEd TU. All rights reserved.</p>
-      </div>
-`}
+
+      ${getEmailFooterHtml()}
     </div>
   `;
 };
 
-const getRejectionEmailHtml = (reg: Registration, reason: string) => {
+// 4. อีเมลแจ้งสลิปมีปัญหา / ขอให้อัปโหลดใหม่
+const getRejectionEmailHtml = (reg: Registration, reason: string, appUrl: string = "https://lsed-running.web.app") => {
   return `
-    <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 20px; overflow: hidden; background-color: #ffffff; color: #1e293b; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);">
-${`
-      <div style="background-color: #ffffff; padding: 32px 32px 24px; text-align: center; border-bottom: 4px solid #E25B45;">
-        <div style="display: inline-block; padding: 8px 16px; background-color: rgba(226, 91, 69, 0.1); border: 1px solid rgba(226, 91, 69, 0.2); border-radius: 12px; margin-bottom: 12px;">
-          <span style="font-size: 28px; font-weight: 900; font-style: italic; color: #2563eb; letter-spacing: 1px;">LSEd</span>
-          <span style="font-size: 16px; font-weight: 900; color: #0f172a; letter-spacing: 2px; margin-left: 4px;">RUNNING 2569</span>
-        </div>
-        <div style="font-size: 14px; font-weight: 800; color: #7F1D1D; text-transform: uppercase; letter-spacing: 2px;">
-          Run to Shine <span style="color: #E25B45;">✨</span>
-        </div>
-        <div style="font-size: 12px; font-weight: 700; color: #64748b; margin-top: 4px;">โครงการวิ่งฉายแสง</div>
-      </div>
-`}
-      <div style="padding: 40px 32px; line-height: 1.7;">
-        <div style="text-align: center; margin-bottom: 32px;">
-          <div style="display: inline-block; background-color: #fef2f2; color: #e11d48; font-size: 13px; font-weight: 800; padding: 6px 16px; border-radius: 20px; letter-spacing: 1px; margin-bottom: 12px;">⚠️ พบปัญหาในการชำระเงิน</div>
-          <h2 style="margin: 0; font-size: 22px; font-weight: 800; color: #0f172a;">สลิปโอนเงินไม่ผ่านการตรวจสอบ</h2>
-          <p style="color: #64748b; margin-top: 8px; font-size: 15px;">สวัสดีคุณ <strong>${reg.firstName} ${reg.lastName}</strong>, สลิปที่ท่านแนบมาไม่ผ่านการตรวจสอบจากแอดมิน</p>
+    <div style="font-family: 'Poppins', 'Prompt', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 620px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 24px; overflow: hidden; background-color: #ffffff; color: #1e293b; box-shadow: 0 12px 30px -8px rgba(225, 29, 72, 0.12);">
+      ${getEmailHeaderHtml("⚠️ แจ้งเตือน • พบปัญหาการตรวจสอบสลิป", "#fff1f2", "#be123c", "#fecdd3")}
+      
+      <div style="padding: 24px 32px 36px; line-height: 1.7;">
+        <div style="text-align: center; margin-bottom: 28px;">
+          <div style="display: inline-block; width: 64px; height: 64px; line-height: 64px; border-radius: 50%; background-color: #fff1f2; border: 2px solid #f43f5e; font-size: 30px; margin-bottom: 12px;">
+            ⚠️
+          </div>
+          <h2 style="margin: 0 0 8px; font-size: 22px; font-weight: 800; color: #0f172a;">สลิปโอนเงินไม่ผ่านการตรวจสอบ</h2>
+          <p style="color: #64748b; margin: 0; font-size: 15px;">สวัสดีคุณ <strong>${reg.firstName} ${reg.lastName}</strong>, สลิปที่ท่านแนบมาไม่สามารถยืนยันความถูกต้องได้</p>
         </div>
 
-        <div style="background-color: #fff1f2; border-left: 4px solid #e11d48; padding: 20px; border-radius: 0 12px 12px 0; margin-bottom: 32px;">
-          <p style="margin: 0 0 8px; font-weight: 800; color: #9f1239; font-size: 14px;">เหตุผลจากผู้ตรวจสอบ:</p>
-          <p style="margin: 0; color: #be123c; font-size: 15px;">${reason}</p>
+        <div style="background-color: #fff1f2; border-left: 4px solid #e11d48; padding: 20px; border-radius: 0 14px 14px 0; margin-bottom: 28px;">
+          <p style="margin: 0 0 6px; font-weight: 800; color: #9f1239; font-size: 14px;">เหตุผลจากเจ้าหน้าที่ผู้ตรวจสอบ:</p>
+          <p style="margin: 0; color: #be123c; font-size: 15px; font-weight: 600;">"${reason}"</p>
         </div>
 
-        <h3 style="color: #0f172a; font-size: 16px; margin-bottom: 16px;">วิธีดำเนินการแก้ไข</h3>
-        <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 32px;">
-          <ol style="margin: 0; padding-left: 20px; color: #475569; font-size: 14px;">
-            <li style="margin-bottom: 12px;">ไปที่หน้าเว็บไซต์ <strong>"ตรวจสอบสิทธิ์ / ส่งสลิป"</strong></li>
-            <li style="margin-bottom: 12px;">กรอกเบอร์โทร, บัตรประชาชน, หรือรหัส: <strong>${reg.id}</strong></li>
-            <li>อัปโหลดสลิปใหม่ให้ตรงกับยอดชำระ <strong>${reg.price} บาท</strong></li>
+        <h3 style="color: #0f172a; font-size: 16px; margin: 0 0 14px; font-weight: 800;">วิธีดำเนินการแก้ไข (ทำได้ทันที):</h3>
+        <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; margin-bottom: 28px; font-size: 14px; color: #475569;">
+          <ol style="margin: 0; padding-left: 20px; line-height: 1.9;">
+            <li>คลิกปุ่ม <strong>"อัปโหลดสลิปใหม่"</strong> ด้านล่างนี้</li>
+            <li>ระบบจะพาท่านไปยังหน้าส่งสลิปพร้อมกรอกรหัส <strong>${reg.id}</strong> ให้โดยอัตโนมัติ</li>
+            <li>แนบรูปภาพสลิปที่ชัดเจนและมียอดโอนถูกต้อง <strong>${reg.price.toLocaleString()} บาท</strong></li>
           </ol>
         </div>
 
+        <div style="text-align: center; margin-bottom: 20px;">
+          <a href="${appUrl}?checkRef=${reg.id}" target="_blank" style="background: linear-gradient(135deg, #e11d48 0%, #be123c 100%); color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 14px; font-weight: 800; font-size: 15px; display: inline-block; box-shadow: 0 6px 18px rgba(225, 29, 72, 0.3);">
+            อัปโหลดสลิปใหม่ทันที ↗
+          </a>
+        </div>
       </div>
-${`
-      <div style="background-color: #f8fafc; padding: 32px 24px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0;">
-        <p style="margin: 0 0 8px; font-weight: bold; color: #64748b;">คณะวิทยาการเรียนรู้และศึกษาศาสตร์ มหาวิทยาลัยธรรมศาสตร์</p>
-        <p style="margin: 0 0 16px;">ขอบพระคุณที่ร่วมเป็นส่วนหนึ่งในการสนับสนุนกองทุนการเรียนรู้และทุนการศึกษา</p>
-        <p style="margin: 0; font-size: 11px;">© 2026 LSEd TU. All rights reserved.</p>
-      </div>
-`}
+
+      ${getEmailFooterHtml()}
     </div>
   `;
 };
 
-const getShippingEmailHtml = (reg: Registration, appUrl: string) => {
+// 5. อีเมลแจ้งจัดส่งพัสดุ (Shipping Tracking)
+const getShippingEmailHtml = (reg: Registration, appUrl: string = "https://lsed-running.web.app") => {
   const carrierMap: Record<string, string> = {
     thailandpost: "ไปรษณีย์ไทย (EMS)",
     flash: "Flash Express",
@@ -447,68 +719,236 @@ const getShippingEmailHtml = (reg: Registration, appUrl: string) => {
   else if (reg.shippingCarrier === "jandt") trackingUrl = `https://www.jtexpress.co.th/index/query/query.html?billNo=${reg.shippingTrackingNumber}`;
 
   return `
-    <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 20px; overflow: hidden; background-color: #ffffff; color: #1e293b; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);">
-${`
-      <div style="background-color: #ffffff; padding: 32px 32px 24px; text-align: center; border-bottom: 4px solid #E25B45;">
-        <div style="display: inline-block; padding: 8px 16px; background-color: rgba(226, 91, 69, 0.1); border: 1px solid rgba(226, 91, 69, 0.2); border-radius: 12px; margin-bottom: 12px;">
-          <span style="font-size: 28px; font-weight: 900; font-style: italic; color: #2563eb; letter-spacing: 1px;">LSEd</span>
-          <span style="font-size: 16px; font-weight: 900; color: #0f172a; letter-spacing: 2px; margin-left: 4px;">RUNNING 2569</span>
-        </div>
-        <div style="font-size: 14px; font-weight: 800; color: #7F1D1D; text-transform: uppercase; letter-spacing: 2px;">
-          Run to Shine <span style="color: #E25B45;">✨</span>
-        </div>
-        <div style="font-size: 12px; font-weight: 700; color: #64748b; margin-top: 4px;">โครงการวิ่งฉายแสง</div>
-      </div>
-`}
-      <div style="padding: 40px 32px; line-height: 1.7;">
-        <div style="text-align: center; margin-bottom: 32px;">
-          <div style="display: inline-block; background-color: #fff7ed; color: #ea580c; font-size: 13px; font-weight: 800; padding: 6px 16px; border-radius: 20px; letter-spacing: 1px; margin-bottom: 12px;">📦 จัดส่งพัสดุแล้ว</div>
-          <h2 style="margin: 0; font-size: 22px; font-weight: 800; color: #0f172a;">พัสดุของคุณอยู่ระหว่างทาง!</h2>
-          <p style="color: #64748b; margin-top: 8px; font-size: 15px;">สวัสดีคุณ <strong>${reg.firstName} ${reg.lastName}</strong>, อุปกรณ์วิ่งของคุณถูกจัดส่งแล้ว</p>
+    <div style="font-family: 'Poppins', 'Prompt', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 620px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 24px; overflow: hidden; background-color: #ffffff; color: #1e293b; box-shadow: 0 12px 30px -8px rgba(234, 88, 12, 0.12);">
+      ${getEmailHeaderHtml("📦 จัดส่งพัสดุแล้ว • เสื้อวิ่งและหมายเลขบิ๊บ", "#fff7ed", "#ea580c", "#ffedd5")}
+      
+      <div style="padding: 24px 32px 36px; line-height: 1.7;">
+        <div style="text-align: center; margin-bottom: 28px;">
+          <div style="display: inline-block; width: 64px; height: 64px; line-height: 64px; border-radius: 50%; background-color: #fff7ed; border: 2px solid #fb923c; font-size: 30px; margin-bottom: 12px;">
+            🚚
+          </div>
+          <h2 style="margin: 0 0 8px; font-size: 22px; font-weight: 800; color: #0f172a;">พัสดุของคุณอยู่ระหว่างการจัดส่ง!</h2>
+          <p style="color: #64748b; margin: 0; font-size: 15px;">สวัสดีคุณ <strong>${reg.firstName} ${reg.lastName}</strong>, อุปกรณ์วิ่งของท่านถูกจัดส่งเรียบร้อยแล้ว</p>
         </div>
 
-        <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; margin-bottom: 32px;">
-          <div style="text-align: center; margin-bottom: 24px;">
-            <p style="margin: 0 0 8px; font-size: 12px; font-weight: bold; color: #64748b; text-transform: uppercase; letter-spacing: 1px;">หมายเลขพัสดุ (Tracking)</p>
-            <span style="font-family: monospace; font-size: 28px; font-weight: 900; color: #ea580c; letter-spacing: 1px; display: block; word-break: break-all;">${reg.shippingTrackingNumber}</span>
+        <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 20px; padding: 24px; margin-bottom: 28px;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <p style="margin: 0 0 6px; font-size: 12px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px;">หมายเลขพัสดุ (Tracking Number)</p>
+            <span style="font-family: monospace; font-size: 28px; font-weight: 900; color: #ea580c; letter-spacing: 1.5px; display: block; word-break: break-all;">
+              ${reg.shippingTrackingNumber}
+            </span>
           </div>
-          
-          <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+
+          <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
             <tr>
-              <td style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; color: #64748b;">ผู้ให้บริการจัดส่ง:</td>
-              <td style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #0f172a; text-align: right;">${carrierName}</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; color: #64748b;">ผู้ให้บริการจัดส่ง:</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-weight: 700; color: #0f172a; text-align: right;">${carrierName}</td>
             </tr>
             <tr>
-              <td style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; color: #64748b;">วันที่จัดส่ง:</td>
-              <td style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #0f172a; text-align: right;">${reg.shippedAt || "วันนี้"}</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; color: #64748b;">วันที่จัดส่ง:</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-weight: 700; color: #0f172a; text-align: right;">${reg.shippedAt || "วันนี้"}</td>
             </tr>
             <tr>
-              <td style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; color: #64748b;">หมายเลขบิ๊บในกล่อง:</td>
-              <td style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #0f172a; text-align: right;">${reg.bibNumber || "-"}</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; color: #64748b;">หมายเลขบิ๊บในพัสดุ:</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-weight: 800; color: #0d9488; text-align: right;">${reg.bibNumber || "-"}</td>
             </tr>
           </table>
         </div>
 
-        <div style="text-align: center; margin-bottom: 32px;">
-          <a href="${trackingUrl}" target="_blank" style="background-color: #ea580c; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 12px; font-weight: 800; display: inline-block; box-shadow: 0 4px 12px rgba(234, 88, 12, 0.25); width: 100%; max-width: 280px; box-sizing: border-box; margin-bottom: 12px;">คลิกเพื่อติดตามพัสดุ ↗</a>
-          <a href="${appUrl}" target="_blank" style="background-color: #f1f5f9; color: #334155; padding: 14px 28px; text-decoration: none; border-radius: 12px; font-weight: 800; display: inline-block; border: 1px solid #cbd5e1; width: 100%; max-width: 280px; box-sizing: border-box;">ตรวจสอบสถานะบนเว็บไซต์</a>
+        <div style="text-align: center; margin-bottom: 24px;">
+          <a href="${trackingUrl}" target="_blank" style="background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: #ffffff; padding: 15px 32px; text-decoration: none; border-radius: 14px; font-weight: 800; font-size: 15px; display: inline-block; box-shadow: 0 6px 18px rgba(234, 88, 12, 0.35); margin-bottom: 10px;">
+            ติดตามสถานะพัสดุ ↗
+          </a>
         </div>
 
-        <div style="font-size: 13px; color: #64748b; line-height: 1.6; text-align: center; background-color: #f8fafc; padding: 16px; border-radius: 12px;">
-          <span style="font-size: 20px; display: block; margin-bottom: 8px;">💡</span>
-          ระบบติดตามพัสดุอาจใช้เวลาประมาณ 12-24 ชั่วโมงในการอัปเดตข้อมูลขึ้นระบบ หากท่านยังไม่พบข้อมูล กรุณาเว้นระยะเวลาและตรวจสอบอีกครั้ง
+        <div style="background-color: #f0fdfa; border: 1px solid #ccfbf1; padding: 14px 16px; border-radius: 12px; font-size: 12px; color: #0f766e; text-align: center;">
+          💡 ระบบติดตามพัสดุอาจใช้เวลาประมาณ 12 - 24 ชั่วโมงในการเชื่อมโยงข้อมูลเข้าระบบขนส่ง หากยังไม่พบข้อมูล สามารถลองตรวจสอบอีกครั้งในวันถัดไป
         </div>
       </div>
-${`
-      <div style="background-color: #f8fafc; padding: 32px 24px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0;">
-        <p style="margin: 0 0 8px; font-weight: bold; color: #64748b;">คณะวิทยาการเรียนรู้และศึกษาศาสตร์ มหาวิทยาลัยธรรมศาสตร์</p>
-        <p style="margin: 0 0 16px;">ขอบพระคุณที่ร่วมเป็นส่วนหนึ่งในการสนับสนุนกองทุนการเรียนรู้และทุนการศึกษา</p>
-        <p style="margin: 0; font-size: 11px;">© 2026 LSEd TU. All rights reserved.</p>
-      </div>
-`}
+
+      ${getEmailFooterHtml()}
     </div>
   `;
 };
+
+// 6. อีเมลแจ้งเตือนล่วงหน้า 3 วันก่อนวันงาน (3-Day Race Reminder & Briefing)
+const getRaceDayReminderEmailHtml = (reg: Registration, appUrl: string = "https://lsed-running.web.app") => {
+  const bib = reg.bibNumber || "LSE-1001";
+  const entryQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(reg.id)}&margin=10`;
+
+  return `
+    <div style="font-family: 'Poppins', 'Prompt', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 620px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 24px; overflow: hidden; background-color: #ffffff; color: #1e293b; box-shadow: 0 12px 35px -8px rgba(13, 148, 136, 0.18);">
+      ${getEmailHeaderHtml("⏰ เตือนความจำล่วงหน้า 3 วัน • สู่วันวิ่งฉายแสง", "#fff7ed", "#ea580c", "#ffedd5")}
+      
+      <div style="padding: 24px 32px 36px; line-height: 1.7;">
+        <!-- Header Greetings -->
+        <div style="text-align: center; margin-bottom: 26px;">
+          <div style="display: inline-block; background-color: #f0fdfa; border: 1.5px solid #14b8a6; color: #0f766e; font-size: 13px; font-weight: 800; padding: 6px 18px; border-radius: 9999px; margin-bottom: 12px; letter-spacing: 0.5px;">
+            🏃‍♂️ นับถอยหลังอีก 3 วัน สู่วันอาทิตย์ที่ 24 มกราคม 2570
+          </div>
+          <h2 style="margin: 0 0 8px; font-size: 23px; font-weight: 900; color: #0f172a;">พร้อมแล้วหรือยัง? ข้อมูลเตรียมตัวก่อนวันแข่งขัน</h2>
+          <p style="color: #64748b; margin: 0; font-size: 15px;">สวัสดีคุณ <strong>${reg.firstName} ${reg.lastName}</strong>, สรุปข้อมูลสถานที่ เวลา และสิ่งของที่ต้องนำมาในวันงาน</p>
+        </div>
+
+        <!-- ================= RUNNER TICKET PASS ================= -->
+        <div style="background: linear-gradient(135deg, #042f2e 0%, #0f766e 60%, #0d9488 100%); border-radius: 20px; padding: 22px; color: #ffffff; margin-bottom: 26px; box-shadow: 0 8px 20px -4px rgba(15, 118, 110, 0.3);">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.2); padding-bottom: 12px; margin-bottom: 16px;">
+            <div>
+              <span style="font-size: 11px; font-weight: 800; color: #fed7aa; text-transform: uppercase; letter-spacing: 1px;">บัตรประจำตัวนักวิ่ง (RUNNER PASS)</span>
+              <p style="margin: 0; font-size: 15px; font-weight: 800;">${reg.firstName} ${reg.lastName}</p>
+            </div>
+            <div style="background-color: #ea580c; color: #ffffff; font-size: 11px; font-weight: 900; padding: 4px 12px; border-radius: 9999px;">
+              ${reg.distance.toUpperCase()}
+            </div>
+          </div>
+
+          <!-- BIB Number Banner -->
+          <div style="background-color: rgba(255, 255, 255, 0.1); border: 1.5px dashed rgba(255, 255, 255, 0.35); border-radius: 14px; padding: 14px; text-align: center; margin-bottom: 16px;">
+            <p style="margin: 0 0 2px; font-size: 11px; font-weight: 800; color: #fed7aa; letter-spacing: 1.5px; text-transform: uppercase;">หมายเลข BIB ประจำตัวของคุณ</p>
+            <span style="font-family: monospace; font-size: 38px; font-weight: 900; color: #ffffff; letter-spacing: 3px; display: block; text-shadow: 0 2px 8px rgba(0,0,0,0.3);">${bib}</span>
+          </div>
+
+          <!-- QR Code Entry -->
+          <div style="background-color: #ffffff; border-radius: 14px; padding: 16px; text-align: center; color: #0f172a;">
+            <p style="margin: 0 0 8px; font-size: 13px; font-weight: 800; color: #0f766e;">
+              📱 QR Code สำหรับเช็คอินเข้างาน & จุดรับฝากของ
+            </p>
+            <div style="display: inline-block; padding: 6px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;">
+              <img src="${entryQrUrl}" alt="Entry QR Code" style="display: block; width: 140px; height: 140px; border-radius: 6px;" />
+            </div>
+            <p style="margin: 8px 0 0; font-size: 11px; color: #64748b;">
+              บันทึกภาพหน้าจอหรือเปิดอีเมลนี้แสดงต่อเจ้าหน้าที่
+            </p>
+          </div>
+        </div>
+
+        <!-- ================= SECTION 1: สถานที่และการเดินทาง ================= -->
+        <h3 style="color: #0f766e; font-size: 16px; border-bottom: 2px solid #ccfbf1; padding-bottom: 8px; margin: 0 0 14px; font-weight: 800; display: flex; align-items: center;">
+          📍 1. สถานที่จัดงานและการเดินทาง
+        </h3>
+        <div style="background-color: #f0fdfa; border: 1.5px solid #ccfbf1; border-radius: 16px; padding: 18px; margin-bottom: 26px; font-size: 13px; line-height: 1.8;">
+          <div style="margin-bottom: 10px;">
+            <strong style="color: #0f766e; font-size: 14px; display: block;">สถานที่จัดกิจกรรม:</strong>
+            <span style="color: #0f172a; font-weight: 700;">ลานกิจกรรม คณะวิทยาการเรียนรู้และศึกษาศาสตร์ (LSEd) มหาวิทยาลัยธรรมศาสตร์ ศูนย์รังสิต</span>
+          </div>
+          <div style="margin-bottom: 10px;">
+            <strong style="color: #0f766e; font-size: 14px; display: block;">🚗 จุดจอดรถฟรี (Free Parking):</strong>
+            <span style="color: #334155;">
+              • <strong>ลานจอดรถยิมเนเซียม 4, 5, 6</strong> มธ. ศูนย์รังสิต (รองรับรถยนต์ได้มากกว่า 500 คัน)<br/>
+              • <strong>อาคารจอดรถรอบคณะ LSEd</strong> (เดินมายังจุดปล่อยตัวเพียง 3-5 นาที)
+            </span>
+          </div>
+          <div>
+            <strong style="color: #0f766e; font-size: 14px; display: block;">🚪 ประตูเข้าสู่มหาวิทยาลัยที่แนะนำ:</strong>
+            <span style="color: #334155;">
+              แนะนำเข้าทาง <strong>ประตูพหลโยธิน 1</strong> (ฝั่งถนนพหลโยธิน) หรือ <strong>ประตูเชียงราก 1</strong> (ฝั่งถนนเชียงราก) จะใกล้จุดจัดงานมากที่สุด
+            </span>
+          </div>
+        </div>
+
+        <!-- ================= SECTION 2: เวลาและกำหนดการ ================= -->
+        <h3 style="color: #0f766e; font-size: 16px; border-bottom: 2px solid #ccfbf1; padding-bottom: 8px; margin: 0 0 14px; font-weight: 800;">
+          ⏰ 2. กำหนดการวันงาน วันอาทิตย์ที่ 24 มกราคม 2570
+        </h3>
+        <div style="background-color: #fff7ed; border-left: 4px solid #ea580c; padding: 18px; border-radius: 0 16px 16px 0; margin-bottom: 26px; font-size: 13px; line-height: 1.9;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 4px 0; font-weight: 800; color: #ea580c; width: 85px; vertical-align: top;">04:00 น.</td>
+              <td style="padding: 4px 0; color: #0f172a;">เปิดจุดลงทะเบียน รายงานตัว ตรวจสอบ BIB และเปิดจุดรับฝากสัมภาระ</td>
+            </tr>
+            <tr>
+              <td style="padding: 4px 0; font-weight: 800; color: #ea580c; width: 85px; vertical-align: top;">04:40 น.</td>
+              <td style="padding: 4px 0; color: #0f172a;">รวมพลบริเวณหน้าเวที ยืดเหยียดกล้ามเนื้อและวอร์มอัพร่างกายโดยทีมผู้เชี่ยวชาญ</td>
+            </tr>
+            <tr style="background-color: rgba(234, 88, 12, 0.08);">
+              <td style="padding: 6px 4px; font-weight: 900; color: #c2410c; width: 85px; vertical-align: top;">05:00 น.</td>
+              <td style="padding: 6px 4px; font-weight: 800; color: #c2410c;">🔔 สัญญาณแตรปล่อยตัวนักวิ่งระยะ 5 กิโลเมตร (Flag-off) พร้อมกัน</td>
+            </tr>
+            <tr>
+              <td style="padding: 4px 0; font-weight: 800; color: #ea580c; width: 85px; vertical-align: top;">06:30 น.</td>
+              <td style="padding: 4px 0; color: #0f172a;">ร่วมรับประทานอาหารเช้า ข้าวต้ม ผลไม้ และเครื่องดื่มสุขภาพหลังเข้าเส้นชัย</td>
+            </tr>
+            <tr>
+              <td style="padding: 4px 0; font-weight: 800; color: #ea580c; width: 85px; vertical-align: top;">07:15 น.</td>
+              <td style="padding: 4px 0; color: #0f172a;">พิธีมอบของที่ระลึก ถ่ายภาพร่วมกัน และปิดกิจกรรม</td>
+            </tr>
+          </table>
+          <p style="margin: 8px 0 0; font-size: 12px; color: #9a3412; font-weight: 700;">
+            *ขอความกรุณานักวิ่งทุกท่านเดินทางมาถึงก่อนเวลา 04:30 น. เพื่อความสะดวกในการฝากสัมภาระและเตรียมตัว
+          </p>
+        </div>
+
+        <!-- ================= SECTION 3: เช็คลิสต์สิ่งของที่ต้องนำมา ================= -->
+        <h3 style="color: #0f766e; font-size: 16px; border-bottom: 2px solid #ccfbf1; padding-bottom: 8px; margin: 0 0 14px; font-weight: 800;">
+          🎒 3. สิ่งของที่ต้องนำมาในวันงาน (Runner's Checklist)
+        </h3>
+        <div style="background-color: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 20px; margin-bottom: 26px; font-size: 13px; line-height: 2;">
+          <div style="display: flex; align-items: flex-start; margin-bottom: 8px;">
+            <span style="color: #0d9488; font-weight: 900; margin-right: 8px; font-size: 16px;">☑</span>
+            <div><strong style="color: #0f172a;">หมายเลข BIB ประจำตัว (${bib}):</strong> ติดเข็มกลัดที่หน้าอกเสื้อให้มองเห็นได้ชัดเจนตลอดการวิ่ง</div>
+          </div>
+          <div style="display: flex; align-items: flex-start; margin-bottom: 8px;">
+            <span style="color: #0d9488; font-weight: 900; margin-right: 8px; font-size: 16px;">☑</span>
+            <div><strong style="color: #0f172a;">QR Code บัตรเข้างาน / บัตรประชาชน:</strong> สำหรับสแกนเข้างาน หรือใช้ยืนยันตัวตนในกรณีต่างๆ</div>
+          </div>
+          <div style="display: flex; align-items: flex-start; margin-bottom: 8px;">
+            <span style="color: #0d9488; font-weight: 900; margin-right: 8px; font-size: 16px;">☑</span>
+            <div><strong style="color: #0f172a;">เสื้อวิ่งของโครงการ:</strong> สวมใส่เสื้อโครงการผ้าดาวกระจายเพื่อความพร้อมเพรียงและสวยงาม</div>
+          </div>
+          <div style="display: flex; align-items: flex-start; margin-bottom: 8px;">
+            <span style="color: #0d9488; font-weight: 900; margin-right: 8px; font-size: 16px;">☑</span>
+            <div><strong style="color: #0f172a;">รองเท้าวิ่งและถุงเท้ากีฬา:</strong> สวมใส่คู่ที่คุ้นเคยเพื่อป้องกันการบาดเจ็บและแผลพุพอง</div>
+          </div>
+          <div style="display: flex; align-items: flex-start; margin-bottom: 8px;">
+            <span style="color: #0d9488; font-weight: 900; margin-right: 8px; font-size: 16px;">☑</span>
+            <div><strong style="color: #0f172a;">ยาประจำตัว:</strong> หากท่านมีโรคประจำตัวหรือแพ้ยา กรุณานำติดตัวมาด้วยเสมอ</div>
+          </div>
+          <div style="display: flex; align-items: flex-start;">
+            <span style="color: #0d9488; font-weight: 900; margin-right: 8px; font-size: 16px;">☑</span>
+            <div><strong style="color: #0f172a;">กระบอกน้ำส่วนตัว (รักษ์โลก):</strong> โครงการจัดจุดเติมน้ำเย็นตลอดงานเพื่อลดขยะพลาสติก</div>
+          </div>
+        </div>
+
+        <!-- ================= SECTION 4: การรับอุปกรณ์สำหรับผู้ที่ยังไม่ได้รับ ================= -->
+        <h3 style="color: #0f766e; font-size: 16px; border-bottom: 2px solid #ccfbf1; padding-bottom: 8px; margin: 0 0 14px; font-weight: 800;">
+          🎪 4. การรับอุปกรณ์ (สำหรับผู้ที่ยังไม่ได้รับเสื้อและบิ๊บ)
+        </h3>
+        <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 18px; margin-bottom: 26px; font-size: 13px; line-height: 1.8;">
+          ${reg.deliveryMethod === 'shipping' ? `
+            <p style="margin: 0; color: #334155;">
+              • <strong>กรณีจัดส่งทางไปรษณีย์:</strong> หากท่านยังไม่ได้รับพัสดุอุปกรณ์วิ่งภายในวันศุกร์ที่ 22 ม.ค. 2570 
+              สามารถติดต่อโต๊ะอำนวยการหน้างานในเช้าวันแข่งขัน พร้อมแสดง Ref ID: <strong>${reg.id}</strong> เพื่อรับอุปกรณ์วิ่งสำรองได้ทันที
+            </p>
+          ` : `
+            <p style="margin: 0; color: #334155;">
+              • <strong>กรณีรับด้วยตนเองหน้างาน:</strong> สามารถมารับได้ 2 ช่วงเวลา:<br/>
+              1. <strong>วันเสาร์ที่ 23 มกราคม 2570</strong> เวลา 10:00 - 18:00 น. ณ โถงกิจกรรม คณะ LSEd มธ.ศูนย์รังสิต (แนะนำช่วงนี้เพื่อเลี่ยงความแออัด)<br/>
+              2. <strong>เช้าวันอาทิตย์ที่ 24 มกราคม 2570</strong> เวลา 04:00 - 04:45 น. ณ จุดรับอุปกรณ์หน้างาน
+            </p>
+          `}
+        </div>
+
+        <!-- ================= SECTION 5: ข้อแนะนำสุขภาพ ================= -->
+        <div style="background-color: #f0fdfa; border: 1px solid #99f6e4; border-radius: 14px; padding: 16px; margin-bottom: 28px; font-size: 12px; line-height: 1.8; color: #0f766e;">
+          💡 <strong>ข้อแนะนำด้านสุขภาพ:</strong> กรุณานอนหลับพักผ่อนให้เพียงพออย่างน้อย 7-8 ชั่วโมงในคืนก่อนวันแข่งขัน งดอาหารมื้อหนักก่อนเวลาปล่อยตัว 2 ชั่วโมง จิบน้ำเป็นระยะ และหากรู้สึกผิดปกติหรือมีอาการหน้ามืดระหว่างวิ่ง โปรดหยุดพักและแจ้งหน่วยพยาบาลทันที
+        </div>
+
+        <!-- ================= BUTTONS ================= -->
+        <div style="text-align: center; margin-bottom: 24px;">
+          <a href="${appUrl}?checkRef=${reg.id}" target="_blank" style="background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 14px; font-weight: 800; font-size: 14px; display: inline-block; box-shadow: 0 4px 14px rgba(13, 148, 136, 0.3); margin-right: 8px; margin-bottom: 10px;">
+            เปิดดูบัตร E-BIB บนเว็บไซต์ ↗
+          </a>
+          <a href="https://maps.google.com/?q=Faculty+of+Learning+Sciences+and+Education+Thammasat+University" target="_blank" style="background-color: #ffffff; color: #0f766e; border: 1.5px solid #14b8a6; padding: 14px 22px; text-decoration: none; border-radius: 14px; font-weight: 800; font-size: 14px; display: inline-block;">
+            📍 แผนที่ Google Maps
+          </a>
+        </div>
+      </div>
+
+      ${getEmailFooterHtml()}
+    </div>
+  `;
+};
+
 
 // Pricing config
 const PRICE_MAP: Record<DistanceType, number> = {
@@ -575,7 +1015,7 @@ const generateBIB = (registrations: Registration[], distance: DistanceType): str
   return `${prefix}-${nextNum}`;
 };
 
-// Helper to generate a unique Registration ID e.g., LSED-XXXXXX
+// Helper to generate a unique Registration ID e.g., LSEd-XXXXXX
 const generateRefID = (): string => {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let result = "";
@@ -583,7 +1023,7 @@ const generateRefID = (): string => {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   const timestampPart = Date.now().toString(36).toUpperCase().slice(-4);
-  return `LSED-${timestampPart}${result}`;
+  return `LSEd-${timestampPart}${result}`;
 };
 
 // ==========================================
@@ -838,7 +1278,20 @@ app.post("/api/upload-slip", async (req, res) => {
 
     await setDoc(regDocRef, regData);
 
-    res.json(regData);
+    // Send Payment Received Email
+    const appUrl = req.headers.origin || req.protocol + "://" + req.get("host");
+    const emailHtml = getPaymentReceivedEmailHtml(regData, appUrl);
+    const emailPreviewUrl = await sendEmail(
+      regData.email,
+      "แจ้งได้รับหลักฐานการชำระเงินเรียบร้อยแล้ว - อยู่ระหว่างรออนุมัติ | วิ่ง-ฉาย-แสง (LSEd Running 2569)",
+      emailHtml,
+      { type: "payment_received", recipientName: `${regData.firstName} ${regData.lastName}` }
+    );
+
+    res.json({
+      ...regData,
+      emailPreviewUrl: emailPreviewUrl || undefined
+    });
   } catch (err: any) {
     console.error("Error uploading slip:", err);
     res.status(500).json({ error: "ไม่สามารถอัปเดตสถานะสลิปชำระเงินใน Firestore ได้" });
@@ -988,7 +1441,12 @@ app.post("/api/admin/approve", async (req, res) => {
     // Send payment approved email asynchronously
     const appUrl = req.headers.origin || req.protocol + "://" + req.get("host");
     const emailHtml = getApprovalEmailHtml(reg, appUrl);
-    const emailPreviewUrl = await sendEmail(reg.email, "ยืนยันการชำระเงินสำเร็จ วิ่ง-ฉาย-แสง (LSEd Running 2569) - ได้รับ BIB แล้ว!", emailHtml);
+    const emailPreviewUrl = await sendEmail(
+      reg.email,
+      `🎉 บัตรเข้างาน E-Ticket & หมายเลข BIB (${reg.bibNumber}) | วิ่ง-ฉาย-แสง (LSEd Running 2569)`,
+      emailHtml,
+      { type: "approval", recipientName: `${reg.firstName} ${reg.lastName}` }
+    );
 
     res.json({
       ...reg,
@@ -1055,8 +1513,14 @@ app.post("/api/admin/reject", async (req, res) => {
     await setDoc(regDocRef, reg);
 
     // Send rejection email asynchronously
-    const emailHtml = getRejectionEmailHtml(reg, reason);
-    const emailPreviewUrl = await sendEmail(reg.email, "แจ้งผลการตรวจสอบหลักฐานการโอนเงิน วิ่ง-ฉาย-แสง (LSEd Running 2569)", emailHtml);
+    const appUrl = req.headers.origin || req.protocol + "://" + req.get("host");
+    const emailHtml = getRejectionEmailHtml(reg, reason, appUrl);
+    const emailPreviewUrl = await sendEmail(
+      reg.email,
+      "แจ้งผลการตรวจสอบหลักฐานการโอนเงิน | วิ่ง-ฉาย-แสง (LSEd Running 2569)",
+      emailHtml,
+      { type: "rejection", recipientName: `${reg.firstName} ${reg.lastName}` }
+    );
 
     res.json({
       ...reg,
@@ -1228,6 +1692,326 @@ app.post("/api/admin/simulate-shipping-notification", async (req, res) => {
   } catch (err: any) {
     console.error("Error simulating shipping notification:", err);
     res.status(500).json({ error: "เกิดข้อผิดพลาดในการจำลองส่งการแจ้งเตือน" });
+  }
+});
+
+// ==========================================
+// EMAIL NOTIFICATIONS & REMINDER ENDPOINTS
+// ==========================================
+
+// Get recent email logs
+app.get("/api/emails/recent", (req, res) => {
+  res.json(recentEmailLogs);
+});
+
+// Preview email template with real or sample runner data
+app.post("/api/emails/preview", async (req, res) => {
+  const { type, id } = req.body;
+  const appUrl = req.headers.origin || req.protocol + "://" + req.get("host");
+
+  let reg: Registration | null = null;
+  if (id) {
+    try {
+      const docSnap = await getDoc(doc(db, "registrations", id));
+      if (docSnap.exists()) {
+        reg = docSnap.data() as Registration;
+      }
+    } catch (e) {
+      console.warn("Could not load runner for preview:", e);
+    }
+  }
+
+  if (!reg) {
+    reg = {
+      id: "LSEd-SAMPLE",
+      firstName: "ธนภัทร",
+      lastName: "รุ่งเรืองฉาย",
+      email: "runner.sample@example.com",
+      phone: "081-234-5678",
+      nationalId: "1100100123456",
+      age: 26,
+      gender: "male",
+      bloodType: "B",
+      emergencyContactName: "คุณแม่",
+      emergencyContactPhone: "089-876-5432",
+      distance: "REGULAR",
+      shirtSize: "L",
+      status: "approved",
+      price: 555,
+      bibNumber: "LSE-1024",
+      deliveryMethod: "shipping",
+      shippingTrackingNumber: "TH1234567890B",
+      shippingCarrier: "thailandpost",
+      shippedAt: "20 มกราคม 2570",
+      createdAt: new Date().toISOString(),
+    };
+  }
+
+  let html = "";
+  let subject = "";
+
+  switch (type) {
+    case "registration": {
+      const settings = await getPaymentSettings();
+      html = getRegistrationEmailHtml(reg, settings, appUrl);
+      subject = "ขั้นตอนที่ 1 / 2 : รอการชำระเงิน | วิ่ง-ฉาย-แสง (LSEd Running 2569)";
+      break;
+    }
+    case "payment_received": {
+      html = getPaymentReceivedEmailHtml(reg, appUrl);
+      subject = "แจ้งได้รับหลักฐานการชำระเงินเรียบร้อยแล้ว - อยู่ระหว่างรออนุมัติ | วิ่ง-ฉาย-แสง (LSEd Running 2569)";
+      break;
+    }
+    case "approval": {
+      html = getApprovalEmailHtml(reg, appUrl);
+      subject = `🎉 บัตรเข้างาน E-Ticket & หมายเลข BIB (${reg.bibNumber || "LSE-1024"}) | วิ่ง-ฉาย-แสง (LSEd Running 2569)`;
+      break;
+    }
+    case "rejection": {
+      html = getRejectionEmailHtml(reg, "ยอดเงินในสลิปไม่ตรงกับระยะวิ่งที่เลือก หรือภาพสลิปไม่คมชัด", appUrl);
+      subject = "แจ้งผลการตรวจสอบหลักฐานการโอนเงิน | วิ่ง-ฉาย-แสง (LSEd Running 2569)";
+      break;
+    }
+    case "shipping": {
+      html = getShippingEmailHtml(reg, appUrl);
+      subject = `แจ้งจัดส่งพัสดุเสร็จสิ้น - โครงการ วิ่ง-ฉาย-แสง (LSEd Running 2569) 🚚`;
+      break;
+    }
+    case "reminder":
+    default: {
+      html = getRaceDayReminderEmailHtml(reg, appUrl);
+      subject = `[สำคัญ] เตือนความจำล่วงหน้า 3 วันสู่งาน "วิ่ง-ฉาย-แสง" (LSEd Running 2569) 🏃‍♂️ วันอาทิตย์ที่ 24 มกราคม 2570`;
+      break;
+    }
+  }
+
+  res.json({ subject, html });
+});
+
+// Admin send single runner email
+app.post("/api/admin/send-email", async (req, res) => {
+  const { id, type, testEmail } = req.body;
+  if (!id && !testEmail) {
+    return res.status(400).json({ error: "โปรดระบุรหัสผู้สมัครหรืออีเมลทดสอบ" });
+  }
+
+  try {
+    let reg: Registration | null = null;
+    if (id) {
+      const docSnap = await getDoc(doc(db, "registrations", id));
+      if (docSnap.exists()) {
+        reg = docSnap.data() as Registration;
+      }
+    }
+
+    if (!reg) {
+      reg = {
+        id: "LSEd-TEST01",
+        firstName: "ทดสอบ",
+        lastName: "ระบบอีเมล",
+        email: testEmail || "admin@example.com",
+        phone: "081-000-0000",
+        nationalId: "1100100000000",
+        age: 25,
+        gender: "other",
+        bloodType: "Unknown",
+        emergencyContactName: "ผู้ดูแลระบบ",
+        emergencyContactPhone: "081-000-0000",
+        distance: "REGULAR",
+        shirtSize: "M",
+        status: "approved",
+        price: 555,
+        bibNumber: "LSE-1001",
+        deliveryMethod: "shipping",
+        shippingTrackingNumber: "TH0099887766EMS",
+        shippingCarrier: "thailandpost",
+        createdAt: new Date().toISOString()
+      };
+    }
+
+    const appUrl = req.headers.origin || req.protocol + "://" + req.get("host");
+    const targetRecipient = testEmail || reg.email;
+    let html = "";
+    let subject = "";
+
+    if (type === "reminder") {
+      html = getRaceDayReminderEmailHtml(reg, appUrl);
+      subject = `[สำคัญ] เตือนความจำล่วงหน้า 3 วันสู่งาน "วิ่ง-ฉาย-แสง" (LSEd Running 2569) 🏃‍♂️ วันอาทิตย์ที่ 24 มกราคม 2570`;
+    } else if (type === "payment_received") {
+      html = getPaymentReceivedEmailHtml(reg, appUrl);
+      subject = "แจ้งได้รับหลักฐานการชำระเงินเรียบร้อยแล้ว - อยู่ระหว่างรออนุมัติ | วิ่ง-ฉาย-แสง (LSEd Running 2569)";
+    } else if (type === "approval") {
+      html = getApprovalEmailHtml(reg, appUrl);
+      subject = `🎉 บัตรเข้างาน E-Ticket & หมายเลข BIB (${reg.bibNumber || "LSE-1001"}) | วิ่ง-ฉาย-แสง (LSEd Running 2569)`;
+    } else if (type === "registration") {
+      const settings = await getPaymentSettings();
+      html = getRegistrationEmailHtml(reg, settings, appUrl);
+      subject = "ขั้นตอนที่ 1 / 2 : รอการชำระเงิน | วิ่ง-ฉาย-แสง (LSEd Running 2569)";
+    } else {
+      html = getRaceDayReminderEmailHtml(reg, appUrl);
+      subject = `เตือนความจำก่อนวันงาน | วิ่ง-ฉาย-แสง (LSEd Running 2569)`;
+    }
+
+    const emailPreviewUrl = await sendEmail(targetRecipient, subject, html, {
+      type: type || "reminder",
+      recipientName: `${reg.firstName} ${reg.lastName}`
+    });
+
+    if (id && !testEmail && type === "reminder") {
+      await updateDoc(doc(db, "registrations", id), {
+        reminderSentAt: new Date().toISOString()
+      });
+    }
+
+    res.json({
+      success: true,
+      email: targetRecipient,
+      emailPreviewUrl: emailPreviewUrl || undefined,
+      message: `ส่งอีเมลไปยัง ${targetRecipient} สำเร็จ`
+    });
+  } catch (err: any) {
+    console.error("Error sending admin email:", err);
+    res.status(500).json({ error: "ไม่สามารถส่งอีเมลได้: " + err.message });
+  }
+});
+
+// Get reminder status (3-day countdown metrics)
+app.get("/api/admin/reminder-status", async (req, res) => {
+  try {
+    const registrations = await readDB();
+    const approved = registrations.filter(r => r.status === "approved");
+    const reminderSent = approved.filter(r => !!r.reminderSentAt);
+    
+    // Target event: 24 January 2570 (2027) 05:00 AM
+    const eventTime = new Date("2027-01-24T05:00:00").getTime();
+    const now = Date.now();
+    const diffMs = eventTime - now;
+    const daysUntilRace = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+    const isThreeDaysBefore = daysUntilRace <= 3 && daysUntilRace >= 0;
+
+    res.json({
+      totalApproved: approved.length,
+      reminderSentCount: reminderSent.length,
+      reminderPendingCount: approved.length - reminderSent.length,
+      daysUntilRace,
+      isThreeDaysBefore,
+      recommendedSendDate: "21 มกราคม 2570"
+    });
+  } catch (err: any) {
+    console.error("Error getting reminder status:", err);
+    res.status(500).json({ error: "ไม่สามารถดึงข้อมูลสถานะการแจ้งเตือนได้" });
+  }
+});
+
+// Admin batch send 3-day reminder to approved runners
+app.post("/api/admin/send-batch-reminder", async (req, res) => {
+  const { testEmail, dryRun, targetId, skipAlreadySent = false } = req.body;
+  const appUrl = req.headers.origin || req.protocol + "://" + req.get("host");
+
+  try {
+    const registrations = await readDB();
+    let eligibleRunners = registrations.filter(r => r.status === "approved");
+
+    if (targetId) {
+      eligibleRunners = eligibleRunners.filter(r => r.id === targetId);
+    } else if (skipAlreadySent) {
+      eligibleRunners = eligibleRunners.filter(r => !r.reminderSentAt);
+    }
+
+    if (dryRun) {
+      return res.json({
+        success: true,
+        dryRun: true,
+        count: eligibleRunners.length,
+        recipients: eligibleRunners.map(r => `${r.firstName} ${r.lastName} (${r.email}) - BIB: ${r.bibNumber || "-"}`)
+      });
+    }
+
+    // If testEmail is provided, send one sample test email to testEmail
+    if (testEmail) {
+      const sampleRunner = eligibleRunners[0] || ({
+        id: "LSEd-SAMPLE",
+        firstName: "ทดสอบแอดมิน",
+        lastName: "ธรรมศาสตร์",
+        email: testEmail,
+        phone: "081-234-5678",
+        nationalId: "1100100123456",
+        age: 26,
+        gender: "male",
+        bloodType: "B",
+        emergencyContactName: "ผู้ดูแลระบบ",
+        emergencyContactPhone: "081-234-5678",
+        distance: "REGULAR",
+        shirtSize: "L",
+        status: "approved",
+        price: 555,
+        bibNumber: "LSE-1008",
+        deliveryMethod: "pickup",
+        createdAt: new Date().toISOString()
+      } as Registration);
+
+      const html = getRaceDayReminderEmailHtml(sampleRunner, appUrl);
+      const subject = `[ทดสอบ] [สำคัญ] เตือนความจำล่วงหน้า 3 วันสู่งาน "วิ่ง-ฉาย-แสง" (LSEd Running 2569) 🏃‍♂️ วันอาทิตย์ที่ 24 มกราคม 2570`;
+      const emailPreviewUrl = await sendEmail(testEmail, subject, html, {
+        type: "reminder",
+        recipientName: `${sampleRunner.firstName} ${sampleRunner.lastName}`
+      });
+
+      return res.json({
+        success: true,
+        count: 1,
+        recipients: [testEmail],
+        emailPreviewUrl: emailPreviewUrl || undefined,
+        message: `ส่งอีเมลแจ้งเตือนตัวอย่างไปยัง ${testEmail} สำเร็จเรียบร้อยแล้ว`
+      });
+    }
+
+    // Batch send to all eligible runners
+    const results: string[] = [];
+    let sentCount = 0;
+    let failedCount = 0;
+    let firstPreviewUrl: string | undefined;
+
+    for (const runner of eligibleRunners) {
+      try {
+        const html = getRaceDayReminderEmailHtml(runner, appUrl);
+        const subject = `[สำคัญ] เตือนความจำล่วงหน้า 3 วันสู่งาน "วิ่ง-ฉาย-แสง" (LSEd Running 2569) 🏃‍♂️ วันอาทิตย์ที่ 24 มกราคม 2570`;
+        const previewUrl = await sendEmail(runner.email, subject, html, {
+          type: "reminder",
+          recipientName: `${runner.firstName} ${runner.lastName}`
+        });
+
+        if (previewUrl && !firstPreviewUrl) {
+          firstPreviewUrl = previewUrl;
+        }
+
+        // Record reminderSentAt in Firestore
+        const nowIso = new Date().toISOString();
+        runner.reminderSentAt = nowIso;
+        await updateDoc(doc(db, "registrations", runner.id), {
+          reminderSentAt: nowIso
+        });
+
+        sentCount++;
+        results.push(`${runner.firstName} ${runner.lastName} (${runner.email})`);
+      } catch (err) {
+        console.error(`Failed to send reminder to ${runner.email}:`, err);
+        failedCount++;
+      }
+    }
+
+    res.json({
+      success: true,
+      count: sentCount,
+      failed: failedCount,
+      recipients: results,
+      emailPreviewUrl: firstPreviewUrl,
+      message: `ส่งอีเมลแจ้งเตือนล่วงหน้า 3 วันสำเร็จทั้งหมด ${sentCount} ท่าน${failedCount > 0 ? ` (ไม่สำเร็จ ${failedCount} รายการ)` : ""}`
+    });
+
+  } catch (err: any) {
+    console.error("Error in batch reminder:", err);
+    res.status(500).json({ error: "เกิดข้อผิดพลาดในการส่งอีเมลแจ้งเตือนแบบกลุ่ม: " + err.message });
   }
 });
 
@@ -1532,7 +2316,7 @@ app.post("/api/admin/populate-mock", async (req, res) => {
 
   try {
     const writePromises: Promise<void>[] = mockRunners.map((runner, i) => {
-      const id = `LSED-MOCK0${i + 1}`;
+      const id = `LSEd-MOCK0${i + 1}`;
       const mockReg: Registration = {
         ...runner,
         id

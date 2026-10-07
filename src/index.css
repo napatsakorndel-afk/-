@@ -1,12 +1,119 @@
-@import url("https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;700;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,300;1,400;1,600;1,700;1,800;1,900&family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,600&display=swap");
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
+/* ======================================================== */
+/* 1. TYPOGRAPHY STACK: FC Minimal + Poppins + Prompt       */
+/* ======================================================== */
 
-@theme {
-  --font-sans: 'Kanit', ui-sans-serif, system-ui, sans-serif;
+/* FC Minimal (Regular & Medium 300-500) */
+@font-face {
+  font-family: 'FC Minimal';
+  src: local('FC Minimal'), local('FCMinimal'), local('FC-Minimal'), local('FC Minimal Regular'), local('FC-Minimal-Regular');
+  font-weight: 300 500;
+  font-style: normal;
+  font-display: swap;
 }
 
-body {
-  font-family: 'Kanit', sans-serif;
+/* FC Minimal (SemiBold & Bold 600-900) */
+@font-face {
+  font-family: 'FC Minimal';
+  src: local('FC Minimal Bold'), local('FCMinimal-Bold'), local('FC-Minimal-Bold');
+  font-weight: 600 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* FCMinimal Alias */
+@font-face {
+  font-family: 'FCMinimal';
+  src: local('FC Minimal'), local('FCMinimal'), local('FC-Minimal'), local('FC Minimal Regular');
+  font-weight: 300 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'FCMinimal';
+  src: local('FC Minimal Bold'), local('FCMinimal-Bold'), local('FC-Minimal-Bold');
+  font-weight: 600 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* FC-Minimal Alias */
+@font-face {
+  font-family: 'FC-Minimal';
+  src: local('FC Minimal'), local('FCMinimal'), local('FC-Minimal'), local('FC Minimal Regular');
+  font-weight: 300 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'FC-Minimal';
+  src: local('FC Minimal Bold'), local('FCMinimal-Bold'), local('FC-Minimal-Bold');
+  font-weight: 600 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme {
+  --font-sans: 'Poppins', 'FC Minimal', 'FCMinimal', 'FC-Minimal', 'Prompt', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  
+  /* ======================================================== */
+  /* 2. LSEd Official Identity: Turquoise & Orange            */
+  /* ======================================================== */
+  --color-turquoise-50: #f0fdfa;
+  --color-turquoise-100: #ccfbf1;
+  --color-turquoise-200: #99f6e4;
+  --color-turquoise-300: #5eead4;
+  --color-turquoise-400: #2dd4bf;
+  --color-turquoise-500: #14b8a6;
+  --color-turquoise-600: #0d9488;
+  --color-turquoise-700: #0f766e;
+  --color-turquoise-800: #115e59;
+  --color-turquoise-900: #134e4a;
+  --color-turquoise-950: #042f2e;
+
+  --color-orange-50: #fff7ed;
+  --color-orange-100: #ffedd5;
+  --color-orange-200: #fed7aa;
+  --color-orange-300: #fdba74;
+  --color-orange-400: #fb923c;
+  --color-orange-500: #f97316;
+  --color-orange-600: #ea580c;
+  --color-orange-700: #c2410c;
+  --color-orange-800: #9a3412;
+  --color-orange-900: #7c2d12;
+}
+
+/* Force Pure Light Theme System */
+html, body {
+  background-color: #f8fafb;
+  color: #0f172a;
+  font-family: 'Poppins', 'FC Minimal', 'FCMinimal', 'FC-Minimal', 'Prompt', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Crisp form controls */
+input, select, textarea {
+  color: #0f172a;
+}
+
+/* Smooth Turquoise-Orange aesthetic scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(13, 148, 136, 0.35);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(249, 115, 22, 0.5);
 }
