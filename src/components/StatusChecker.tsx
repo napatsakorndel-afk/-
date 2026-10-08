@@ -462,25 +462,25 @@ export default function StatusChecker({ initialQuery = "", onRefreshStats, initi
     switch (status) {
       case "pending_payment":
         return (
-          <span className="inline-flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">
+          <span className="inline-flex items-center justify-center whitespace-nowrap gap-1.5 bg-amber-100 border border-amber-300 text-amber-800 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-xs">
             <Clock className="w-3.5 h-3.5" /> รอชำระเงิน
           </span>
         );
       case "pending_verification":
         return (
-          <span className="inline-flex items-center gap-1.5 bg-teal-500/10 border border-teal-500/20 text-teal-600 dark:text-teal-400 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full animate-pulse">
+          <span className="inline-flex items-center justify-center whitespace-nowrap gap-1.5 bg-teal-100 border border-teal-300 text-teal-800 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-xs animate-pulse">
             <Clock className="w-3.5 h-3.5 animate-spin" /> ตรวจสอบสลิป
           </span>
         );
       case "approved":
         return (
-          <span className="inline-flex items-center gap-1.5 bg-green-500/10 border border-green-500/20 text-green-400 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">
+          <span className="inline-flex items-center justify-center whitespace-nowrap gap-1.5 bg-emerald-100 border border-emerald-300 text-emerald-800 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-xs">
             <CheckCircle2 className="w-3.5 h-3.5" /> ชำระเงินสำเร็จ
           </span>
         );
       case "rejected":
         return (
-          <span className="inline-flex items-center gap-1.5 bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">
+          <span className="inline-flex items-center justify-center whitespace-nowrap gap-1.5 bg-rose-100 border border-rose-300 text-rose-800 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-xs">
             <XCircle className="w-3.5 h-3.5" /> สลิปไม่ถูกต้อง
           </span>
         );
@@ -490,7 +490,7 @@ export default function StatusChecker({ initialQuery = "", onRefreshStats, initi
   const getDistanceColor = (dist: DistanceType) => {
     switch (dist) {
       case "REGULAR":
-      case "5K": return "bg-teal-600/20 border-teal-500 text-teal-600 dark:text-teal-400";
+      case "5K": return "bg-teal-600/20 border-teal-500 text-teal-700";
       case "vip": return "bg-yellow-500/20 border-yellow-500 text-yellow-400";
       case "vip_duo": return "bg-amber-500/20 border-amber-500 text-amber-400";
       case "vip_trio": return "bg-orange-500/20 border-orange-500 text-orange-400";
@@ -524,62 +524,62 @@ export default function StatusChecker({ initialQuery = "", onRefreshStats, initi
   return (
     <div className="space-y-8 animate-fade-in" id="status-checker">
       {/* Tab Switcher */}
-      <div className="flex border-b border-slate-200 dark:border-white/5 gap-6 mb-2">
+      <div className="flex border-b border-slate-200 gap-6 mb-2">
         <button
           onClick={() => setActiveTab("lookup")}
-          className={`pb-3 text-xs md:text-sm font-black tracking-wider uppercase transition cursor-pointer flex items-center gap-2 ${
+          className={`pb-3.5 text-sm sm:text-base font-black tracking-wider uppercase transition cursor-pointer flex items-center gap-2 ${
             activeTab === "lookup"
-              ? "text-teal-600 dark:text-teal-400 border-b-2 border-teal-500"
-              : "text-slate-400 dark:text-white/40 hover:text-slate-600 dark:text-white/70"
+              ? "text-teal-700 border-b-2 border-teal-500"
+              : "text-slate-600 hover:text-slate-800"
           }`}
         >
-          <SearchCheck className="w-4 h-4 text-teal-600 dark:text-teal-400" /> ตรวจสอบสิทธิ์ & แจ้งชำระเงิน
+          <SearchCheck className="w-5 h-5 text-teal-700" /> ตรวจสอบสิทธิ์ & แจ้งชำระเงิน
         </button>
         <button
           onClick={() => setActiveTab("shipping")}
-          className={`pb-3 text-xs md:text-sm font-black tracking-wider uppercase transition cursor-pointer flex items-center gap-2 ${
+          className={`pb-3.5 text-sm sm:text-base font-black tracking-wider uppercase transition cursor-pointer flex items-center gap-2 ${
             activeTab === "shipping"
-              ? "text-teal-600 dark:text-teal-400 border-b-2 border-teal-500"
-              : "text-slate-400 dark:text-white/40 hover:text-slate-600 dark:text-white/70"
+              ? "text-teal-700 border-b-2 border-teal-500"
+              : "text-slate-600 hover:text-slate-800"
           }`}
         >
-          <Truck className="w-4 h-4 text-teal-600 dark:text-teal-400" /> ตรวจสอบเลขจัดส่งไปรษณีย์
+          <Truck className="w-5 h-5 text-teal-700" /> ตรวจสอบเลขจัดส่งไปรษณีย์
         </button>
       </div>
 
       {activeTab === "lookup" && (
         <>
           {/* Search Bar section */}
-      <section className="bg-gradient-to-br from-neutral-950 via-zinc-900 to-indigo-950 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
+      <section className="bg-gradient-to-br from-teal-50/80 via-white to-orange-50/60 border border-teal-500/20 text-slate-900 rounded-3xl p-6 md:p-8 shadow-xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-40 h-40 bg-teal-500/10 rounded-full blur-3xl"></div>
         <div className="relative z-10 max-w-2xl space-y-4">
-          <h2 className="text-xl md:text-2xl font-black italic uppercase tracking-wider flex items-center gap-2 text-slate-900 dark:text-white">
-            <SearchCheck className="w-6 h-6 text-teal-600 dark:text-teal-400" /> ตรวจสอบสถานะและชำระเงินออนไลน์ <Sparkles className="w-5 h-5 text-orange-500 animate-pulse" />
+          <h2 className="text-xl md:text-2xl font-black italic uppercase tracking-wider flex items-center gap-2 text-slate-900">
+            <SearchCheck className="w-6 h-6 text-teal-700" /> ตรวจสอบสถานะและชำระเงินออนไลน์ <Sparkles className="w-5 h-5 text-orange-500 animate-pulse" />
           </h2>
-          <p className="text-xs text-slate-400 dark:text-white/50 leading-relaxed font-light">
-            กรอกข้อมูลสืบค้น เช่น **เลขบัตรประชาชน / อีเมล / เบอร์โทรศัพท์** หรือ **รหัสอ้างอิงการสมัคร** (เช่น LSEd-XXXXXX) เพื่อตรวจสอบสิทธิ์หรือแนบหลักฐานการโอนเงิน
+          <p className="text-sm sm:text-base text-slate-700 leading-relaxed font-normal">
+            กรอกข้อมูลสืบค้น เช่น <strong>เลขบัตรประชาชน, อีเมล หรือเบอร์โทรศัพท์</strong> หรือ <strong>รหัสอ้างอิงการสมัคร</strong> (เช่น LSEd-XXXXXX) เพื่อตรวจสอบสิทธิ์หรือแนบหลักฐานการโอนเงิน
           </p>
 
           <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 pt-2">
             <div className="relative flex-grow">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-white/40" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600" />
               <input 
                 type="text" 
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="กรอกเบอร์โทร, เลขบัตรประชาชน หรือ รหัสลงทะเบียน..."
-                className="w-full pl-11 pr-4 py-3.5 bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-sm placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-teal-500/25 focus:border-teal-500 transition"
+                className="w-full pl-11 pr-4 py-3.5 bg-white border border-slate-300 text-slate-900 rounded-xl text-base placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition shadow-xs"
                 id="search-input"
               />
             </div>
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-3.5 bg-teal-600 hover:bg-teal-500 text-white font-black uppercase tracking-widest text-xs rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 shadow-lg shadow-teal-500/20 min-w-[120px]"
+              className="px-6 py-3.5 bg-teal-600 hover:bg-teal-500 text-white font-black uppercase tracking-widest text-sm rounded-xl transition cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-teal-500/20 min-w-[130px]"
               id="search-submit"
             >
               {loading ? (
-                <svg className="animate-spin h-5 w-5 text-slate-900 dark:text-white" fill="none" viewBox="0 0 24 24">
+                <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                 </svg>
@@ -593,12 +593,12 @@ export default function StatusChecker({ initialQuery = "", onRefreshStats, initi
 
       {/* Error State */}
       {error && (
-        <div className="p-5 bg-red-500/10 border border-red-500/20 text-red-200 rounded-2xl flex items-start gap-3.5 shadow-sm max-w-2xl mx-auto">
-          <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+        <div className="p-5 bg-red-500/10 border border-red-500/20 text-red-900 rounded-2xl flex items-start gap-3.5 shadow-sm max-w-2xl mx-auto">
+          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
           <div className="space-y-1">
-            <p className="font-bold">ตรวจสอบข้อมูลไม่สำเร็จ</p>
-            <p className="text-xs text-red-300/80">{error}</p>
-            <p className="text-[10px] text-slate-400 dark:text-white/40 mt-2 pt-2 border-t border-slate-200 dark:border-white/5 font-light">
+            <p className="font-black text-red-800 text-base">ตรวจสอบข้อมูลไม่สำเร็จ</p>
+            <p className="text-sm sm:text-base text-red-700 font-medium">{error}</p>
+            <p className="text-sm text-slate-700 mt-2 pt-2 border-t border-slate-200 font-normal">
               * โปรดตรวจสอบตัวสะกดหรือกรอกเบอร์โทรและรหัสผู้สมัครให้ตรงตามที่ลงทะเบียนไว้ครั้งแรก หรือสมัครใหม่อีกครั้งผ่านหน้าหลัก
             </p>
           </div>
@@ -608,7 +608,7 @@ export default function StatusChecker({ initialQuery = "", onRefreshStats, initi
       {/* Results Selection Grid */}
       {registrations.length > 1 && (
         <div className="space-y-3 max-w-2xl mx-auto">
-          <p className="text-[10px] font-black text-slate-400 dark:text-white/50 uppercase tracking-widest">พบข้อมูลลงทะเบียนซ้ำซ้อน ({registrations.length} รายการ)</p>
+          <p className="text-sm font-black text-slate-800 uppercase tracking-widest">พบข้อมูลลงทะเบียนซ้ำซ้อน <span className="text-xs font-normal text-slate-500 ml-1">({registrations.length} รายการ)</span></p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {registrations.map((reg) => (
               <button
@@ -616,14 +616,14 @@ export default function StatusChecker({ initialQuery = "", onRefreshStats, initi
                 onClick={() => { setSelectedReg(reg); setUploadSuccess(false); setUploadError(null); }}
                 className={`p-4 rounded-xl border text-left transition flex justify-between items-center ${
                   selectedReg?.id === reg.id
-                    ? "border-teal-500 bg-teal-500/10 text-slate-900 dark:text-white"
-                    : "border-slate-200 dark:border-white/10 hover:border-white/20 bg-slate-50 dark:bg-white/5 text-slate-900 dark:text-white/80"
+                    ? "border-teal-500 bg-teal-500/10 text-slate-900 shadow-sm"
+                    : "border-slate-200 hover:border-teal-300 bg-slate-50 text-slate-900"
                 }`}
               >
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400 dark:text-white/40 font-mono">{reg.id}</p>
-                  <p className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">{reg.firstName} {reg.lastName}</p>
-                  <p className="text-[10px] text-teal-600 dark:text-teal-400 font-bold mt-1 uppercase tracking-wider">{getDistanceLabel(reg.distance)}</p>
+                  <p className="text-xs sm:text-sm font-bold text-slate-600">{reg.id}</p>
+                  <p className="text-base font-extrabold text-slate-900 mt-0.5">{reg.firstName} {reg.lastName}</p>
+                  <p className="text-xs sm:text-sm text-teal-700 font-black mt-1 uppercase tracking-wider">{getDistanceLabel(reg.distance)}</p>
                 </div>
                 <div>
                   {getStatusBadge(reg.status)}
@@ -642,18 +642,18 @@ export default function StatusChecker({ initialQuery = "", onRefreshStats, initi
           <div className="lg:col-span-7 space-y-6">
             
             {/* Participant Card */}
-            <div className="bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-3xl p-6 md:p-8 shadow-xl space-y-6 text-slate-900 dark:text-white">
-              <div className="flex flex-col sm:flex-row justify-between items-start gap-4 border-b border-slate-200 dark:border-white/5 pb-5">
+            <div className="bg-slate-100 border border-slate-200 rounded-3xl p-6 md:p-8 shadow-xl space-y-6 text-slate-900">
+              <div className="flex flex-col sm:flex-row justify-between items-start gap-4 border-b border-slate-200 pb-5">
                 <div>
-                  <p className="text-[10px] text-slate-400 dark:text-white/40 font-bold tracking-widest uppercase font-mono">{selectedReg.id}</p>
-                  <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-1 uppercase tracking-tight">
+                  <p className="text-sm font-black text-slate-600 tracking-widest uppercase">{selectedReg.id}</p>
+                  <h3 className="text-2xl md:text-3xl font-black text-slate-900 mt-1 uppercase tracking-tight">
                     {selectedReg.firstName} {selectedReg.lastName}
                   </h3>
-                  <p className="text-xs text-slate-400 dark:text-white/50 font-semibold mt-1 font-mono">เลขบัตร ปชช./พาสปอร์ต: {selectedReg.nationalId}</p>
+                  <p className="text-sm sm:text-base text-slate-700 font-bold mt-1.5">เลขประจำตัวบัตร: <span className="font-mono text-slate-900">{selectedReg.nationalId}</span></p>
                 </div>
-                <div className="flex flex-col sm:items-end gap-2">
+                <div className="flex flex-col sm:items-end gap-2.5">
                   {getStatusBadge(selectedReg.status)}
-                  <span className={`text-[10px] font-black px-3 py-1 rounded-full border uppercase tracking-wider ${getDistanceColor(selectedReg.distance)}`}>
+                  <span className={`text-xs sm:text-sm font-black px-3.5 py-1.5 rounded-full border uppercase tracking-wider ${getDistanceColor(selectedReg.distance)}`}>
                     {getDistanceLabel(selectedReg.distance)}
                   </span>
                 </div>
@@ -661,23 +661,23 @@ export default function StatusChecker({ initialQuery = "", onRefreshStats, initi
 
               {/* Sandbox Bypass Action */}
               {selectedReg.status !== "approved" && (
-                <div className="p-4 bg-amber-500/10 border border-amber-500/20 text-amber-200 rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-3 text-xs leading-relaxed">
-                  <div className="flex items-start gap-2.5 text-left">
-                    <Sparkles className="w-5 h-5 text-amber-400 flex-shrink-0 animate-pulse mt-0.5" />
+                <div className="p-4 bg-amber-500/10 border border-amber-500/25 text-amber-950 rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-3 text-sm leading-relaxed">
+                  <div className="flex items-start gap-3 text-left">
+                    <Sparkles className="w-5 h-5 text-amber-600 flex-shrink-0 animate-pulse mt-0.5" />
                     <div>
-                      <p className="font-bold text-amber-300">🧪 ข้ามขั้นตอนตรวจสอบ (โหมดทดสอบ)</p>
-                      <p className="text-slate-500 dark:text-white/60 mt-0.5">กดปุ่มด้านขวาเพื่อทำการอนุมัติสลิปและออกหมายเลข BIB จำลองอัตโนมัติทันที เพื่อทดลองระบบดาวน์โหลด E-Ticket และ E-BIB</p>
+                      <p className="font-black text-amber-900 text-base">🧪 ข้ามขั้นตอนตรวจสอบ <span className="text-xs font-semibold text-amber-800 ml-1">(โหมดทดสอบ)</span></p>
+                      <p className="text-slate-700 mt-0.5 font-medium">กดปุ่มด้านขวาเพื่อทำการอนุมัติสลิปและออกหมายเลข BIB จำลองอัตโนมัติทันที เพื่อทดลองระบบดาวน์โหลด E-Ticket และ E-BIB</p>
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={handleSandboxApprove}
                     disabled={sandboxApproving}
-                    className="w-full sm:w-auto px-4 py-2 bg-amber-500 hover:bg-amber-400 disabled:bg-amber-500/40 text-black font-black text-[11px] uppercase tracking-wider rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 shrink-0 shadow-lg shadow-amber-500/15"
+                    className="w-full sm:w-auto px-5 py-2.5 bg-amber-500 hover:bg-amber-400 disabled:bg-amber-500/40 text-slate-900 font-black text-sm uppercase tracking-wider rounded-xl transition cursor-pointer flex items-center justify-center gap-2 shrink-0 shadow-lg shadow-amber-500/15"
                   >
                     {sandboxApproving ? (
                       <>
-                        <svg className="animate-spin h-3.5 w-3.5 text-black" fill="none" viewBox="0 0 24 24">
+                        <svg className="animate-spin h-4 w-4 text-slate-900" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                         </svg>
@@ -692,60 +692,68 @@ export default function StatusChecker({ initialQuery = "", onRefreshStats, initi
 
               {/* Dynamic instruction or rejection alerts */}
               {selectedReg.status === "rejected" && selectedReg.rejectionReason && (
-                <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-200 rounded-2xl flex items-start gap-3 text-xs leading-relaxed">
-                  <ShieldAlert className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                <div className="p-4 bg-red-500/10 border border-red-500/25 text-red-950 rounded-2xl flex items-start gap-3.5 text-sm sm:text-base leading-relaxed">
+                  <ShieldAlert className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-bold text-red-300">สาเหตุที่หลักฐานไม่ผ่านการอนุมัติ:</p>
-                    <p className="text-red-200 mt-1 font-medium">{selectedReg.rejectionReason}</p>
-                    <p className="text-slate-400 dark:text-white/40 mt-2">กรุณาดาวน์โหลดหรือสแกนคิวอาร์โค้ด และแนบไฟล์หลักฐานสลิปการโอนเงินฉบับแก้ไขที่อ่างอิงยอดโอนตรงกันด้านล่างใหม่อีกครั้ง</p>
+                    <p className="font-black text-red-900 text-base">สาเหตุที่หลักฐานไม่ผ่านการอนุมัติ:</p>
+                    <p className="text-red-800 mt-1 font-bold">{selectedReg.rejectionReason}</p>
+                    <p className="text-slate-700 mt-2 font-medium">กรุณาดาวน์โหลดหรือสแกนคิวอาร์โค้ด และแนบไฟล์หลักฐานสลิปการโอนเงินฉบับแก้ไขที่อ้างอิงยอดโอนตรงกันด้านล่างใหม่อีกครั้ง</p>
                   </div>
                 </div>
               )}
 
               {selectedReg.status === "pending_verification" && (
-                <div className="p-4 bg-teal-500/10 border border-teal-500/20 text-teal-700 dark:text-teal-200 rounded-2xl flex items-start gap-3 text-xs leading-relaxed font-light">
-                  <Clock className="w-4 h-4 text-teal-600 dark:text-teal-400 flex-shrink-0 mt-0.5 animate-spin" />
+                <div className="p-4 bg-teal-500/10 border border-teal-500/25 text-teal-950 rounded-2xl flex items-start gap-3.5 text-sm sm:text-base leading-relaxed font-normal">
+                  <Clock className="w-5 h-5 text-teal-700 flex-shrink-0 mt-0.5 animate-spin" />
                   <div>
-                    <p className="font-bold text-teal-700 dark:text-teal-300">อยู่ระหว่างรอดำเนินการตรวจสอบข้อมูลหลักฐานสลิป</p>
-                    <p className="text-slate-500 dark:text-white/60 mt-1">เจ้าหน้าที่จะเร่งดำเนินการตรวจเช็คยอดเงินและอัปเดตหมายเลข BIB ของท่านโดยด่วนที่สุด (ปกติภายใน 12-24 ชั่วโมง) หากผ่านการอนุมัติ บัตรรันเนอร์การ์ด BIB และบาร์โค้ดทางการจะแสดงผลด้านขวาทันที</p>
+                    <p className="font-black text-teal-800 text-base">อยู่ระหว่างรอดำเนินการตรวจสอบข้อมูลหลักฐานสลิป</p>
+                    <p className="text-slate-700 mt-1 font-normal">เจ้าหน้าที่จะเร่งดำเนินการตรวจเช็คยอดเงินและอัปเดตหมายเลข BIB ของท่านโดยด่วนที่สุด <span className="text-xs font-semibold text-slate-500 ml-1">(ปกติภายใน 12-24 ชั่วโมง)</span> หากผ่านการอนุมัติ บัตรรันเนอร์การ์ด BIB และบาร์โค้ดทางการจะแสดงผลด้านขวาทันที</p>
                   </div>
                 </div>
               )}
 
               {selectedReg.status === "approved" && (
-                <div className="p-4 bg-green-500/10 border border-green-500/20 text-green-200 rounded-2xl flex items-start gap-3 text-xs leading-relaxed font-light">
-                  <CheckCircle2 className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
+                <div className="p-4 bg-green-500/10 border border-green-500/25 text-green-950 rounded-2xl flex items-start gap-3.5 text-sm sm:text-base leading-relaxed font-normal">
+                  <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-bold text-green-300">ยืนยันความถูกต้องและชำระเงินเรียบร้อยแล้ว!</p>
-                    <p className="text-slate-500 dark:text-white/60 mt-1">ระบบได้อนุมัติหมายเลขบิ๊บวิ่งทางการให้แก่คุณเรียบร้อยแล้ว ท่านสามารถกดบันทึกหรือพิมพ์บัตรรันเนอร์การ์ดเพื่อนำมาเป็นหลักฐานยื่นรับเสื้อวิ่งจริงและบิ๊บจริงในวันจัดกิจกรรม ณ มธ. รังสิต</p>
+                    <p className="font-black text-green-900 text-base">ยืนยันความถูกต้องและชำระเงินเรียบร้อยแล้ว!</p>
+                    <p className="text-slate-700 mt-1 font-normal">ระบบได้อนุมัติหมายเลขบิ๊บวิ่งทางการให้แก่คุณเรียบร้อยแล้ว ท่านสามารถกดบันทึกหรือพิมพ์บัตรรันเนอร์การ์ดเพื่อนำมาเป็นหลักฐานยื่นรับเสื้อวิ่งจริงและบิ๊บจริงในวันจัดกิจกรรม ณ มธ. รังสิต</p>
                   </div>
                 </div>
               )}
 
-              {/* Personal specs breakdown */}
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-6 text-xs font-light">
-                <div>
-                  <span className="text-[10px] text-slate-400 dark:text-white/40 block font-bold uppercase tracking-wider">เบอร์โทรศัพท์</span>
-                  <span className="font-bold text-slate-900 dark:text-white text-sm">{selectedReg.phone}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-slate-400 dark:text-white/40 block font-bold uppercase tracking-wider">อีเมลผู้สมัคร</span>
-                  <span className="font-bold text-slate-900 dark:text-white text-sm">{selectedReg.email}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-slate-400 dark:text-white/40 block font-bold uppercase tracking-wider">ขนาดเสื้อวิ่ง</span>
-                  <span className="font-black text-teal-600 dark:text-teal-400 text-sm">{selectedReg.shirtSize}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-slate-400 dark:text-white/40 block font-bold uppercase tracking-wider">อายุ / กรุ๊ปเลือด</span>
-                  <span className="font-bold text-slate-900 dark:text-white text-sm">{selectedReg.age} ปี / กรุ๊ป {selectedReg.bloodType}</span>
-                </div>
-                <div className="col-span-2">
-                  <span className="text-[10px] text-slate-400 dark:text-white/40 block font-bold uppercase tracking-wider">ผู้ติดต่อฉุกเฉิน</span>
-                  <span className="font-bold text-slate-900 dark:text-white text-sm">
-                    {selectedReg.emergencyContactName} ({selectedReg.emergencyContactPhone})
-                  </span>
-                </div>
+              {/* Personal specs breakdown - Structured Data Table */}
+              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
+                <table className="w-full text-left border-collapse text-sm sm:text-base">
+                  <tbody className="divide-y divide-slate-100">
+                    <tr className="hover:bg-slate-50/50 transition">
+                      <td className="px-5 py-3.5 bg-slate-50 text-slate-700 font-bold w-1/3 sm:w-1/4 whitespace-nowrap">เบอร์โทรศัพท์</td>
+                      <td className="px-5 py-3.5 text-slate-900 font-bold">{selectedReg.phone}</td>
+                    </tr>
+                    <tr className="hover:bg-slate-50/50 transition">
+                      <td className="px-5 py-3.5 bg-slate-50 text-slate-700 font-bold whitespace-nowrap">อีเมลผู้สมัคร</td>
+                      <td className="px-5 py-3.5 text-slate-900 font-bold">{selectedReg.email}</td>
+                    </tr>
+                    <tr className="hover:bg-slate-50/50 transition">
+                      <td className="px-5 py-3.5 bg-slate-50 text-slate-700 font-bold whitespace-nowrap">ขนาดเสื้อวิ่ง</td>
+                      <td className="px-5 py-3.5 text-teal-700 font-black">{selectedReg.shirtSize}</td>
+                    </tr>
+                    <tr className="hover:bg-slate-50/50 transition">
+                      <td className="px-5 py-3.5 bg-slate-50 text-slate-700 font-bold whitespace-nowrap">อายุ</td>
+                      <td className="px-5 py-3.5 text-slate-900 font-bold">{selectedReg.age} ปี</td>
+                    </tr>
+                    <tr className="hover:bg-slate-50/50 transition">
+                      <td className="px-5 py-3.5 bg-slate-50 text-slate-700 font-bold whitespace-nowrap">กรุ๊ปเลือด</td>
+                      <td className="px-5 py-3.5 text-slate-900 font-bold">กรุ๊ป {selectedReg.bloodType}</td>
+                    </tr>
+                    <tr className="hover:bg-slate-50/50 transition">
+                      <td className="px-5 py-3.5 bg-slate-50 text-slate-700 font-bold whitespace-nowrap">ผู้ติดต่อฉุกเฉิน</td>
+                      <td className="px-5 py-3.5 text-slate-900 font-bold">
+                        {selectedReg.emergencyContactName} <span className="text-xs sm:text-sm font-semibold text-slate-600 ml-1.5">({selectedReg.emergencyContactPhone})</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
 
@@ -753,7 +761,7 @@ export default function StatusChecker({ initialQuery = "", onRefreshStats, initi
             {selectedReg.status === "pending_payment" && paymentExpired ? (
               <div className="bg-red-950/40 border border-red-500/20 rounded-3xl p-6 md:p-8 shadow-xl text-center space-y-4">
                 <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
-                <h3 className="text-xl font-black text-slate-900 dark:text-white">หมดเวลาชำระเงิน</h3>
+                <h3 className="text-xl font-black text-slate-900">หมดเวลาชำระเงิน</h3>
                 <p className="text-red-200/80 text-sm">
                   รายการลงทะเบียนนี้เกินกำหนดเวลา 9 นาทีแล้ว กรุณาทำการสมัครใหม่อีกครั้ง
                 </p>
@@ -765,15 +773,15 @@ export default function StatusChecker({ initialQuery = "", onRefreshStats, initi
                 </button>
               </div>
             ) : (selectedReg.status === "pending_payment" || selectedReg.status === "rejected") && (
-              <div className="bg-white dark:bg-neutral-950/40 border border-slate-200 dark:border-white/5 rounded-3xl p-6 md:p-8 shadow-xl space-y-6 text-slate-900 dark:text-white" id="payment-gateway">
+              <div className="bg-white border border-slate-200 rounded-3xl shadow-md p-6 md:p-8 shadow-xl space-y-6 text-slate-900" id="payment-gateway">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                  <h3 className="text-base font-black italic uppercase tracking-wider flex items-center gap-2 text-slate-900 dark:text-white">
-                    <CreditCard className="w-5 h-5 text-teal-600 dark:text-teal-400" /> ชำระเงินค่าสมัครวิ่ง
+                  <h3 className="text-base font-black italic uppercase tracking-wider flex items-center gap-2 text-slate-900">
+                    <CreditCard className="w-5 h-5 text-teal-700" /> ชำระเงินค่าสมัครวิ่ง
                   </h3>
                   {selectedReg.status === "pending_payment" && paymentTimeLeft && (
                     <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 px-4 py-2 rounded-xl">
                       <Clock className="w-4 h-4 text-red-400 animate-pulse" />
-                      <span className="text-red-400 font-mono font-bold text-sm">
+                      <span className="text-red-400 font-bold text-sm">
                         เหลือเวลา {String(paymentTimeLeft.minutes).padStart(2, '0')}:{String(paymentTimeLeft.seconds).padStart(2, '0')}
                       </span>
                     </div>
@@ -783,7 +791,7 @@ export default function StatusChecker({ initialQuery = "", onRefreshStats, initi
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 items-center">
                   
                   {/* PromptPay QR Simulation Card / Uploaded Slip */}
-                  <div className="sm:col-span-5 bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-3xl overflow-hidden flex flex-col items-center shadow-2xl relative" id="ttb-promptpay-slip">
+                  <div className="sm:col-span-5 bg-slate-100  border border-slate-200 rounded-3xl overflow-hidden flex flex-col items-center shadow-2xl relative" id="ttb-promptpay-slip">
                     {selectedReg.paymentQrImage && !selectedReg.paymentQrImage.includes('api.qrserver.com') ? (
                       <div className="w-full flex items-center justify-center bg-white h-full relative p-2">
                         <img 
@@ -797,7 +805,7 @@ export default function StatusChecker({ initialQuery = "", onRefreshStats, initi
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
                           </span>
-                          <span className="text-[10px] font-black tracking-widest text-[#004684] uppercase font-mono">
+                          <span className="text-xs font-black tracking-widest text-[#004684] uppercase">
                             REF ID: {selectedReg.id}
                           </span>
                         </div>
@@ -808,7 +816,7 @@ export default function StatusChecker({ initialQuery = "", onRefreshStats, initi
                         <div className="w-full bg-[#004684] py-3 px-4 flex items-center justify-between text-white border-b border-blue-900">
                           <div className="flex items-center gap-1.5">
                             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                            <span className="text-[9px] font-black tracking-widest uppercase font-mono text-white/95">THAI QR PAYMENT</span>
+                            <span className="text-[9px] font-black tracking-widest uppercase text-white/95">THAI QR PAYMENT</span>
                           </div>
                           <QrCode className="w-3.5 h-3.5 text-white/80" />
                         </div>
@@ -832,38 +840,40 @@ export default function StatusChecker({ initialQuery = "", onRefreshStats, initi
                           </div>
 
                           {/* Save QR Code Button */}
-                          <div className="mt-3 w-full max-w-[240px]">
+                          <div className="mt-3.5 w-full max-w-[260px]">
                             <a 
                               href={`/api/qr-download?payload=${encodeURIComponent(selectedReg.qrPayload || generatePromptPayPayload("0830131768", selectedReg.price))}`} download="PromptPay_QR.png"
-                              className="flex items-center justify-center gap-1.5 w-full bg-teal-600 hover:bg-teal-500 text-white py-2 rounded-xl text-xs font-bold transition shadow-sm"
+                              className="flex items-center justify-center gap-2 w-full bg-teal-600 hover:bg-teal-500 text-white py-2.5 rounded-xl text-sm font-bold transition shadow-sm"
                             >
-                              <Download className="w-3.5 h-3.5" /> บันทึกคิวอาร์โค้ด
+                              <Download className="w-4 h-4" /> บันทึกคิวอาร์โค้ด
                             </a>
                           </div>
     
                           {/* Account Owner Details */}
-                          <div className="mt-4 text-center space-y-0.5">
-                            <p className="text-xs font-black text-[#002d63] tracking-wide max-w-[180px] truncate mx-auto">
+                          <div className="mt-4 text-center space-y-1 w-full px-2">
+                            <p className="text-sm sm:text-base font-black text-[#002d63] tracking-wide break-words">
                               {selectedReg.paymentAccountName || selectedReg.qrAccountName || "นาย นภัสกร กลิ่นเฟื่อง"}
                             </p>
-                            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider font-mono">
+                            <p className="text-xs sm:text-sm font-extrabold text-slate-600 uppercase tracking-wider">
                               {selectedReg.paymentBankName || "PROMPTPAY MERCHANT"}
                             </p>
                           </div>
     
                           {/* Price and reference details */}
-                          <div className="mt-3 pt-2.5 border-t border-dashed border-slate-200 w-full text-center">
-                            <p className="text-xl font-black text-[#004684] font-mono tracking-tight">{selectedReg.price.toFixed(2)} THB</p>
-                            <p className="text-[9px] text-slate-400 font-bold font-mono tracking-wider">REF ID: {selectedReg.id}</p>
+                          <div className="mt-3.5 pt-3 border-t border-dashed border-slate-200 w-full text-center">
+                            <p className="text-3xl sm:text-4xl font-black text-[#004684] tracking-tight font-sans">
+                              {selectedReg.price.toFixed(2)} <span className="text-base sm:text-lg font-bold text-slate-500 font-sans">THB</span>
+                            </p>
+                            <p className="text-xs text-slate-500 font-bold tracking-wider mt-1 font-mono">REF ID: {selectedReg.id}</p>
                           </div>
                         </div>
     
                         {/* Footer */}
-                        <div className="w-full bg-[#004684] py-2.5 px-4 flex items-center justify-between text-white text-[10px] border-t border-blue-900/40">
-                          <span className="font-semibold text-white/90">ชำระผ่าน {selectedReg.paymentBankName || "PromptPay"}</span>
+                        <div className="w-full bg-[#004684] py-3 px-4 flex items-center justify-between text-white text-xs sm:text-sm border-t border-blue-900/40">
+                          <span className="font-bold text-white/95">ชำระผ่าน {selectedReg.paymentBankName || "PromptPay"}</span>
                           {/* Custom styled bank badge */}
                           <div className="flex items-center gap-1.5">
-                            <span className="font-black tracking-tighter text-xs uppercase text-white bg-[#002d63] px-2 py-0.5 rounded border border-white/20">THAI QR</span>
+                            <span className="font-black tracking-tighter text-xs uppercase text-white bg-[#002d63] px-2.5 py-1 rounded border border-white/20">THAI QR</span>
                           </div>
                         </div>
                       </>
@@ -871,29 +881,29 @@ export default function StatusChecker({ initialQuery = "", onRefreshStats, initi
                   </div>
 
                   {/* Payment Details & Upload */}
-                  <div className="sm:col-span-7 space-y-4 text-xs text-slate-600 dark:text-white/70 leading-relaxed font-light">
-                    <div className="space-y-1 bg-slate-50 dark:bg-white/5 p-4 rounded-xl border border-slate-200 dark:border-white/5">
-                      <p className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider mb-2">
+                  <div className="sm:col-span-7 space-y-5 text-sm sm:text-base text-slate-800 leading-relaxed font-normal">
+                    <div className="space-y-2 bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                      <p className="font-extrabold text-slate-900 text-sm sm:text-base uppercase tracking-wider mb-2">
                         รายละเอียดบัญชี {selectedReg.taxDeduction || selectedReg.distance === "donation" ? "(ลดหย่อนภาษี e-Donation)" : "(บัญชีทั่วไป)"}:
                       </p>
-                      <p className="text-slate-500 dark:text-white/60">
-                        บัญชีรับเงิน: <strong className="text-slate-900 dark:text-white font-bold">{selectedReg.paymentAccountName || "นาย นภัสกร กลิ่นเฟื่อง"}</strong>
+                      <p className="text-slate-700">
+                        บัญชีรับเงิน: <strong className="text-slate-900 font-extrabold">{selectedReg.paymentAccountName || "นาย นภัสกร กลิ่นเฟื่อง"}</strong>
                       </p>
-                      <p className="text-slate-500 dark:text-white/60">
-                        ธนาคาร: <strong className="text-slate-900 dark:text-white font-bold">{selectedReg.paymentBankName || "ทหารไทยธนชาต (ttb)"}</strong>
+                      <p className="text-slate-700">
+                        ธนาคาร: <strong className="text-slate-900 font-extrabold">{selectedReg.paymentBankName || "ทหารไทยธนชาต (ttb)"}</strong>
                       </p>
-                      <p className="text-slate-500 dark:text-white/60">
-                        เลขที่บัญชีโอนตรง: <strong className="text-teal-600 dark:text-teal-400 font-black font-mono text-sm tracking-wider block mt-1">
+                      <p className="text-slate-700">
+                        เลขที่บัญชีโอนตรง: <strong className="text-teal-700 font-black text-base sm:text-lg tracking-wider block mt-1">
                           {selectedReg.paymentAccountNo || "ttb PromptPay QR"}
                         </strong>
                       </p>
                     </div>
 
                     {/* File Upload interactive zone */}
-                    <div className="space-y-2 pt-2">
-                      <p className="font-bold text-slate-900 dark:text-white text-[10px] uppercase tracking-widest">แนบหลักฐานสลิปโอนเงิน:</p>
+                    <div className="space-y-2.5 pt-2">
+                      <p className="font-black text-slate-900 text-sm sm:text-base uppercase tracking-widest">แนบหลักฐานสลิปโอนเงิน:</p>
                       
-                      <label className="border-2 border-dashed border-slate-200 dark:border-white/10 hover:border-teal-500 bg-slate-50 dark:bg-white/5 hover:bg-teal-500/5 rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer transition text-center aspect-video relative overflow-hidden group">
+                      <label className="border-2 border-dashed border-slate-300 hover:border-teal-500 bg-slate-50 hover:bg-teal-500/5 rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer transition text-center min-h-[160px] relative overflow-hidden group">
                         <input 
                           type="file" 
                           accept="image/*" 
@@ -902,34 +912,34 @@ export default function StatusChecker({ initialQuery = "", onRefreshStats, initi
                           className="sr-only"
                         />
                         {uploading ? (
-                          <div className="space-y-2 flex flex-col items-center">
-                            <svg className="animate-spin h-8 w-8 text-teal-600 dark:text-teal-400" fill="none" viewBox="0 0 24 24">
+                          <div className="space-y-2.5 flex flex-col items-center">
+                            <svg className="animate-spin h-8 w-8 text-teal-700" fill="none" viewBox="0 0 24 24">
                               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                             </svg>
-                            <p className="text-xs text-slate-400 dark:text-white/50 font-bold animate-pulse">กำลังตรวจสอบและส่งรูปภาพสลิป...</p>
+                            <p className="text-sm font-bold text-slate-700 animate-pulse">กำลังตรวจสอบและส่งรูปภาพสลิป...</p>
                           </div>
                         ) : (
                           <div className="space-y-2 flex flex-col items-center">
-                            <UploadCloud className="w-8 h-8 text-slate-400 dark:text-white/40 group-hover:text-teal-600 dark:text-teal-400 group-hover:scale-110 transition duration-200" />
-                            <p className="text-xs font-black text-slate-900 dark:text-white">คลิกเพื่ออัปโหลด หรือ ลากไฟล์สลิปมาวางที่นี่</p>
-                            <p className="text-[10px] text-slate-400 dark:text-white/40">รองรับไฟล์ JPG, PNG ขนาดไม่เกิน 5MB</p>
+                            <UploadCloud className="w-10 h-10 text-slate-600 group-hover:text-teal-700 group-hover:scale-110 transition duration-200" />
+                            <p className="text-sm sm:text-base font-extrabold text-slate-900">คลิกเพื่ออัปโหลด หรือ ลากไฟล์สลิปมาวางที่นี่</p>
+                            <p className="text-xs sm:text-sm text-slate-600 font-medium">รองรับไฟล์ JPG, PNG ขนาดไม่เกิน 5MB</p>
                           </div>
                         )}
                       </label>
 
                       {uploadError && (
-                        <p className="text-xs font-bold text-red-400 flex items-center gap-1 mt-1.5">
-                          <AlertCircle className="w-3.5 h-3.5" /> {uploadError}
+                        <p className="text-sm font-bold text-red-600 flex items-center gap-1.5 mt-2">
+                          <AlertCircle className="w-4 h-4 shrink-0" /> {uploadError}
                         </p>
                       )}
 
                       {uploadSuccess && (
-                        <div className="mt-3 p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl text-xs space-y-1.5 animate-fade-in text-left">
-                          <p className="font-bold text-emerald-400 flex items-center gap-1.5">
-                            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" /> อัปโหลดหลักฐานสำเร็จเรียบร้อยแล้ว!
+                        <div className="mt-3 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl text-sm space-y-2 animate-fade-in text-left">
+                          <p className="font-black text-emerald-800 text-base flex items-center gap-2">
+                            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" /> อัปโหลดหลักฐานสำเร็จเรียบร้อยแล้ว!
                           </p>
-                          <p className="text-slate-300 text-[11px] leading-relaxed">
+                          <p className="text-slate-800 text-sm sm:text-base leading-relaxed">
                             ระบบได้ส่งอีเมลยืนยันการรับหลักฐานชำระเงินไปยัง <strong>{selectedReg.email}</strong> เรียบร้อยแล้ว ขณะนี้เรื่องอยู่ระหว่างรอเจ้าหน้าที่ฝ่ายการเงินตรวจสอบและออกหมายเลข BIB
                           </p>
                           {selectedReg.emailPreviewUrl && (
@@ -937,9 +947,9 @@ export default function StatusChecker({ initialQuery = "", onRefreshStats, initi
                               href={selectedReg.emailPreviewUrl}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-flex items-center gap-1 text-[11px] text-teal-400 hover:text-teal-300 font-bold underline pt-0.5"
+                              className="inline-flex items-center gap-1.5 text-sm text-teal-700 hover:text-teal-800 font-bold underline pt-1"
                             >
-                              <Mail className="w-3.5 h-3.5" /> คลิกเพื่อเปิดดูตัวอย่างอีเมลที่ระบบจัดส่ง ↗
+                              <Mail className="w-4 h-4" /> คลิกเพื่อเปิดดูตัวอย่างอีเมลที่ระบบจัดส่ง ↗
                             </a>
                           )}
                         </div>
@@ -953,17 +963,17 @@ export default function StatusChecker({ initialQuery = "", onRefreshStats, initi
           </div>
 
           {/* RIGHT COLUMN: HIGH-FIDELITY BIB ONLINE CARD PREVIEW & E-TICKET */}
-          <div className="lg:col-span-5 space-y-6 text-slate-900 dark:text-white" id="runner-pass-preview">
+          <div className="lg:col-span-5 space-y-6 text-slate-900" id="runner-pass-preview">
             
             {/* Tab switch buttons */}
-            <div className="flex bg-white dark:bg-zinc-900/90 p-1 border border-slate-200 dark:border-white/5 rounded-2xl gap-1">
+            <div className="flex bg-slate-100 p-1.5 border border-slate-200 rounded-2xl gap-1.5">
               <button
                 type="button"
                 onClick={() => setCardType("bib")}
-                className={`flex-1 py-2 text-xs font-black rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                className={`flex-1 py-3 text-sm sm:text-base font-black rounded-xl transition cursor-pointer flex items-center justify-center gap-2 ${
                   cardType === "bib" 
                     ? "bg-teal-600 text-white shadow-lg shadow-teal-500/10" 
-                    : "text-slate-400 dark:text-white/40 hover:text-slate-600 dark:text-white/70"
+                    : "text-slate-600 hover:text-slate-800"
                 }`}
               >
                 บัตรประจำตัววิ่ง (E-BIB)
@@ -971,46 +981,43 @@ export default function StatusChecker({ initialQuery = "", onRefreshStats, initi
               <button
                 type="button"
                 onClick={() => setCardType("ticket")}
-                className={`flex-1 py-2 text-xs font-black rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                className={`flex-1 py-3 text-sm sm:text-base font-black rounded-xl transition cursor-pointer flex items-center justify-center gap-2 ${
                   cardType === "ticket" 
                     ? "bg-orange-600 text-white shadow-lg shadow-orange-500/10" 
-                    : "text-slate-400 dark:text-white/40 hover:text-slate-600 dark:text-white/70"
+                    : "text-slate-600 hover:text-slate-800"
                 }`}
               >
-                <QrCode className="w-3.5 h-3.5" /> บัตรเข้างาน (E-Ticket)
+                <QrCode className="w-4 h-4" /> บัตรเข้างาน (E-Ticket)
               </button>
             </div>
 
             {cardType === "ticket" ? (
               /* E-Ticket Preview */
-              <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-neutral-950 border border-orange-500/10 shadow-2xl p-6 flex flex-col justify-between aspect-[3/4] text-slate-900 dark:text-slate-100 max-w-sm mx-auto">
-                {/* Punch out holes */}
-                <div className="absolute top-[65%] -left-3.5 w-7 h-7 rounded-full bg-[#030712] border-r border-slate-200 dark:border-white/10 z-20"></div>
-                <div className="absolute top-[65%] -right-3.5 w-7 h-7 rounded-full bg-[#030712] border-l border-slate-200 dark:border-white/10 z-20"></div>
+              <div className="relative rounded-3xl bg-white border border-orange-200 shadow-xl p-6 sm:p-8 flex flex-col justify-between min-h-[560px] h-auto text-slate-900 max-w-sm sm:max-w-md mx-auto space-y-4">
 
                 {/* E-Ticket Header */}
-                <div className="text-center pb-3 border-b border-slate-200 dark:border-white/5">
+                <div className="text-center pb-3 border-b border-slate-200">
                   {logoImage ? (
-                    <img src={logoImage} alt="Event Logo" className="h-8 w-auto object-contain" />
+                    <img src={logoImage} alt="Event Logo" className="h-9 w-auto object-contain mx-auto" />
                   ) : (
                     <>
-                      <h4 className="text-xs font-black tracking-widest text-orange-500 italic">LSEd Running 2569</h4>
-                      <p className="text-[8px] text-slate-300 dark:text-white/30 uppercase tracking-widest mt-0.5 font-mono">Learning Sciences & Education TU</p>
+                      <h4 className="text-sm font-black tracking-widest text-orange-600 italic">LSEd Running 2569</h4>
+                      <p className="text-xs sm:text-sm text-slate-700 font-bold uppercase tracking-wider mt-0.5">Learning Sciences & Education TU</p>
                     </>
                   )}
                 </div>
 
                 {/* Badge */}
-                <div className="my-2.5 text-center">
-                  <span className="inline-flex items-center gap-1 px-3 py-1 bg-orange-500/10 border border-orange-500/20 rounded-full text-orange-400 text-[10px] font-black tracking-wider uppercase">
-                    <Sparkles className="w-3 h-3 text-orange-500 animate-pulse" /> EVENT ENTRANCE PASS
+                <div className="my-1 text-center">
+                  <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-orange-500/10 border border-orange-500/20 rounded-full text-orange-600 text-xs sm:text-sm font-black tracking-wider uppercase">
+                    <Sparkles className="w-3.5 h-3.5 text-orange-500 animate-pulse" /> EVENT ENTRANCE PASS
                   </span>
                 </div>
 
                 {/* QR Code container */}
-                <div className="bg-white p-3 rounded-2xl mx-auto flex items-center justify-center shadow-lg border border-slate-200 dark:border-white/5 w-44 h-44">
+                <div className="bg-white p-3.5 rounded-2xl mx-auto flex items-center justify-center shadow-lg border border-slate-200 w-48 h-48 sm:w-52 sm:h-52">
                   <img 
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(selectedReg.id)}`}
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(selectedReg.id)}`}
                     alt="Entry QR Code"
                     className="w-full h-full object-contain"
                     referrerPolicy="no-referrer"
@@ -1018,69 +1025,69 @@ export default function StatusChecker({ initialQuery = "", onRefreshStats, initi
                 </div>
 
                 {/* Registration text ID */}
-                <div className="text-center mt-2.5 pb-2 border-b border-dashed border-slate-200 dark:border-white/10">
-                  <span className="text-[8px] text-slate-300 dark:text-white/30 font-black tracking-wider uppercase block">REGISTRATION ID</span>
-                  <p className="text-xs font-bold text-slate-900 dark:text-white/80 font-mono mt-0.5 tracking-wider">{selectedReg.id}</p>
+                <div className="text-center mt-2 pb-2.5 border-b border-dashed border-slate-200">
+                  <span className="text-xs sm:text-sm text-slate-600 font-black tracking-wider uppercase block">REGISTRATION ID</span>
+                  <p className="text-sm sm:text-base font-black text-slate-900 mt-0.5 tracking-wider font-mono">{selectedReg.id}</p>
                 </div>
 
                 {/* Info block */}
-                <div className="grid grid-cols-2 gap-y-2 gap-x-4 pt-2.5 text-xs">
+                <div className="grid grid-cols-2 gap-y-3 gap-x-4 pt-2 text-sm sm:text-base">
                   <div className="col-span-2">
-                    <span className="text-[8px] text-slate-400 dark:text-white/40 font-bold uppercase block">Runner Name</span>
-                    <span className="font-extrabold text-slate-900 dark:text-white text-sm truncate block">{selectedReg.firstName} {selectedReg.lastName}</span>
+                    <span className="text-xs sm:text-sm text-slate-600 font-black uppercase block">Runner Name</span>
+                    <span className="font-black text-slate-900 text-base sm:text-lg block">{selectedReg.firstName} {selectedReg.lastName}</span>
                   </div>
                   <div>
-                    <span className="text-[8px] text-slate-400 dark:text-white/40 font-bold uppercase block">BIB Number</span>
-                    <span className="font-black text-orange-400 font-mono text-base block">{selectedReg.bibNumber || "PENDING"}</span>
+                    <span className="text-xs sm:text-sm text-slate-600 font-black uppercase block">BIB Number</span>
+                    <span className="font-black text-orange-600 text-lg sm:text-xl block">{selectedReg.bibNumber || "PENDING"}</span>
                   </div>
                   <div>
-                    <span className="text-[8px] text-slate-400 dark:text-white/40 font-bold uppercase block">Distance</span>
-                    <span className="font-bold text-teal-600 dark:text-teal-400 block">{getDistanceLabel(selectedReg.distance)}</span>
+                    <span className="text-xs sm:text-sm text-slate-600 font-black uppercase block">Distance</span>
+                    <span className="font-black text-teal-700 text-base sm:text-lg block">{getDistanceLabel(selectedReg.distance)}</span>
                   </div>
                 </div>
 
                 {/* Footer text info */}
-                <div className="text-center text-[8px] text-slate-900 dark:text-white/20 border-t border-slate-200 dark:border-white/5 pt-2">
+                <div className="text-center text-xs sm:text-sm text-slate-600 font-bold border-t border-slate-200 pt-3">
                   โปรดนำคิวอาร์โค้ดนี้แสดงแก่เจ้าหน้าที่ ณ จุดลงทะเบียนเข้างาน
                 </div>
               </div>
             ) : (
               /* BIB Card Frame */
-              <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-neutral-950 border border-slate-200 dark:border-white/10 shadow-2xl p-6 flex flex-col justify-between aspect-[3/4] text-slate-900 dark:text-white max-w-sm mx-auto">
+              <div className="relative rounded-3xl bg-white border border-slate-200 shadow-xl p-6 sm:p-8 flex flex-col justify-between min-h-[560px] h-auto text-slate-900 max-w-sm sm:max-w-md mx-auto space-y-4">
                 
                 {/* Event Watermark behind */}
-                <div className="absolute inset-0 opacity-5 pointer-events-none flex items-center justify-center select-none font-black text-slate-900 dark:text-white text-9xl">
+                <div className="absolute inset-0 opacity-5 pointer-events-none flex items-center justify-center select-none font-black text-slate-900 text-9xl">
                   {selectedReg.distance}
                 </div>
 
                 {/* BIB HEADER */}
-                <div className="relative z-10 bg-white dark:bg-neutral-950 border-b border-slate-200 dark:border-white/10 p-4 -mx-6 -mt-6 flex justify-between items-center text-slate-900 dark:text-white">
+                <div className="relative z-10 bg-white border-b border-slate-200 pb-3 -mx-2 flex justify-between items-center text-slate-900">
                   <div>
                     {logoImage ? (
-                      <img src={logoImage} alt="Event Logo" className="h-8 w-auto object-contain" />
+                      <img src={logoImage} alt="Event Logo" className="h-9 w-auto object-contain" />
                     ) : (
                       <>
-                        <h4 className="text-xs font-black tracking-widest text-teal-600 dark:text-teal-400 italic">LSEd Running</h4>
-                        <p className="text-[8px] text-slate-400 dark:text-white/50 uppercase font-black tracking-wider mt-0.5 font-mono">Learning Sciences & Education TU</p>
+                        <h4 className="text-sm font-black tracking-widest text-teal-700 italic">LSEd Running</h4>
+                        <p className="text-xs sm:text-sm text-slate-700 uppercase font-black tracking-wider mt-0.5">Learning Sciences & Education TU</p>
                       </>
                     )}
                   </div>
                   <div className="text-right">
-                    <span className="text-lg font-black font-mono tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-orange-500">2569 BE</span>
+                    <span className="text-xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-orange-500">2569 BE</span>
                   </div>
                 </div>
 
                 {/* BIB MAIN AREA (White card panel resembling physical running BIB) */}
-                <div className="relative z-10 bg-white border border-slate-100 rounded-2xl p-4 md:p-6 my-4 flex-grow flex flex-col justify-between shadow-lg">
+                <div className="relative z-10 bg-white border border-slate-100 rounded-2xl p-4 md:p-6 my-2 flex-grow flex flex-col justify-between shadow-lg space-y-3">
                   
                   {referrals >= 3 && (
-                    <div className="absolute top-4 right-4 bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 text-slate-900 dark:text-white text-[8px] font-black px-2.5 py-1 rounded-full shadow-md border border-amber-300 animate-bounce flex items-center gap-1 z-30">
-                      <Sparkles className="w-2.5 h-2.5 animate-pulse text-amber-100" /> LSEd Light-Bringer
+                    <div className="absolute top-4 right-4 bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 text-slate-900 text-xs font-black px-3 py-1 rounded-full shadow-md border border-amber-300 animate-bounce flex items-center gap-1 z-30">
+                      <Sparkles className="w-3 h-3 animate-pulse text-amber-100" /> LSEd Light-Bringer
                     </div>
                   )}
                   
                   {/* Distance stripe */}
-                  <div className="absolute top-0 left-0 right-0 h-3 rounded-t-2xl overflow-hidden flex">
+                  <div className="absolute top-0 left-0 right-0 h-3.5 rounded-t-2xl overflow-hidden flex">
                     <div className={`w-full h-full ${
                       selectedReg.distance === "10K" ? "bg-indigo-600" : selectedReg.distance === "5K" ? "bg-teal-600" : "bg-zinc-800"
                     }`}></div>
@@ -1088,28 +1095,26 @@ export default function StatusChecker({ initialQuery = "", onRefreshStats, initi
 
                   {/* Status/Verified Watermark overlay */}
                   {selectedReg.status !== "approved" && (
-                    <div className="absolute inset-0 z-25 bg-white/70 backdrop-blur-[1px] flex flex-col items-center justify-center rounded-2xl">
-                      <div className="border-4 border-dashed border-amber-500/70 text-amber-600 font-black text-center text-lg p-2.5 uppercase tracking-widest rounded-xl transform -rotate-12 animate-pulse">
-                        รออนุมัติสลิป<br/><span className="text-[10px]">PENDING APPROVE</span>
+                    <div className="absolute inset-0 z-25 bg-white/75 backdrop-blur-[1px] flex flex-col items-center justify-center rounded-2xl">
+                      <div className="border-4 border-dashed border-amber-500/80 text-amber-700 font-black text-center text-xl p-3 uppercase tracking-widest rounded-xl transform -rotate-12 animate-pulse">
+                        รออนุมัติสลิป<br/><span className="text-sm">PENDING APPROVE</span>
                       </div>
                     </div>
                   )}
 
                   {/* Runner details inside BIB */}
                   <div className="flex justify-between items-start pt-2">
-                    <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full ${
+                    <span className={`text-xs sm:text-sm font-black px-3 py-1 rounded-full ${
                       selectedReg.distance === "10K" ? "bg-indigo-100 text-indigo-700" : selectedReg.distance === "5K" ? "bg-teal-100 text-teal-800" : "bg-zinc-100 text-zinc-700"
                     }`}>
                       {selectedReg.distance === "10K" ? "Mini Marathon" : selectedReg.distance === "5K" ? "Micro Marathon" : "Fun Run"}
                     </span>
-                    <span className="text-[9px] text-slate-400 dark:text-white/40 font-bold uppercase tracking-wider">BIB CARD</span>
+                    <span className="text-xs sm:text-sm text-slate-700 font-bold uppercase tracking-wider">BIB CARD</span>
                   </div>
-
-                                    
 
                   {/* BIB NUMBER DISPLAY */}
                   <div className="text-center py-4">
-                    <h2 className="text-5xl md:text-6xl font-black font-mono tracking-tighter text-slate-900 dark:text-white leading-none">
+                    <h2 className="text-5xl md:text-6xl font-black tracking-tighter text-slate-900 leading-none">
                       {selectedReg.bibNumber || "LXX-XXXX"}
                     </h2>
                   </div>
@@ -1117,43 +1122,43 @@ export default function StatusChecker({ initialQuery = "", onRefreshStats, initi
                   {/* Runner Name & Info inside BIB */}
                   <div className="border-t border-slate-100 pt-3 flex justify-between items-end">
                     <div className="space-y-0.5 text-left">
-                      <p className="text-[8px] text-slate-400 dark:text-white/40 uppercase font-bold tracking-wider">Runner Name</p>
-                      <p className="text-sm font-black text-slate-900 dark:text-white leading-tight uppercase tracking-tight">
+                      <p className="text-xs sm:text-sm text-slate-600 uppercase font-bold tracking-wider">Runner Name</p>
+                      <p className="text-base sm:text-lg font-black text-slate-900 leading-tight uppercase tracking-tight">
                         {selectedReg.firstName} {selectedReg.lastName}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-[8px] text-slate-400 dark:text-white/40 uppercase font-bold tracking-wider">Shirt Size</p>
-                      <p className="text-sm font-black text-teal-600 dark:text-teal-400">{selectedReg.shirtSize}</p>
+                      <p className="text-xs sm:text-sm text-slate-600 uppercase font-bold tracking-wider">Shirt Size</p>
+                      <p className="text-base sm:text-lg font-black text-teal-700">{selectedReg.shirtSize}</p>
                     </div>
                   </div>
 
                   {/* Barcode representation */}
                   <div className="border-t border-dashed border-slate-200 pt-3 flex flex-col items-center">
-                    <div className="flex gap-0.5 justify-center h-6 w-full items-center">
+                    <div className="flex gap-0.5 justify-center h-7 w-full items-center">
                       {[1,3,1,2,1,4,1,2,3,1,1,2,1,4,1,3,1,2,1,2,3,1,4,1,1,2].map((w, idx) => (
                         <div 
                           key={idx} 
-                          className="bg-white dark:bg-slate-900 h-full" 
+                          className="bg-slate-900 h-full" 
                           style={{ width: `${w * 1.5}px`, opacity: idx % 2 === 0 ? 1 : 0 }}
                         ></div>
                       ))}
                     </div>
-                    <p className="text-[8px] text-slate-400 dark:text-white/40 font-bold font-mono mt-1 tracking-widest">{selectedReg.id}</p>
+                    <p className="text-xs sm:text-sm text-slate-700 font-bold mt-1.5 tracking-widest font-mono">{selectedReg.id}</p>
                   </div>
                 </div>
 
                 {/* BIB FOOTER (Emergency Contact Details) */}
-                <div className="relative z-10 flex justify-between items-center text-[10px] text-slate-400 dark:text-white/40 border-t border-slate-200 dark:border-white/5 pt-3 -mx-2 mb-0">
+                <div className="relative z-10 flex flex-wrap justify-between items-center text-xs sm:text-sm text-slate-700 border-t border-slate-200 pt-3 -mx-1 gap-2">
                   <div className="space-y-0.5 text-left">
-                    <p className="text-[8px] text-slate-300 dark:text-white/30 font-bold uppercase tracking-wider">Emergency Contact</p>
-                    <p className="text-slate-900 dark:text-white font-bold truncate max-w-[150px]">
+                    <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Emergency Contact</p>
+                    <p className="text-slate-900 font-bold">
                       {selectedReg.emergencyContactName || "N/A"}
                     </p>
                   </div>
                   <div className="text-right space-y-0.5">
-                    <p className="text-[8px] text-slate-300 dark:text-white/30 font-bold uppercase tracking-wider">Phone / Blood</p>
-                    <p className="text-slate-900 dark:text-white font-bold">
+                    <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Phone & Blood</p>
+                    <p className="text-slate-900 font-bold">
                       {selectedReg.emergencyContactPhone || "N/A"} ({selectedReg.bloodType || "N/A"})
                     </p>
                   </div>
@@ -1164,17 +1169,17 @@ export default function StatusChecker({ initialQuery = "", onRefreshStats, initi
 
             {/* Print and Share helper triggers */}
             {selectedReg.status === "approved" && (
-              <div className="flex flex-col gap-2.5 sm:flex-row justify-center items-center">
+              <div className="flex flex-col gap-3 sm:flex-row justify-center items-center pt-2">
                 {cardType === "ticket" ? (
                   <button
                     type="button"
                     onClick={handleDownloadTicket}
                     disabled={downloadingTicket}
-                    className="w-full sm:w-auto px-5 py-3 bg-orange-600 hover:bg-orange-500 text-white font-black text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-orange-500/10"
+                    className="w-full sm:w-auto px-6 py-3.5 bg-orange-600 hover:bg-orange-500 text-white font-black text-sm uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-orange-500/10"
                   >
                     {downloadingTicket ? (
                       <>
-                        <svg className="animate-spin h-4 w-4 text-slate-900 dark:text-white" fill="none" viewBox="0 0 24 24">
+                        <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                         </svg>
@@ -1190,16 +1195,16 @@ export default function StatusChecker({ initialQuery = "", onRefreshStats, initi
                   <>
                     <button
                       onClick={() => window.print()}
-                      className="w-full sm:w-auto px-4 py-2.5 bg-white text-black font-black text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer hover:bg-slate-200"
+                      className="w-full sm:w-auto px-5 py-3 bg-white text-slate-900 font-black text-sm uppercase tracking-wider rounded-xl border border-slate-300 hover:bg-slate-50 flex items-center justify-center gap-2 transition cursor-pointer shadow-xs"
                     >
-                      <Printer className="w-3.5 h-3.5" /> สั่งพิมพ์บัตรวิ่ง
+                      <Printer className="w-4 h-4 text-slate-700" /> สั่งพิมพ์บัตรวิ่ง
                     </button>
                     <a
                       href={`data:text/plain;charset=utf-8,LSEd Running 2569 BIB Confirmation: ${selectedReg.id} BIB: ${selectedReg.bibNumber} Runner: ${selectedReg.firstName} ${selectedReg.lastName}`}
                       download={`BIB_${selectedReg.bibNumber}_LSEd.txt`}
-                      className="w-full sm:w-auto px-4 py-2.5 bg-teal-600 hover:bg-teal-500 text-white font-black text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer shadow-md shadow-teal-500/20"
+                      className="w-full sm:w-auto px-5 py-3 bg-teal-600 hover:bg-teal-500 text-white font-black text-sm uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition cursor-pointer shadow-md shadow-teal-500/20"
                     >
-                      <Download className="w-3.5 h-3.5" /> บันทึกข้อมูล
+                      <Download className="w-4 h-4" /> บันทึกข้อมูล
                     </a>
                   </>
                 )}
@@ -1208,17 +1213,17 @@ export default function StatusChecker({ initialQuery = "", onRefreshStats, initi
 
             {/* Postal shipping tracking system check */}
             {selectedReg.status === "approved" && selectedReg.deliveryMethod === "shipping" && (
-              <div className="bg-white dark:bg-neutral-900/60 border border-slate-200 dark:border-white/10 rounded-3xl p-5 space-y-4 text-slate-900 dark:text-white mt-4">
-                <h3 className="text-xs font-black italic uppercase tracking-wider flex items-center gap-2 text-slate-900 dark:text-white">
-                  <Truck className="w-4 h-4 text-orange-400 animate-pulse" /> ข้อมูลการจัดส่งเสื้อยืดและของที่ระลึกทางไปรษณีย์
+              <div className="bg-white border border-slate-200 rounded-3xl shadow-md p-6 space-y-5 text-slate-900 mt-4">
+                <h3 className="text-sm sm:text-base font-black italic uppercase tracking-wider flex items-center gap-2 text-slate-900">
+                  <Truck className="w-5 h-5 text-orange-500 animate-pulse" /> ข้อมูลการจัดส่งเสื้อยืดและของที่ระลึกทางไปรษณีย์
                 </h3>
-                <div className="bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/5 rounded-2xl p-4 space-y-3 text-xs leading-relaxed">
-                  <div className="flex justify-between items-center border-b border-slate-200 dark:border-white/5 pb-2">
-                    <span className="text-slate-400 dark:text-white/50">สถานะการจัดส่ง:</span>
-                    <span className={`px-2.5 py-0.5 rounded-full font-bold text-[10px] ${
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4 text-sm sm:text-base leading-relaxed">
+                  <div className="flex justify-between items-center border-b border-slate-200 pb-3">
+                    <span className="text-slate-700 font-bold">สถานะการจัดส่ง:</span>
+                    <span className={`px-3 py-1 rounded-full font-black text-xs sm:text-sm ${
                       selectedReg.shippingTrackingNumber 
-                        ? "bg-orange-500/10 border border-orange-500/20 text-orange-400" 
-                        : "bg-teal-500/10 border border-teal-500/20 text-teal-600 dark:text-teal-400"
+                        ? "bg-orange-500/10 border border-orange-500/25 text-orange-600" 
+                        : "bg-teal-500/10 border border-teal-500/25 text-teal-800"
                     }`}>
                       {selectedReg.shippingTrackingNumber ? "จัดส่งพัสดุเรียบร้อยแล้ว" : "กำลังเตรียมการจัดส่ง"}
                     </span>
@@ -1226,9 +1231,9 @@ export default function StatusChecker({ initialQuery = "", onRefreshStats, initi
 
                   {selectedReg.shippingTrackingNumber && (
                     <>
-                      <div className="flex justify-between items-center border-b border-slate-200 dark:border-white/5 pb-2">
-                        <span className="text-slate-400 dark:text-white/50">ผู้จัดส่งพัสดุ (Carrier):</span>
-                        <span className="font-extrabold text-slate-900 dark:text-white text-[11px] bg-slate-50 dark:bg-white/5 px-2 py-0.5 rounded border border-slate-200 dark:border-white/10">
+                      <div className="flex justify-between items-center border-b border-slate-200 pb-3">
+                        <span className="text-slate-700 font-bold">ผู้จัดส่งพัสดุ <span className="text-xs font-normal text-slate-500 ml-1">(Carrier):</span></span>
+                        <span className="font-extrabold text-slate-900 text-sm sm:text-base bg-white px-3 py-1 rounded-xl border border-slate-200">
                           {selectedReg.shippingCarrier === "flash" ? "Flash Express" :
                            selectedReg.shippingCarrier === "kerry" ? "Kerry Express" :
                            selectedReg.shippingCarrier === "jandt" ? "J&T Express" :
@@ -1236,68 +1241,68 @@ export default function StatusChecker({ initialQuery = "", onRefreshStats, initi
                         </span>
                       </div>
 
-                      <div className="flex justify-between items-center border-b border-slate-200 dark:border-white/5 pb-2">
-                        <span className="text-slate-400 dark:text-white/50">เลขพัสดุ (Tracking Number):</span>
-                        <strong className="text-orange-400 font-black font-mono text-sm tracking-widest bg-orange-500/5 px-2 py-0.5 rounded border border-orange-500/15">
+                      <div className="flex justify-between items-center border-b border-slate-200 pb-3">
+                        <span className="text-slate-700 font-bold">เลขพัสดุ <span className="text-xs font-normal text-slate-500 ml-1">(Tracking Number):</span></span>
+                        <strong className="text-orange-600 font-black text-base sm:text-lg tracking-widest bg-orange-500/10 px-3 py-1 rounded-xl border border-orange-500/20 font-mono">
                           {selectedReg.shippingTrackingNumber}
                         </strong>
                       </div>
 
                       {selectedReg.shippedAt && (
-                        <div className="flex justify-between items-center border-b border-slate-200 dark:border-white/5 pb-2">
-                          <span className="text-slate-400 dark:text-white/50">วันเวลาจัดส่ง (Shipped At):</span>
-                          <span className="font-bold text-slate-900 dark:text-white/75 font-mono">
+                        <div className="flex justify-between items-center border-b border-slate-200 pb-3">
+                          <span className="text-slate-700 font-bold">วันเวลาจัดส่ง <span className="text-xs font-normal text-slate-500 ml-1">(Shipped At):</span></span>
+                          <span className="font-bold text-slate-900">
                             {selectedReg.shippedAt}
                           </span>
                         </div>
                       )}
 
                       {/* Visual Timeline Stepper */}
-                      <div className="py-4 border-b border-slate-200 dark:border-white/5">
-                        <p className="text-[9px] text-slate-300 dark:text-white/30 uppercase font-black tracking-wider text-center mb-3">สถานะเรียลไทม์ (Real-time Timeline)</p>
+                      <div className="py-4 border-b border-slate-200">
+                        <p className="text-xs sm:text-sm text-slate-700 uppercase font-black tracking-wider text-center mb-4">สถานะเรียลไทม์ <span className="text-xs font-semibold text-slate-500 ml-1">(Real-time Timeline)</span></p>
                         <div className="relative flex items-center justify-between max-w-xs mx-auto">
                           {/* Background Line */}
-                          <div className="absolute left-0 right-0 top-2 h-0.5 bg-slate-100 dark:bg-white/10 z-0"></div>
+                          <div className="absolute left-4 right-4 top-3.5 h-1 bg-slate-200 z-0"></div>
                           {/* Active Progress Line */}
-                          <div className="absolute left-0 right-1/2 top-2 h-0.5 bg-orange-500 z-0"></div>
+                          <div className="absolute left-4 right-1/2 top-3.5 h-1 bg-orange-500 z-0"></div>
                           
                           {/* Step 1: Packing */}
-                          <div className="z-10 flex flex-col items-center text-center space-y-1">
-                            <div className="w-4 h-4 rounded-full bg-orange-500 border border-neutral-900 flex items-center justify-center font-black text-[8px] text-slate-900 dark:text-white shadow">✓</div>
-                            <span className="text-[9px] text-slate-900 dark:text-white/80 font-bold block">เตรียมส่ง</span>
+                          <div className="z-10 flex flex-col items-center text-center space-y-1.5">
+                            <div className="w-7 h-7 rounded-full bg-orange-500 border-2 border-white flex items-center justify-center font-black text-xs text-white shadow">✓</div>
+                            <span className="text-xs sm:text-sm text-slate-900 font-bold block">เตรียมส่ง</span>
                           </div>
                           
                           {/* Step 2: Shipped */}
-                          <div className="z-10 flex flex-col items-center text-center space-y-1">
-                            <div className="w-4 h-4 rounded-full bg-orange-500 border border-neutral-900 flex items-center justify-center font-black text-[8px] text-slate-900 dark:text-white shadow">✓</div>
-                            <span className="text-[9px] text-orange-400 font-bold block">จัดส่งแล้ว</span>
+                          <div className="z-10 flex flex-col items-center text-center space-y-1.5">
+                            <div className="w-7 h-7 rounded-full bg-orange-500 border-2 border-white flex items-center justify-center font-black text-xs text-white shadow">✓</div>
+                            <span className="text-xs sm:text-sm text-orange-600 font-extrabold block">จัดส่งแล้ว</span>
                           </div>
 
                           {/* Step 3: Delivering */}
-                          <div className="z-10 flex flex-col items-center text-center space-y-1">
-                            <div className="w-4 h-4 rounded-full bg-neutral-800 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400 dark:text-white/40 font-bold text-[8px]"></div>
-                            <span className="text-[9px] text-slate-400 dark:text-white/40 block">นำจ่าย</span>
+                          <div className="z-10 flex flex-col items-center text-center space-y-1.5">
+                            <div className="w-7 h-7 rounded-full bg-slate-200 border-2 border-white flex items-center justify-center text-slate-500 font-bold text-xs">3</div>
+                            <span className="text-xs sm:text-sm text-slate-600 font-semibold block">นำจ่าย</span>
                           </div>
                         </div>
                       </div>
                     </>
                   )}
 
-                  <div className="space-y-1 pt-1 border-b border-slate-200 dark:border-white/5 pb-3">
-                    <span className="text-slate-400 dark:text-white/50 block">ที่อยู่จัดส่ง:</span>
-                    <p className="text-slate-900 dark:text-white bg-slate-50 dark:bg-white/5 p-3 rounded-xl border border-slate-200 dark:border-white/5 text-[11px] leading-relaxed">
+                  <div className="space-y-1.5 pt-1 border-b border-slate-200 pb-3">
+                    <span className="text-slate-700 font-bold block">ที่อยู่จัดส่ง:</span>
+                    <p className="text-slate-900 bg-white p-3.5 rounded-xl border border-slate-200 text-sm sm:text-base leading-relaxed">
                       {selectedReg.shippingAddress || "ไม่พบข้อมูลที่อยู่จัดส่ง กรุณาติดต่อแอดมินเพื่อแก้ไขข้อมูล"}
                     </p>
                   </div>
 
                   {selectedReg.shippingTrackingNumber && (
-                    <div className="flex gap-2 justify-end pt-2">
+                    <div className="flex gap-2.5 justify-end pt-2">
                       <button
                         onClick={() => {
                           navigator.clipboard.writeText(selectedReg.shippingTrackingNumber || "");
                           alert("คัดลอกเลขพัสดุเรียบร้อยแล้ว: " + selectedReg.shippingTrackingNumber);
                         }}
-                        className="px-3.5 py-2 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-white font-bold rounded-xl border border-slate-200 dark:border-white/10 transition text-[10px] uppercase tracking-wider cursor-pointer"
+                        className="px-4 py-2.5 bg-white hover:bg-slate-100 text-slate-900 font-bold rounded-xl border border-slate-300 transition text-xs sm:text-sm uppercase tracking-wider cursor-pointer shadow-xs"
                       >
                         คัดลอกเลขพัสดุ
                       </button>
@@ -1310,7 +1315,7 @@ export default function StatusChecker({ initialQuery = "", onRefreshStats, initi
                         }
                         target="_blank"
                         rel="noreferrer"
-                        className="px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white font-black rounded-xl transition text-[10px] uppercase tracking-widest flex items-center gap-1 cursor-pointer shadow-lg shadow-orange-500/20"
+                        className="px-5 py-2.5 bg-orange-600 hover:bg-orange-500 text-white font-black rounded-xl transition text-xs sm:text-sm uppercase tracking-widest flex items-center gap-1.5 cursor-pointer shadow-md shadow-orange-500/20"
                       >
                         ติดตามสถานะ ↗
                       </a>
@@ -1331,24 +1336,24 @@ export default function StatusChecker({ initialQuery = "", onRefreshStats, initi
       {activeTab === "shipping" && (
         <div className="space-y-6">
           {/* Shipping tracking section */}
-          <section className="bg-gradient-to-br from-neutral-950 via-zinc-900 to-indigo-950 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
+          <section className="bg-gradient-to-br from-teal-50/80 via-white to-orange-50/60 border border-teal-500/20 text-slate-900 rounded-3xl p-6 md:p-8 shadow-xl relative overflow-hidden">
             <div className="absolute top-0 right-0 w-40 h-40 bg-teal-500/10 rounded-full blur-3xl"></div>
             <div className="relative z-10 max-w-2xl space-y-4">
-              <h2 className="text-xl md:text-2xl font-black italic uppercase tracking-wider flex items-center gap-2 text-slate-900 dark:text-white">
-                <Truck className="w-6 h-6 text-teal-600 dark:text-teal-400" /> ตรวจสอบเลขพัสดุจัดส่งไปรษณีย์
+              <h2 className="text-xl md:text-2xl font-black italic uppercase tracking-wider flex items-center gap-2 text-slate-900">
+                <Truck className="w-6 h-6 text-teal-700" /> ตรวจสอบเลขพัสดุจัดส่งไปรษณีย์
               </h2>
-              <p className="text-xs text-slate-400 dark:text-white/50 leading-relaxed font-light">
-                ค้นหารายชื่อผู้จัดส่งเสื้อและของที่ระลึกที่เลือกรับทางไปรษณีย์ โดยสามารถค้นหาด้วย **ชื่อ, นามสกุล, หมายเลข BIB หรือ เลขพัสดุ**
+              <p className="text-sm sm:text-base text-slate-700 leading-relaxed font-normal">
+                ค้นหารายชื่อผู้จัดส่งเสื้อและของที่ระลึกที่เลือกรับทางไปรษณีย์ โดยสามารถค้นหาด้วย <strong>ชื่อ, นามสกุล, หมายเลข BIB หรือ เลขพัสดุ</strong>
               </p>
 
               <div className="relative">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-white/40" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600" />
                 <input 
                   type="text" 
                   value={shippingSearchQuery}
                   onChange={(e) => setShippingSearchQuery(e.target.value)}
                   placeholder="ค้นหารายชื่อจัดส่ง, เลข BIB..."
-                  className="w-full pl-11 pr-4 py-3.5 bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-sm placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-teal-500/25 focus:border-teal-500 transition"
+                  className="w-full pl-11 pr-4 py-3.5 bg-white border border-slate-300 text-slate-900 rounded-xl text-base placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition shadow-xs"
                 />
               </div>
               <div className="pt-2">
@@ -1356,61 +1361,65 @@ export default function StatusChecker({ initialQuery = "", onRefreshStats, initi
                   href="https://track.thailandpost.co.th/" 
                   target="_blank" 
                   rel="noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-red-600/10 hover:bg-red-600/20 text-red-400 font-bold text-xs uppercase tracking-wider rounded-xl border border-red-500/20 transition"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-red-600/10 hover:bg-red-600/20 text-red-600 font-bold text-sm uppercase tracking-wider rounded-xl border border-red-500/20 transition"
                 >
-                  <ExternalLink className="w-3.5 h-3.5" /> ระบบติดตามพัสดุไปรษณีย์ไทย (Track & Trace)
+                  <ExternalLink className="w-4 h-4" /> ระบบติดตามพัสดุไปรษณีย์ไทย (Track & Trace)
                 </a>
               </div>
             </div>
           </section>
 
           {shippingLoading ? (
-            <div className="flex flex-col items-center justify-center py-12 gap-3 text-slate-500 dark:text-white/60">
-              <svg className="animate-spin h-8 w-8 text-teal-600 dark:text-teal-400" fill="none" viewBox="0 0 24 24">
+            <div className="flex flex-col items-center justify-center py-12 gap-3 text-slate-600">
+              <svg className="animate-spin h-8 w-8 text-teal-700" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
-              <span className="text-xs">กำลังโหลดข้อมูลการจัดส่ง...</span>
+              <span className="text-sm font-bold">กำลังโหลดข้อมูลการจัดส่ง...</span>
             </div>
           ) : filteredShipping.length === 0 ? (
-            <div className="bg-white dark:bg-neutral-950/40 border border-slate-200 dark:border-white/5 rounded-3xl p-12 text-center text-slate-400 dark:text-white/40 space-y-2">
-              <Truck className="w-12 h-12 text-slate-900 dark:text-white/10 mx-auto" />
-              <p className="text-sm font-bold">ไม่พบข้อมูลการจัดส่ง</p>
-              <p className="text-xs max-w-md mx-auto">เฉพาะผู้สมัครสถานะอนุมัติ (ชำระเงินเรียบร้อย) ที่เลือกจัดส่งทางไปรษณีย์เท่านั้นที่จะแสดงผลในระบบนี้</p>
+            <div className="bg-white border border-slate-200 rounded-3xl shadow-md p-12 text-center text-slate-600 space-y-2">
+              <Truck className="w-12 h-12 text-slate-400 mx-auto" />
+              <p className="text-base font-black text-slate-800">ไม่พบข้อมูลการจัดส่ง</p>
+              <p className="text-sm text-slate-600 max-w-md mx-auto">เฉพาะผู้สมัครสถานะอนุมัติ <span className="text-xs font-normal text-slate-500 ml-1">(ชำระเงินเรียบร้อย)</span> ที่เลือกจัดส่งทางไปรษณีย์เท่านั้นที่จะแสดงผลในระบบนี้</p>
             </div>
           ) : (
-            <div className="bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-3xl overflow-hidden shadow-2xl">
+            <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-xl">
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full text-left border-collapse min-w-[800px]">
                   <thead>
-                    <tr className="border-b border-slate-200 dark:border-white/10 bg-black/35 text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-white/40">
-                      <th className="px-6 py-4">หมายเลขสมัคร / รันเนอร์</th>
-                      <th className="px-6 py-4">เบอร์โทร</th>
-                      <th className="px-6 py-4">หมายเลข BIB</th>
-                      <th className="px-6 py-4">เลขพัสดุ (Tracking)</th>
-                      <th className="px-6 py-4 text-right">ดำเนินการ</th>
+                    <tr className="border-b border-slate-200 bg-slate-50 text-xs sm:text-sm font-black uppercase tracking-wider text-slate-700">
+                      <th className="px-6 py-4 whitespace-nowrap">หมายเลขและชื่อผู้สมัคร</th>
+                      <th className="px-6 py-4 whitespace-nowrap">เบอร์โทร</th>
+                      <th className="px-6 py-4 whitespace-nowrap">หมายเลข BIB</th>
+                      <th className="px-6 py-4 whitespace-nowrap">เลขพัสดุ <span className="text-xs font-normal text-slate-400 ml-1">(Tracking)</span></th>
+                      <th className="px-6 py-4 text-right whitespace-nowrap">ดำเนินการ</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-white/5 text-xs text-slate-900 dark:text-white">
+                  <tbody className="divide-y divide-slate-100 text-sm sm:text-base text-slate-900 bg-white">
                     {filteredShipping.map((item) => (
-                      <tr key={item.id} className="hover:bg-slate-50 dark:bg-white/5 transition">
-                        <td className="px-6 py-4">
-                          <span className="text-[10px] text-slate-400 dark:text-white/40 font-mono block">{item.id}</span>
-                          <span className="font-bold text-slate-900 dark:text-white text-sm">{item.firstName} {item.lastName}</span>
+                      <tr key={item.id} className="hover:bg-slate-50 transition">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-xs text-slate-500 font-bold block">REF: {item.id}</span>
+                          <span className="font-black text-slate-900 text-base">{item.firstName} {item.lastName}</span>
                         </td>
-                        <td className="px-6 py-4 font-mono text-slate-500 dark:text-white/60">{item.phone}</td>
-                        <td className="px-6 py-4">
-                          <span className="px-2.5 py-1 bg-green-500/10 border border-green-500/20 text-green-400 rounded-lg font-black font-mono text-xs">
-                            {item.bibNumber}
-                          </span>
+                        <td className="px-6 py-4 whitespace-nowrap text-slate-700 font-bold">{item.phone}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {item.bibNumber ? (
+                            <span className="inline-flex items-center justify-center whitespace-nowrap px-3 py-1 bg-slate-900 text-white rounded-lg font-black text-sm shadow-xs font-mono">
+                              {item.bibNumber}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 font-bold">-</span>
+                          )}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 whitespace-nowrap">
                           {item.shippingTrackingNumber ? (
                             <div className="space-y-1">
-                              <span className="font-mono font-bold text-orange-400 text-sm tracking-wider bg-orange-500/5 px-2 py-1 rounded border border-orange-500/10 block w-fit">
+                              <span className="inline-flex items-center font-black text-orange-800 text-sm tracking-wider bg-orange-100 px-3 py-1 rounded-lg border border-orange-300 shadow-xs font-mono">
                                 {item.shippingTrackingNumber}
                               </span>
-                              <span className="text-[10px] text-slate-400 dark:text-white/40 block">
+                              <span className="text-xs sm:text-sm text-slate-600 block font-medium">
                                 ขนส่ง: {item.shippingCarrier === "flash" ? "Flash Express" :
                                        item.shippingCarrier === "kerry" ? "Kerry Express" :
                                        item.shippingCarrier === "jandt" ? "J&T Express" :
@@ -1418,10 +1427,12 @@ export default function StatusChecker({ initialQuery = "", onRefreshStats, initi
                               </span>
                             </div>
                           ) : (
-                            <span className="text-slate-300 dark:text-white/30 italic">กำลังเตรียมพัสดุ</span>
+                            <span className="inline-flex items-center text-amber-800 bg-amber-50 px-3 py-1 rounded-md border border-amber-200 text-xs sm:text-sm font-bold">
+                              กำลังเตรียมพัสดุ
+                            </span>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-right">
+                        <td className="px-6 py-4 text-right whitespace-nowrap">
                           {item.shippingTrackingNumber ? (
                             <div className="flex gap-2 justify-end">
                               <button
@@ -1429,7 +1440,7 @@ export default function StatusChecker({ initialQuery = "", onRefreshStats, initi
                                   navigator.clipboard.writeText(item.shippingTrackingNumber);
                                   alert("คัดลอกเลขพัสดุเรียบร้อยแล้ว: " + item.shippingTrackingNumber);
                                 }}
-                                className="px-2.5 py-1.5 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-white font-bold rounded-lg border border-slate-200 dark:border-white/10 transition text-[10px] uppercase tracking-wider cursor-pointer"
+                                className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-900 font-bold rounded-lg border border-slate-200 transition text-xs sm:text-sm uppercase tracking-wider cursor-pointer shadow-xs"
                               >
                                 คัดลอก
                               </button>
@@ -1442,13 +1453,13 @@ export default function StatusChecker({ initialQuery = "", onRefreshStats, initi
                                 }
                                 target="_blank"
                                 rel="noreferrer"
-                                className="px-2.5 py-1.5 bg-orange-600 hover:bg-orange-500 text-white font-bold rounded-lg transition text-[10px] uppercase tracking-wider flex items-center gap-1 cursor-pointer"
+                                className="px-3.5 py-1.5 bg-orange-600 hover:bg-orange-500 text-white font-bold rounded-lg transition text-xs sm:text-sm uppercase tracking-wider flex items-center gap-1 cursor-pointer shadow-xs"
                               >
                                 ติดตามพัสดุ
                               </a>
                             </div>
                           ) : (
-                            <span className="text-slate-400 dark:text-white/40 text-[10px]">เตรียมจัดส่งใน 1-2 วัน</span>
+                            <span className="text-slate-600 text-xs sm:text-sm font-medium">เตรียมจัดส่งใน 1-2 วัน</span>
                           )}
                         </td>
                       </tr>

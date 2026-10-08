@@ -291,12 +291,33 @@ export default function RegistrationForm({ onSuccess, onCancel, preselectedDista
   };
 
   return (
-    <div className="max-w-4xl mx-auto bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-3xl overflow-hidden backdrop-blur-xl" id="registration-form-container">
+    <div className="max-w-4xl mx-auto bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-xl" id="registration-form-container">
       <form onSubmit={handleSubmit}>
-        <div className="bg-slate-50 dark:bg-white/5 border-b border-slate-200 dark:border-white/10 p-6 md:p-8 relative overflow-hidden">
+        <div className="bg-gradient-to-r from-teal-50/80 via-white to-orange-50/70 border-b border-slate-200 p-6 md:p-8 relative overflow-hidden">
           <div className={`absolute top-0 right-0 w-32 h-32 ${formData.distance === "donation" ? "bg-orange-500/10" : "bg-teal-500/10"} rounded-full filter blur-xl`} />
+          
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div>
+              <span className="text-xs sm:text-sm font-black text-teal-700 uppercase tracking-widest block mb-0.5">
+                แบบฟอร์มลงทะเบียนออนไลน์ 2569
+              </span>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                {step === 1 && "ขั้นตอนที่ 1 จาก 5: เลือกระยะทางและประเภทการสมัคร"}
+                {step === 2 && "ขั้นตอนที่ 2 จาก 5: กรอกข้อมูลส่วนตัวผู้สมัคร"}
+                {step === 3 && "ขั้นตอนที่ 3 จาก 5: ขนาดเสื้อวิ่ง การจัดส่ง และสิทธิ์ลดหย่อนภาษี"}
+                {step === 4 && "ขั้นตอนที่ 4 จาก 5: กฎกติกา ข้อตกลง และความยินยอม"}
+                {step === 5 && "ขั้นตอนที่ 5 จาก 5: สรุปข้อมูลและยืนยันการลงทะเบียน"}
+              </h2>
+            </div>
+            <div className="shrink-0 flex items-center gap-1.5 bg-white/90 border border-slate-200 px-3 py-1.5 rounded-full shadow-xs text-sm font-extrabold text-slate-800">
+              <span className="text-teal-700">ก้าวที่ {step}</span>
+              <span className="text-slate-400">จาก</span>
+              <span>5</span>
+            </div>
+          </div>
+
           {/* Progress bar */}
-          <div className="w-full bg-slate-100 dark:bg-white/10 h-1.5 rounded-full overflow-hidden flex">
+          <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden flex">
             <div 
               className={`bg-gradient-to-r ${formData.distance === "donation" ? "from-teal-500 to-orange-500" : "from-teal-500 to-orange-500"} transition-all duration-500 h-full`}
               style={{ 
@@ -310,18 +331,18 @@ export default function RegistrationForm({ onSuccess, onCancel, preselectedDista
         <div className="p-6 md:p-8">
           {/* Test Sandbox Banner */}
           {step < 5 && (
-            <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex flex-col sm:flex-row justify-between items-center gap-4">
               <div className="flex items-start gap-3 text-left">
-                <Sparkles className="w-5 h-5 text-amber-400 flex-shrink-0 animate-pulse mt-0.5" />
+                <Sparkles className="w-6 h-6 text-amber-500 flex-shrink-0 animate-pulse mt-0.5" />
                 <div>
-                  <h4 className="text-xs font-black tracking-wider text-amber-300 uppercase">โหมดทดลองระบบ (Sandbox Mode)</h4>
-                  <p className="text-[10.5px] text-slate-500 dark:text-white/60 mt-0.5 leading-relaxed">ต้องการทดลองลงทะเบียนโดยไม่ต้องกรอกข้อมูลจริง? กดปุ่มเพื่อใส่ข้อมูลทดสอบและข้ามไปยังขั้นตอนตรวจสอบเพื่อส่งข้อมูลทันที</p>
+                  <h4 className="text-sm font-black tracking-wider text-amber-800 uppercase">โหมดทดลองระบบ (Sandbox Mode)</h4>
+                  <p className="text-xs sm:text-sm text-slate-700 mt-0.5 leading-relaxed font-normal">ต้องการทดลองลงทะเบียนโดยไม่ต้องกรอกข้อมูลจริง? กดปุ่มเพื่อใส่ข้อมูลทดสอบและข้ามไปยังขั้นตอนตรวจสอบเพื่อส่งข้อมูลทันที</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={handleFillMockDataAndSkip}
-                className="w-full sm:w-auto px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-black text-[11px] font-black uppercase tracking-wider rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 shadow-lg shadow-amber-500/15 shrink-0"
+                className="w-full sm:w-auto px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-900 text-xs sm:text-sm font-black uppercase tracking-wider rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/15 shrink-0"
               >
                 กรอกข้อมูลจำลอง & ข้ามขั้นตอน 🧪
               </button>
@@ -329,8 +350,8 @@ export default function RegistrationForm({ onSuccess, onCancel, preselectedDista
           )}
 
           {error && (
-            <div className="mb-6 bg-red-500/10 border border-red-500/20 rounded-2xl p-4 text-red-400 text-sm flex items-center gap-3">
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse flex-shrink-0"></span>
+            <div className="mb-6 bg-red-500/10 border border-red-500/20 rounded-2xl p-4 text-red-500 text-sm sm:text-base font-bold flex items-center gap-3">
+              <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse flex-shrink-0"></span>
               <p>{error}</p>
             </div>
           )}
@@ -338,26 +359,26 @@ export default function RegistrationForm({ onSuccess, onCancel, preselectedDista
           {/* STEP 1: DISTANCE / PACKAGE */}
           {step === 1 && (
             <div className="space-y-6 animate-fade-in">
-              <div className="border-b border-slate-200 dark:border-white/5 pb-2">
-                <h3 className="text-base font-black italic uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-1.5">
-                  เลือกระยะทาง / รูปแบบการสมัคร <Sparkles className="w-4 h-4 text-orange-500" />
+              <div className="border-b border-slate-200 pb-3">
+                <h3 className="text-lg sm:text-xl font-black italic uppercase tracking-wider text-slate-900 flex items-center gap-2">
+                  เลือกระยะทางและประเภทการสมัคร <Sparkles className="w-5 h-5 text-orange-500" />
                 </h3>
-                <p className="text-xs text-slate-400 dark:text-white/50">เลือกประเภทที่ต้องการร่วมกิจกรรม</p>
+                <p className="text-sm sm:text-base text-slate-700 font-medium mt-1">เลือกประเภทที่ต้องการร่วมกิจกรรม</p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-4">
                 {[
-                  { type: "REGULAR" as DistanceType, title: "REGULAR 5KM", price: "555 บาท", desc: "เดิน-วิ่งเพื่อสุขภาพ ได้รับเสื้อยืดและเหรียญที่ระลึกเมื่อเข้าเส้นชัย", accentColor: "border-teal-500", radioColor: "accent-teal-500", badgeStyle: "text-teal-600 dark:text-teal-400 bg-teal-500/10 border-teal-500/20" },
-                  { type: "vip" as DistanceType, title: "VIP 5KM", price: "990 บาท", desc: "สิทธิพิเศษ VIP เลือกลายเสื้อวิ่งพิเศษ พร้อมรับเกียรติบัตรพิเศษและของสมนาคุณ", accentColor: "border-yellow-500", radioColor: "accent-yellow-500", badgeStyle: "text-yellow-400 bg-yellow-500/10 border-yellow-500/20" },
-                  { type: "souvenir" as DistanceType, title: "ของที่ระลึกสะสม", price: "390 บาท", desc: "รับเหรียญรางวัลพรีเมียม สุโขทัย ซีรีส์ + เสื้อยืด 1 ตัว (จัดส่งถึงบ้าน ไม่เข้าร่วมวิ่ง)", accentColor: "border-orange-500", radioColor: "accent-orange-500", badgeStyle: "text-orange-400 bg-orange-500/10 border-orange-500/20" },
-                  { type: "donation" as DistanceType, title: "ร่วมบริจาคสนับสนุน", price: "ตามความประสงค์", desc: "ร่วมสมทบทุนบริจาคสนับสนุนเพื่อการกุศลตามประสงค์ (ไม่มีสิทธิ์วิ่งและเสื้อที่ระลึก) ลดหย่อนภาษีเงินได้ 2 เท่า", accentColor: "border-purple-500", radioColor: "accent-purple-500", badgeStyle: "text-purple-400 bg-purple-500/10 border-purple-500/20" },
+                  { type: "REGULAR" as DistanceType, title: "REGULAR 5KM", price: "555 บาท", desc: "เดิน-วิ่งเพื่อสุขภาพ ได้รับเสื้อยืดและเหรียญที่ระลึกเมื่อเข้าเส้นชัย", accentColor: "border-teal-500", radioColor: "accent-teal-500", badgeStyle: "text-teal-700 bg-teal-500/10 border-teal-500/20" },
+                  { type: "vip" as DistanceType, title: "VIP 5KM", price: "990 บาท", desc: "สิทธิพิเศษ VIP เลือกลายเสื้อวิ่งพิเศษ พร้อมรับเกียรติบัตรพิเศษและของสมนาคุณ", accentColor: "border-yellow-500", radioColor: "accent-yellow-500", badgeStyle: "text-yellow-600 bg-yellow-500/10 border-yellow-500/20" },
+                  { type: "souvenir" as DistanceType, title: "ของที่ระลึกสะสม", price: "390 บาท", desc: "รับเหรียญรางวัลพรีเมียม สุโขทัย ซีรีส์ + เสื้อยืด 1 ตัว (จัดส่งถึงบ้าน ไม่เข้าร่วมวิ่ง)", accentColor: "border-orange-500", radioColor: "accent-orange-500", badgeStyle: "text-orange-600 bg-orange-500/10 border-orange-500/20" },
+                  { type: "donation" as DistanceType, title: "ร่วมบริจาคสนับสนุน", price: "ตามความประสงค์", desc: "ร่วมสมทบทุนบริจาคสนับสนุนเพื่อการกุศลตามประสงค์ (ไม่มีสิทธิ์วิ่งและเสื้อที่ระลึก) ลดหย่อนภาษีเงินได้ 2 เท่า", accentColor: "border-purple-500", radioColor: "accent-purple-500", badgeStyle: "text-purple-600 bg-purple-500/10 border-purple-500/20" },
                 ].map((item) => (
                   <label 
                     key={item.type}
                     className={`border rounded-2xl p-5 flex flex-col justify-between cursor-pointer transition-all duration-200 relative ${
                       formData.distance === item.type 
-                        ? `${item.type === 'donation' ? 'border-purple-500 bg-purple-500/10 ring-1 ring-purple-500' : item.type === 'souvenir' ? 'border-orange-500 bg-orange-500/10 ring-1 ring-orange-500' : item.type.startsWith('vip') ? 'border-yellow-500 bg-yellow-500/10 ring-1 ring-yellow-500' : 'border-teal-500 bg-teal-500/10 ring-1 ring-teal-500'}` 
-                        : "border-slate-200 dark:border-white/10 hover:border-white/20 bg-slate-50 dark:bg-white/5"
+                        ? `${item.type === 'donation' ? 'border-purple-500 bg-purple-500/10 ring-2 ring-purple-500' : item.type === 'souvenir' ? 'border-orange-500 bg-orange-500/10 ring-2 ring-orange-500' : item.type.startsWith('vip') ? 'border-yellow-500 bg-yellow-500/10 ring-2 ring-yellow-500' : 'border-teal-500 bg-teal-500/10 ring-2 ring-teal-500'}` 
+                        : "border-slate-200 hover:border-teal-400 bg-slate-50"
                     }`}
                   >
                     <input 
@@ -369,30 +390,30 @@ export default function RegistrationForm({ onSuccess, onCancel, preselectedDista
                       className={`absolute top-5 right-5 ${item.radioColor} w-4 h-4 cursor-pointer`}
                     />
                     <div>
-                      <span className={`text-[9px] font-black tracking-widest uppercase border px-2.5 py-0.5 rounded-full ${item.badgeStyle}`}>
+                      <span className={`text-xs font-black tracking-widest uppercase border px-2.5 py-0.5 rounded-full ${item.badgeStyle}`}>
                         {item.type === 'donation' ? 'Donation' : item.type === 'souvenir' ? 'Souvenir' : item.type}
                       </span>
-                      <h4 className="text-sm font-black tracking-tight text-slate-900 dark:text-white mt-4">{item.title}</h4>
-                      <p className="text-[11px] text-slate-400 dark:text-white/50 mt-1.5 leading-relaxed">{item.desc}</p>
+                      <h4 className="text-base font-black tracking-tight text-slate-900 mt-3">{item.title}</h4>
+                      <p className="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed">{item.desc}</p>
                     </div>
-                    <div className="pt-3 border-t border-slate-200 dark:border-white/5 mt-4 flex items-baseline justify-between">
-                      <span className="text-[9px] text-slate-400 dark:text-white/40 font-bold uppercase tracking-wider">{item.type === 'donation' ? 'ยอดบริจาค' : 'ราคา'}</span>
-                      <span className="text-base font-black text-slate-900 dark:text-white font-sans">{item.price}</span>
+                    <div className="pt-3 border-t border-slate-200 mt-3 flex items-baseline justify-between">
+                      <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">{item.type === 'donation' ? 'ยอดบริจาค' : 'ราคา'}</span>
+                      <span className="text-2xl sm:text-3xl font-black text-teal-800 font-sans tracking-tight">{item.price}</span>
                     </div>
                   </label>
                 ))}
               </div>
 
             {["REGULAR", "5K", "vip", "souvenir"].includes(formData.distance) && (
-              <div className={`bg-slate-50 dark:bg-white/5 border rounded-2xl p-5 mt-4 flex flex-col items-center justify-center gap-4 animate-fade-in text-center min-h-[160px] ${formData.distance === 'vip' ? 'border-yellow-500/20' : formData.distance === 'souvenir' ? 'border-orange-500/20' : 'border-teal-500/20'}`}> 
+              <div className={`bg-slate-50 border rounded-2xl p-5 mt-4 flex flex-col items-center justify-center gap-4 animate-fade-in text-center min-h-[160px] ${formData.distance === 'vip' ? 'border-yellow-500/20' : formData.distance === 'souvenir' ? 'border-orange-500/20' : 'border-teal-500/20'}`}> 
                 <div className="flex gap-4 items-center justify-center flex-wrap">
                   {formData.distance === 'souvenir' ? (
                     souvenirImage ? (
-                      <div className="w-64 h-64 sm:w-80 sm:h-80 rounded-xl bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 flex items-center justify-center p-2 shadow-inner relative group">
+                      <div className="w-64 h-64 sm:w-80 sm:h-80 rounded-xl bg-white border border-slate-300 flex items-center justify-center p-2 shadow-inner relative group">
                         <img src={souvenirImage} alt="Souvenir" className="w-full h-full object-contain rounded-lg drop-shadow-md group-hover:scale-105 transition-transform duration-300" />
                       </div>
                     ) : (
-                      <div className="w-64 h-64 sm:w-80 sm:h-80 rounded-xl bg-slate-100 dark:bg-black/40 border border-dashed border-white/20 flex flex-col items-center justify-center text-slate-300 dark:text-white/30">
+                      <div className="w-64 h-64 sm:w-80 sm:h-80 rounded-xl bg-white border border-dashed border-slate-300 flex flex-col items-center justify-center text-slate-500">
                         <Award className="w-8 h-8 mb-2 opacity-50" />
                         <span className="text-xs uppercase font-black tracking-wider">รออัปโหลดภาพของที่ระลึก</span>
                       </div>
@@ -402,60 +423,60 @@ export default function RegistrationForm({ onSuccess, onCancel, preselectedDista
                       {formData.distance.startsWith("vip") ? (
                         <>
                           {shirtImage ? (
-                            <div className="w-40 h-40 sm:w-56 sm:h-56 rounded-xl bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 flex items-center justify-center p-2 shadow-inner relative group">
+                            <div className="w-40 h-40 sm:w-56 sm:h-56 rounded-xl bg-white border border-slate-300 flex items-center justify-center p-2 shadow-inner relative group">
                               <img src={shirtImage} alt="Shirt" className="w-full h-full object-contain rounded-lg drop-shadow-md group-hover:scale-110 transition-transform duration-300" />
                             </div>
                           ) : (
-                            <div className="w-40 h-40 sm:w-56 sm:h-56 rounded-xl bg-slate-100 dark:bg-black/40 border border-dashed border-white/20 flex flex-col items-center justify-center text-slate-300 dark:text-white/30">
+                            <div className="w-40 h-40 sm:w-56 sm:h-56 rounded-xl bg-white border border-dashed border-slate-300 flex flex-col items-center justify-center text-slate-500">
                               <Shirt className="w-6 h-6 mb-1 opacity-50" />
-                              <span className="text-[9px] uppercase font-black tracking-wider">รออัปโหลดภาพเสื้อวิ่ง</span>
+                              <span className="text-xs uppercase font-black tracking-wider">รออัปโหลดภาพเสื้อวิ่ง</span>
                             </div>
                           )}
                           {poloShirtImage ? (
-                            <div className="w-40 h-40 sm:w-56 sm:h-56 rounded-xl bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 flex items-center justify-center p-2 shadow-inner relative group">
+                            <div className="w-40 h-40 sm:w-56 sm:h-56 rounded-xl bg-white border border-slate-300 flex items-center justify-center p-2 shadow-inner relative group">
                               <img src={poloShirtImage} alt="VIP Polo Shirt" className="w-full h-full object-contain rounded-lg drop-shadow-md group-hover:scale-110 transition-transform duration-300" />
                             </div>
                           ) : (
-                            <div className="w-40 h-40 sm:w-56 sm:h-56 rounded-xl bg-slate-100 dark:bg-black/40 border border-dashed border-white/20 flex flex-col items-center justify-center text-slate-300 dark:text-white/30">
+                            <div className="w-40 h-40 sm:w-56 sm:h-56 rounded-xl bg-white border border-dashed border-slate-300 flex flex-col items-center justify-center text-slate-500">
                               <Shirt className="w-6 h-6 mb-1 opacity-50" />
-                              <span className="text-[9px] uppercase font-black tracking-wider">รออัปโหลดภาพเสื้อโปโล</span>
+                              <span className="text-xs uppercase font-black tracking-wider">รออัปโหลดภาพเสื้อโปโล</span>
                             </div>
                           )}
                         </>
                       ) : (
                         shirtImage ? (
-                          <div className="w-40 h-40 sm:w-56 sm:h-56 rounded-xl bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 flex items-center justify-center p-2 shadow-inner relative group">
+                          <div className="w-40 h-40 sm:w-56 sm:h-56 rounded-xl bg-white border border-slate-300 flex items-center justify-center p-2 shadow-inner relative group">
                             <img src={shirtImage} alt="Shirt" className="w-full h-full object-contain rounded-lg drop-shadow-md group-hover:scale-110 transition-transform duration-300" />
                           </div>
                         ) : (
-                          <div className="w-40 h-40 sm:w-56 sm:h-56 rounded-xl bg-slate-100 dark:bg-black/40 border border-dashed border-white/20 flex flex-col items-center justify-center text-slate-300 dark:text-white/30">
+                          <div className="w-40 h-40 sm:w-56 sm:h-56 rounded-xl bg-white border border-dashed border-slate-300 flex flex-col items-center justify-center text-slate-500">
                             <Shirt className="w-6 h-6 mb-1 opacity-50" />
-                            <span className="text-[9px] uppercase font-black tracking-wider">รออัปโหลดภาพ</span>
+                            <span className="text-xs uppercase font-black tracking-wider">รออัปโหลดภาพ</span>
                           </div>
                         )
                       )}
 
                       {medalImage ? (
-                        <div className="w-40 h-40 sm:w-56 sm:h-56 rounded-xl bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 flex items-center justify-center p-2 shadow-inner relative group">
+                        <div className="w-40 h-40 sm:w-56 sm:h-56 rounded-xl bg-white border border-slate-300 flex items-center justify-center p-2 shadow-inner relative group">
                           <img src={medalImage} alt="Medal" className="w-full h-full object-contain rounded-lg drop-shadow-md group-hover:scale-110 transition-transform duration-300" />
                         </div>
                       ) : (
-                        <div className="w-40 h-40 sm:w-56 sm:h-56 rounded-xl bg-slate-100 dark:bg-black/40 border border-dashed border-white/20 flex flex-col items-center justify-center text-slate-300 dark:text-white/30">
+                        <div className="w-40 h-40 sm:w-56 sm:h-56 rounded-xl bg-white border border-dashed border-slate-300 flex flex-col items-center justify-center text-slate-500">
                           <Award className="w-6 h-6 mb-1 opacity-50" />
-                          <span className="text-[9px] uppercase font-black tracking-wider">รออัปโหลดภาพ</span>
+                          <span className="text-xs uppercase font-black tracking-wider">รออัปโหลดภาพ</span>
                         </div>
                       )}
                     </>
                   )}
                 </div>
                 
-                <div className="space-y-1 text-left w-full max-w-sm mx-auto">
+                <div className="space-y-2 text-left w-full max-w-md mx-auto">
                   {formData.distance === "REGULAR" || formData.distance === "5K" ? (
                     <>
-                      <h4 className="text-sm font-black uppercase tracking-wider text-teal-600 dark:text-teal-400 text-center">
+                      <h4 className="text-base font-black uppercase tracking-wider text-teal-700 text-center">
                         แพ็กเกจ REGULAR 5KM
                       </h4>
-                      <ul className="text-xs text-slate-500 dark:text-white/60 space-y-1 pt-3 list-disc list-inside">
+                      <ul className="text-sm sm:text-base text-slate-800 space-y-2 pt-2 list-disc list-inside font-medium leading-relaxed">
                         <li>เข้าร่วมกิจกรรมเดิน-วิ่ง ระยะ 5 กิโลเมตร</li>
                         <li>เสื้อวิ่ง LSEd Running 1 ตัว (ระบุไซส์ในขั้นตอนถัดไป)</li>
                         <li>เหรียญรางวัลเมื่อเข้าเส้นชัย 1 เหรียญ</li>
@@ -464,10 +485,10 @@ export default function RegistrationForm({ onSuccess, onCancel, preselectedDista
                     </>
                   ) : formData.distance === "vip" ? (
                     <>
-                      <h4 className="text-sm font-black uppercase tracking-wider text-yellow-400 text-center">
+                      <h4 className="text-base font-black uppercase tracking-wider text-yellow-600 text-center">
                         แพ็กเกจ VIP 5KM
                       </h4>
-                      <ul className="text-xs text-slate-500 dark:text-white/60 space-y-1 pt-3 list-disc list-inside">
+                      <ul className="text-sm sm:text-base text-slate-800 space-y-2 pt-2 list-disc list-inside font-medium leading-relaxed">
                         <li>เข้าร่วมกิจกรรมเดิน-วิ่ง ระยะ 5 กิโลเมตร</li>
                         <li>เลือกลายเสื้อวิ่ง VIP พิเศษ 1 ตัว (ระบุไซส์ในขั้นตอนถัดไป)</li>
                         <li>เหรียญรางวัลพรีเมียม 1 เหรียญ</li>
@@ -477,10 +498,10 @@ export default function RegistrationForm({ onSuccess, onCancel, preselectedDista
                     </>
                   ) : (
                     <>
-                      <h4 className="text-sm font-black uppercase tracking-wider text-orange-400 text-center">
+                      <h4 className="text-base font-black uppercase tracking-wider text-orange-600 text-center">
                         แพ็กเกจของที่ระลึกสะสม (Souvenir Package)
                       </h4>
-                      <ul className="text-xs text-slate-500 dark:text-white/60 space-y-1 pt-3 list-disc list-inside">
+                      <ul className="text-sm sm:text-base text-slate-800 space-y-2 pt-2 list-disc list-inside font-medium leading-relaxed">
                         <li>เสื้อวิ่งพรีเมียม LSEd Running 1 ตัว (ระบุไซส์ในขั้นตอนถัดไป)</li>
                         <li>เหรียญรางวัลพรีเมียม สุโขทัย ซิกเนเจอร์ ซีรีส์ 1 เหรียญ</li>
                         <li>สิทธิ์ขอลดหย่อนภาษีจากการสมทบทุน 1 เท่า</li>
@@ -492,7 +513,7 @@ export default function RegistrationForm({ onSuccess, onCancel, preselectedDista
             )}
 
             {formData.distance === "donation" && (
-              <div className="bg-slate-50 dark:bg-white/5 border border-orange-500/20 rounded-2xl p-6 mt-4 space-y-3">
+              <div className="bg-slate-50 border border-orange-500/20 rounded-2xl p-6 mt-4 space-y-3">
                 <label className="text-xs font-black uppercase tracking-wider text-orange-400 block">ระบุจำนวนเงินที่ต้องการบริจาคสนับสนุน (บาท)</label>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-400 font-bold text-lg">฿</span>
@@ -506,10 +527,10 @@ export default function RegistrationForm({ onSuccess, onCancel, preselectedDista
                     }}
                     placeholder="1"
                     min={1}
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-orange-500/30 bg-slate-100 dark:bg-black/40 text-lg font-black tracking-wide focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition text-slate-900 dark:text-white font-mono"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-orange-500/30 bg-white text-lg font-black tracking-wide focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition text-slate-900"
                   />
                 </div>
-                <p className="text-[10px] text-slate-400 dark:text-white/40 leading-relaxed font-light">
+                <p className="text-xs text-slate-700 leading-relaxed font-medium">
                   * ท่านสามารถร่วมบริจาคสนับสนุนได้ไม่มีขั้นต่ำตามความประสงค์ เพื่อร่วมสมทบทุนสนับสนุนกิจกรรมและสามารถนำไปลดหย่อนภาษีได้
                 </p>
               </div>
@@ -520,85 +541,85 @@ export default function RegistrationForm({ onSuccess, onCancel, preselectedDista
         {/* STEP 2: RUNNER DETAILS */}
         {step === 2 && (
           <div className="space-y-6 animate-fade-in">
-            <div className="border-b border-slate-200 dark:border-white/5 pb-2">
-              <h3 className="text-base font-black italic uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-1.5">
+            <div className="border-b border-slate-200 pb-2">
+              <h3 className="text-base font-black italic uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
                 ข้อมูลส่วนบุคคลของผู้สมัคร <Sparkles className="w-4 h-4 text-orange-500" />
               </h3>
-              <p className="text-xs text-slate-400 dark:text-white/50">กรุณากรอกข้อมูลส่วนตัวตามจริงเพื่อผลประโยชน์ของท่าน</p>
+              <p className="text-xs text-slate-600">กรุณากรอกข้อมูลส่วนตัวตามจริงเพื่อผลประโยชน์ของท่าน</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-4">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/50 block">ชื่อจริง (ภาษาไทย หรือ อังกฤษ)</label>
+                <label className="text-sm font-bold uppercase tracking-wider text-slate-800 block">ชื่อจริง <span className="text-xs font-normal text-slate-500 ml-1">(ภาษาไทย หรือ อังกฤษ)</span></label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-white/40" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
                   <input 
                     type="text" 
                     name="firstName"
                     value={formData.firstName}
                     onChange={handleChange}
                     placeholder="กรอกชื่อจริง"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition text-slate-900 dark:text-white"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 bg-white text-base py-3 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition text-slate-900 font-medium"
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/50 block">นามสกุล</label>
+                <label className="text-sm font-bold uppercase tracking-wider text-slate-800 block">นามสกุล</label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-white/40" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
                   <input 
                     type="text" 
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleChange}
                     placeholder="กรอกนามสกุล"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition text-slate-900 dark:text-white"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 bg-white text-base py-3 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition text-slate-900 font-medium"
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5 md:col-span-2">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/50 block">เลขบัตรประชาชน / เลขหนังสือเดินทาง</label>
+                <label className="text-sm font-bold uppercase tracking-wider text-slate-800 block">เลขบัตรประชาชน หรือหนังสือเดินทาง</label>
                 <div className="relative">
-                  <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-white/40" />
+                  <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
                   <input 
                     type="text" 
                     name="nationalId"
                     value={formData.nationalId}
                     onChange={handleChange}
                     placeholder="เลขบัตรประชาชน 13 หลัก หรือเลขที่พาสปอร์ต"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition text-slate-900 dark:text-white"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 bg-white text-base py-3 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition text-slate-900 font-medium"
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/50 block">อีเมลสำหรับติดต่อ</label>
+                <label className="text-sm font-bold uppercase tracking-wider text-slate-800 block">อีเมลสำหรับติดต่อ</label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-white/40" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
                   <input 
                     type="email" 
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="example@mail.com"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition text-slate-900 dark:text-white"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 bg-white text-base py-3 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition text-slate-900 font-medium"
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/50 block">เบอร์โทรศัพท์มือถือ</label>
+                <label className="text-sm font-bold uppercase tracking-wider text-slate-800 block">เบอร์โทรศัพท์มือถือ</label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-white/40" />
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
                   <input 
                     type="tel" 
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
                     placeholder="081XXXXXXX"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition text-slate-900 dark:text-white"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 bg-white text-base py-3 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition text-slate-900 font-medium"
                   />
                 </div>
               </div>
@@ -606,47 +627,47 @@ export default function RegistrationForm({ onSuccess, onCancel, preselectedDista
               {formData.distance !== "donation" && (
                 <>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/50 block">อายุ (ปี)</label>
+                    <label className="text-sm font-bold uppercase tracking-wider text-slate-800 block">อายุ <span className="text-xs font-normal text-slate-500 ml-1">(ปี)</span></label>
                     <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-white/40" />
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
                       <input 
                         type="number" 
                         name="age"
                         value={formData.age}
                         onChange={handleChange}
                         placeholder="ระบุอายุเป็นตัวเลข"
-                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition text-slate-900 dark:text-white"
+                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 bg-white text-base py-3 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition text-slate-900 font-medium"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/50 block">เพศ</label>
+                    <label className="text-sm font-bold uppercase tracking-wider text-slate-800 block">เพศ</label>
                     <select
                       name="gender"
                       value={formData.gender}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition text-slate-900 dark:text-white"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-base py-3 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition text-slate-900 font-medium"
                     >
-                      <option value="male" className="bg-slate-50 dark:bg-neutral-900">ชาย</option>
-                      <option value="female" className="bg-slate-50 dark:bg-neutral-900">หญิง</option>
-                      <option value="other" className="bg-slate-50 dark:bg-neutral-900">อื่นๆ</option>
+                      <option value="male" className="bg-slate-50 ">ชาย</option>
+                      <option value="female" className="bg-slate-50 ">หญิง</option>
+                      <option value="other" className="bg-slate-50 ">อื่นๆ</option>
                     </select>
                   </div>
 
                   <div className="space-y-1.5 md:col-span-2">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/50 block">หมู่โลหิต (กรุ๊ปเลือด)</label>
+                    <label className="text-sm font-bold uppercase tracking-wider text-slate-800 block">หมู่โลหิต <span className="text-xs font-normal text-slate-500 ml-1">(กรุ๊ปเลือด)</span></label>
                     <select
                       name="bloodType"
                       value={formData.bloodType}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition text-slate-900 dark:text-white"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-base py-3 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition text-slate-900 font-medium"
                     >
-                      <option value="Unknown" className="bg-slate-50 dark:bg-neutral-900">ไม่ทราบ / ไม่ระบุ</option>
-                      <option value="A" className="bg-slate-50 dark:bg-neutral-900">A</option>
-                      <option value="B" className="bg-slate-50 dark:bg-neutral-900">B</option>
-                      <option value="AB" className="bg-slate-50 dark:bg-neutral-900">AB</option>
-                      <option value="O" className="bg-slate-50 dark:bg-neutral-900">O</option>
+                      <option value="Unknown" className="bg-slate-50 ">ไม่ระบุ</option>
+                      <option value="A" className="bg-slate-50 ">A</option>
+                      <option value="B" className="bg-slate-50 ">B</option>
+                      <option value="AB" className="bg-slate-50 ">AB</option>
+                      <option value="O" className="bg-slate-50 ">O</option>
                     </select>
                   </div>
                 </>
@@ -658,15 +679,15 @@ export default function RegistrationForm({ onSuccess, onCancel, preselectedDista
         {/* STEP 3: EMERGENCY & SHIRT (OR TAX DEDUCTION FOR DONATIONS) */}
         {step === 3 && (
           <div className="space-y-6 animate-fade-in">
-            <div className="border-b border-slate-200 dark:border-white/5 pb-2">
-              <h3 className="text-base font-black italic uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-1.5">
+            <div className="border-b border-slate-200 pb-2">
+              <h3 className="text-base font-black italic uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
                 {formData.distance === "donation" ? (
                   <>การลดหย่อนภาษี & รายละเอียดผู้บริจาค <Sparkles className="w-4 h-4 text-orange-500" /></>
                 ) : (
                   <>ผู้ติดต่อฉุกเฉิน, รับเสื้อวิ่ง & สิทธิ์ลดหย่อนภาษี <Sparkles className="w-4 h-4 text-orange-500" /></>
                 )}
               </h3>
-              <p className="text-xs text-slate-400 dark:text-white/50">
+              <p className="text-xs text-slate-600">
                 {formData.distance === "donation" 
                   ? "ระบุรายละเอียดข้อมูลผู้บริจาคและวัตถุประสงค์เพื่อออกใบลดหย่อนภาษีตามระบบของสถาบัน"
                   : "กรุณาระบุเพื่อความปลอดภัยสูงสุดในการบริการด้านพยาบาล, สิทธิ์รับเสื้อวิ่ง และการกรอกข้อมูลลดหย่อนภาษี"
@@ -679,31 +700,31 @@ export default function RegistrationForm({ onSuccess, onCancel, preselectedDista
               {formData.distance !== "donation" && formData.distance !== "souvenir" && (
                 <>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/50 block">ชื่อผู้ติดต่อฉุกเฉิน</label>
+                    <label className="text-sm font-bold uppercase tracking-wider text-slate-800 block">ชื่อผู้ติดต่อฉุกเฉิน</label>
                     <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-white/40" />
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
                       <input 
                         type="text" 
                         name="emergencyContactName"
                         value={formData.emergencyContactName}
                         onChange={handleChange}
                         placeholder="ชื่อ-นามสกุล ผู้ติดต่อกรณีฉุกเฉิน"
-                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition text-slate-900 dark:text-white"
+                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 bg-white text-base py-3 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition text-slate-900 font-medium"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/50 block">เบอร์โทรศัพท์ติดต่อฉุกเฉิน</label>
+                    <label className="text-sm font-bold uppercase tracking-wider text-slate-800 block">เบอร์โทรศัพท์ติดต่อฉุกเฉิน</label>
                     <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-white/40" />
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
                       <input 
                         type="text" 
                         name="emergencyContactPhone"
                         value={formData.emergencyContactPhone}
                         onChange={handleChange}
                         placeholder="เบอร์โทรศัพท์ผู้ติดต่อฉุกเฉิน"
-                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition text-slate-900 dark:text-white"
+                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 bg-white text-base py-3 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition text-slate-900 font-medium"
                       />
                     </div>
                   </div>
@@ -714,69 +735,69 @@ export default function RegistrationForm({ onSuccess, onCancel, preselectedDista
               {formData.distance !== "donation" && (
                 <>
                   <div className="space-y-1.5 md:col-span-2">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/50 block">ไซส์เสื้อที่ระลึก (กรุณาตรวจสอบขนาดตามตาราง)</label>
+                    <label className="text-sm font-bold uppercase tracking-wider text-slate-800 block">ไซส์เสื้อที่ระลึก <span className="text-xs font-normal text-slate-500 ml-1">(กรุณาตรวจสอบขนาดตามตาราง)</span></label>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       {SHIRT_SIZES.map((sizeObj) => (
                         <button
                           key={sizeObj.size}
                           type="button"
                           onClick={() => setFormData(prev => ({ ...prev, shirtSize: sizeObj.size }))}
-                          className={`p-3 rounded-xl border text-center transition cursor-pointer ${
+                          className={`p-3.5 rounded-xl border text-center transition cursor-pointer ${
                             formData.shirtSize === sizeObj.size
-                              ? "border-teal-500 bg-teal-500/10 text-slate-900 dark:text-white"
-                              : "border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-white/60 hover:border-white/20 hover:text-slate-900 dark:hover:text-white"
+                              ? "border-teal-500 bg-teal-500/10 text-slate-900"
+                              : "border-slate-200 bg-slate-50 text-slate-700 hover:border-teal-400 hover:text-slate-900"
                           }`}
                         >
-                          <span className="block text-sm font-black tracking-wider">{sizeObj.size}</span>
-                          <span className="block text-[10px] opacity-70 mt-0.5">{sizeObj.desc}</span>
+                          <span className="block text-base font-black tracking-wider">{sizeObj.size}</span>
+                          <span className="block text-sm text-slate-700 font-semibold mt-0.5">{sizeObj.desc}</span>
                         </button>
                       ))}
                     </div>
                   </div>
 
-                  <div className="md:col-span-2 space-y-4 pt-4 border-t border-slate-200 dark:border-white/5">
+                  <div className="md:col-span-2 space-y-4 pt-4 border-t border-slate-200">
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/50 block">ช่องทางการรับเสื้อยืดและของที่ระลึก</label>
+                      <label className="text-sm font-bold uppercase tracking-wider text-slate-800 block">ช่องทางการรับเสื้อยืดและของที่ระลึก</label>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <button
                           type="button"
                           onClick={() => setFormData(prev => ({ ...prev, deliveryMethod: "pickup" }))}
                           className={`p-4 rounded-xl border text-center transition cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
                             formData.deliveryMethod === "pickup"
-                              ? "border-teal-500 bg-teal-500/10 text-slate-900 dark:text-white"
-                              : "border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-white/60 hover:border-white/20 hover:text-slate-900 dark:hover:text-white"
+                              ? "border-teal-500 bg-teal-500/10 text-slate-900"
+                              : "border-slate-200 bg-slate-50 text-slate-700 hover:border-teal-400 hover:text-slate-900"
                           }`}
                         >
-                          <MapPin className="w-4 h-4 text-teal-600 dark:text-teal-400" />
-                          <span className="block text-xs font-black tracking-wider">รับหน้างานเอง (ไม่มีค่าใช้จ่าย)</span>
-                          <span className="block text-[10px] opacity-70">รับด้วยตนเอง ณ คณะ LSEd มธ. รังสิต ในวันงาน</span>
+                          <MapPin className="w-5 h-5 text-teal-700" />
+                          <span className="block text-base font-black tracking-wider">รับหน้างานเอง <span className="text-sm font-normal text-teal-800 ml-1">(ไม่มีค่าใช้จ่าย)</span></span>
+                          <span className="block text-sm text-slate-700 font-medium">รับด้วยตนเอง ณ คณะ LSEd มธ. รังสิต ในวันงาน</span>
                         </button>
                         <button
                           type="button"
                           onClick={() => setFormData(prev => ({ ...prev, deliveryMethod: "shipping" }))}
                           className={`p-4 rounded-xl border text-center transition cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
                             formData.deliveryMethod === "shipping"
-                              ? "border-orange-500 bg-orange-500/10 text-slate-900 dark:text-white"
-                              : "border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-white/60 hover:border-white/20 hover:text-slate-900 dark:hover:text-white"
+                              ? "border-orange-500 bg-orange-500/10 text-slate-900"
+                              : "border-slate-200 bg-slate-50 text-slate-700 hover:border-teal-400 hover:text-slate-900"
                           }`}
                         >
-                          <Truck className="w-4 h-4 text-orange-500" />
-                          <span className="block text-xs font-black tracking-wider text-orange-400">จัดส่งโดยไปรษณีย์ไทย (EMS) (+60 บาท)</span>
-                          <span className="block text-[10px] opacity-70">จัดส่งเสื้อยืดและเหรียญด่วนพิเศษถึงที่อยู่ท่าน</span>
+                          <Truck className="w-5 h-5 text-orange-500" />
+                          <span className="block text-base font-black tracking-wider text-orange-600">จัดส่งโดยไปรษณีย์ไทย <span className="text-sm font-semibold text-orange-700 ml-1">(EMS)</span> <span className="text-xs font-normal text-orange-600 ml-1">(+60 บาท)</span></span>
+                          <span className="block text-sm text-slate-700 font-medium">จัดส่งเสื้อยืดและเหรียญด่วนพิเศษถึงที่อยู่ท่าน</span>
                         </button>
                       </div>
                     </div>
 
                     {formData.deliveryMethod === "shipping" && (
                       <div className="space-y-1.5 pt-2 animate-fade-in">
-                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/50 block">ที่อยู่ในการจัดส่งโดยละเอียด</label>
+                        <label className="text-sm font-bold uppercase tracking-wider text-slate-800 block">ที่อยู่ในการจัดส่งโดยละเอียด</label>
                         <textarea
                           name="shippingAddress"
                           value={formData.shippingAddress}
                           onChange={(e) => setFormData(prev => ({ ...prev, shippingAddress: e.target.value }))}
                           placeholder="ระบุ บ้านเลขที่ หมู่บ้าน/อาคาร ถนน ตำบล อำเภอ จังหวัด รหัสไปรษณีย์"
                           rows={3}
-                          className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition text-slate-900 dark:text-white"
+                          className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-base focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition text-slate-900"
                         />
                       </div>
                     )}
@@ -785,9 +806,9 @@ export default function RegistrationForm({ onSuccess, onCancel, preselectedDista
               )}
 
               {/* Tax Deduction Request section (for BOTH Runner and Donation) */}
-              <div className="md:col-span-2 space-y-4 pt-4 border-t border-slate-200 dark:border-white/5">
-                <div className="space-y-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl p-4">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/50 block">การขอใบลดหย่อนภาษีประจำปี (ใบแสดงวัตถุประสงค์ในการบริจาคเงิน)</label>
+              <div className="md:col-span-2 space-y-4 pt-4 border-t border-slate-200">
+                <div className="space-y-3 bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                  <label className="text-sm font-bold uppercase tracking-wider text-slate-800 block">การขอใบลดหย่อนภาษีประจำปี <span className="text-xs font-normal text-slate-500 ml-1">(ใบแสดงวัตถุประสงค์ในการบริจาคเงิน)</span></label>
                   <div className="flex items-start gap-3">
                     <input 
                       type="checkbox"
@@ -795,11 +816,11 @@ export default function RegistrationForm({ onSuccess, onCancel, preselectedDista
                       id="taxDeduction"
                       checked={formData.taxDeduction}
                       onChange={(e) => setFormData(prev => ({ ...prev, taxDeduction: e.target.checked }))}
-                      className="w-4 h-4 rounded text-orange-500 focus:ring-orange-500 border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 mt-1 cursor-pointer"
+                      className="w-5 h-5 rounded text-orange-500 focus:ring-orange-500 border-slate-300 bg-white mt-1 cursor-pointer"
                     />
-                    <div className="text-xs">
-                      <label htmlFor="taxDeduction" className="text-slate-900 dark:text-white font-bold cursor-pointer block">ต้องการขอใช้สิทธิ์ลดหย่อนภาษีประจำปี (e-Donation)</label>
-                      <p className="text-slate-400 dark:text-white/50 mt-0.5 leading-relaxed">
+                    <div className="text-sm sm:text-base">
+                      <label htmlFor="taxDeduction" className="text-slate-900 font-bold cursor-pointer block">ต้องการขอใช้สิทธิ์ลดหย่อนภาษีประจำปี <span className="text-xs font-semibold text-orange-600 ml-1">(e-Donation)</span></label>
+                      <p className="text-slate-700 mt-1 leading-relaxed font-normal">
                         หักลดหย่อนภาษีได้ตามกฎหมายของคณะวิทยาการเรียนรู้และศึกษาศาสตร์ มหาวิทยาลัยธรรมศาสตร์
                       </p>
                     </div>
@@ -809,23 +830,23 @@ export default function RegistrationForm({ onSuccess, onCancel, preselectedDista
                 {/* Sub-form of Tax Deduction matching the uploaded PDF */}
                 {formData.taxDeduction && (
                   <div className="p-5 rounded-2xl bg-orange-500/5 border border-orange-500/10 space-y-5 animate-fade-in">
-                    <div className="flex items-center gap-2 border-b border-slate-200 dark:border-white/5 pb-2">
-                      <FileText className="w-4 h-4 text-orange-400" />
-                      <span className="text-xs font-black tracking-wider text-orange-400 uppercase">กรอกข้อมูลแสดงวัตถุประสงค์ในการบริจาคเงิน</span>
+                    <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+                      <FileText className="w-5 h-5 text-orange-500" />
+                      <span className="text-sm font-black tracking-wider text-orange-600 uppercase">กรอกข้อมูลแสดงวัตถุประสงค์ในการบริจาคเงิน</span>
                     </div>
 
                     {/* Donor Type selection */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/50 block">ประเภทผู้บริจาค</label>
+                        <label className="text-sm font-bold uppercase tracking-wider text-slate-800 block">ประเภทผู้บริจาค</label>
                         <div className="flex gap-2">
                           <button
                             type="button"
                             onClick={() => setFormData(prev => ({ ...prev, donorType: "personal" }))}
-                            className={`flex-1 py-2 text-xs font-bold rounded-xl border transition ${
+                            className={`flex-1 py-2.5 text-sm font-bold rounded-xl border transition ${
                               formData.donorType === "personal"
-                                ? "border-orange-500 bg-orange-500/10 text-slate-900 dark:text-white"
-                                : "border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-400 dark:text-white/50 hover:border-white/20"
+                                ? "border-orange-500 bg-orange-500/10 text-slate-900"
+                                : "border-slate-200 bg-slate-50 text-slate-700 hover:border-teal-400"
                             }`}
                           >
                             บุคคลธรรมดา
@@ -833,21 +854,21 @@ export default function RegistrationForm({ onSuccess, onCancel, preselectedDista
                           <button
                             type="button"
                             onClick={() => setFormData(prev => ({ ...prev, donorType: "corporate" }))}
-                            className={`flex-1 py-2 text-xs font-bold rounded-xl border transition ${
+                            className={`flex-1 py-2.5 text-sm font-bold rounded-xl border transition ${
                               formData.donorType === "corporate"
-                                ? "border-orange-500 bg-orange-500/10 text-slate-900 dark:text-white"
-                                : "border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-400 dark:text-white/50 hover:border-white/20"
+                                ? "border-orange-500 bg-orange-500/10 text-slate-900"
+                                : "border-slate-200 bg-slate-50 text-slate-700 hover:border-teal-400"
                             }`}
                           >
-                            นิติบุคคล (บริษัท/ห้างฯ)
+                            นิติบุคคล <span className="text-xs font-normal text-slate-500 ml-1">(บริษัทหรือห้างฯ)</span>
                           </button>
                         </div>
                       </div>
 
                       {/* Tax ID */}
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/50 block">
-                          {formData.donorType === "personal" ? "เลขประจำตัวผู้เสียภาษี (เลขบัตรประชาชน)" : "เลขประจำตัวผู้เสียภาษีอากรนิติบุคคล"} <span className="text-red-500">*</span>
+                        <label className="text-sm font-bold uppercase tracking-wider text-slate-800 block">
+                          {formData.donorType === "personal" ? <>เลขประจำตัวผู้เสียภาษี <span className="text-xs font-normal text-slate-500 ml-1">(เลขบัตรประชาชน)</span></> : "เลขประจำตัวผู้เสียภาษีอากรนิติบุคคล"} <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="text"
@@ -855,48 +876,48 @@ export default function RegistrationForm({ onSuccess, onCancel, preselectedDista
                           placeholder="ระบุตัวเลข 13 หลัก"
                           value={formData.taxId}
                           onChange={(e) => setFormData(prev => ({ ...prev, taxId: e.target.value.replace(/[^0-9]/g, "") }))}
-                          className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-slate-900 dark:text-white"
+                          className="w-full px-4 py-2 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-slate-900"
                         />
                       </div>
                     </div>
 
                     {/* Donor Name override */}
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/50 block">
-                        {formData.donorType === "personal" ? "ชื่อ - นามสกุล ผู้บริจาค (ตามบัตรประชาชน)" : "ชื่อนิติบุคคล (บริษัท/ห้างหุ้นส่วน/ห้างหุ้นส่วนจำกัด)"} <span className="text-red-500">*</span>
+                      <label className="text-sm font-bold uppercase tracking-wider text-slate-800 block">
+                        {formData.donorType === "personal" ? <>ชื่อ - นามสกุล ผู้บริจาค <span className="text-xs font-normal text-slate-500 ml-1">(ตามบัตรประชาชน)</span></> : <>ชื่อนิติบุคคล <span className="text-xs font-normal text-slate-500 ml-1">(บริษัทหรือห้างหุ้นส่วน)</span></>} <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
-                        placeholder={formData.donorType === "personal" ? "ระบุ นาย / นาง / นางสาว พร้อมชื่อ-นามสกุล" : "ระบุชื่อนิติบุคคลเพื่อจัดทำใบเสร็จให้ถูกต้อง"}
+                        placeholder={formData.donorType === "personal" ? "ระบุคำนำหน้า พร้อมชื่อและนามสกุล" : "ระบุชื่อนิติบุคคลเพื่อจัดทำใบเสร็จให้ถูกต้อง"}
                         value={formData.donorName}
                         onChange={(e) => setFormData(prev => ({ ...prev, donorName: e.target.value }))}
-                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-slate-900 dark:text-white"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-slate-900"
                       />
                     </div>
 
                     {/* Receipt Address */}
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/50 block">ที่อยู่ในการออกใบเสร็จรับเงิน <span className="text-red-500">*</span></label>
+                      <label className="text-sm font-bold uppercase tracking-wider text-slate-800 block">ที่อยู่ในการออกใบเสร็จรับเงิน <span className="text-red-500">*</span></label>
                       <textarea
                         placeholder="ระบุที่อยู่ในการออกใบเสร็จรับเงินให้ละเอียดและถูกต้องเพื่อประโยชน์ทางภาษีของท่าน"
                         value={formData.receiptAddress}
                         onChange={(e) => setFormData(prev => ({ ...prev, receiptAddress: e.target.value }))}
                         rows={2.5}
-                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-slate-900 dark:text-white"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-slate-900"
                       />
                     </div>
 
                     {/* Receipt Delivery Method */}
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/50 block">ที่อยู่ในการจัดส่งใบเสร็จรับเงิน</label>
+                      <label className="text-sm font-bold uppercase tracking-wider text-slate-800 block">ที่อยู่ในการจัดส่งใบเสร็จรับเงิน</label>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <button
                           type="button"
                           onClick={() => setFormData(prev => ({ ...prev, receiptDeliveryType: "same" }))}
                           className={`py-3 text-xs font-bold rounded-xl border transition text-left px-4 flex items-center gap-2.5 ${
                             formData.receiptDeliveryType === "same"
-                              ? "border-orange-500 bg-orange-500/10 text-slate-900 dark:text-white"
-                              : "border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-400 dark:text-white/50 hover:border-white/20"
+                              ? "border-orange-500 bg-orange-500/10 text-slate-900"
+                              : "border-slate-200 bg-slate-50 text-slate-600 hover:border-teal-400"
                           }`}
                         >
                           <span className={`w-2.5 h-2.5 rounded-full border border-orange-500 flex-shrink-0 flex items-center justify-center`}>
@@ -909,8 +930,8 @@ export default function RegistrationForm({ onSuccess, onCancel, preselectedDista
                           onClick={() => setFormData(prev => ({ ...prev, receiptDeliveryType: "custom" }))}
                           className={`py-3 text-xs font-bold rounded-xl border transition text-left px-4 flex items-center gap-2.5 ${
                             formData.receiptDeliveryType === "custom"
-                              ? "border-orange-500 bg-orange-500/10 text-slate-900 dark:text-white"
-                              : "border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-400 dark:text-white/50 hover:border-white/20"
+                              ? "border-orange-500 bg-orange-500/10 text-slate-900"
+                              : "border-slate-200 bg-slate-50 text-slate-600 hover:border-teal-400"
                           }`}
                         >
                           <span className={`w-2.5 h-2.5 rounded-full border border-orange-500 flex-shrink-0 flex items-center justify-center`}>
@@ -923,20 +944,20 @@ export default function RegistrationForm({ onSuccess, onCancel, preselectedDista
 
                     {formData.receiptDeliveryType === "custom" && (
                       <div className="space-y-1.5 pt-1 animate-fade-in">
-                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/50 block">ที่อยู่จัดส่งใบเสร็จรับเงิน <span className="text-red-500">*</span></label>
+                        <label className="text-sm font-bold uppercase tracking-wider text-slate-800 block">ที่อยู่จัดส่งใบเสร็จรับเงิน <span className="text-red-500">*</span></label>
                         <textarea
                           placeholder="ระบุที่อยู่จัดส่งใบเสร็จรับเงินปลายทางอย่างละเอียด"
                           value={formData.receiptDeliveryAddress}
                           onChange={(e) => setFormData(prev => ({ ...prev, receiptDeliveryAddress: e.target.value }))}
                           rows={2}
-                          className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-slate-900 dark:text-white"
+                          className="w-full px-4 py-2 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-slate-900"
                         />
                       </div>
                     )}
 
                     {/* Donation Objective */}
-                    <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-white/5">
-                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/50 block">วัตถุประสงค์ในการบริจาคเงิน (ระบุในใบแสดงวัตถุประสงค์)</label>
+                    <div className="space-y-2 pt-2 border-t border-slate-200">
+                      <label className="text-sm font-bold uppercase tracking-wider text-slate-800 block">วัตถุประสงค์ในการบริจาคเงิน (ระบุในใบแสดงวัตถุประสงค์)</label>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {[
                           { key: "education", label: "เพื่อการศึกษาทั่วไป" },
@@ -950,8 +971,8 @@ export default function RegistrationForm({ onSuccess, onCancel, preselectedDista
                             onClick={() => setFormData(prev => ({ ...prev, donationObjective: item.key as any }))}
                             className={`py-3 text-xs font-bold rounded-xl border transition text-left px-4 flex items-center gap-2.5 ${
                               formData.donationObjective === item.key
-                                ? "border-orange-500 bg-orange-500/10 text-slate-900 dark:text-white"
-                                : "border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-400 dark:text-white/50 hover:border-white/20"
+                                ? "border-orange-500 bg-orange-500/10 text-slate-900"
+                                : "border-slate-200 bg-slate-50 text-slate-600 hover:border-teal-400"
                             }`}
                           >
                             <span className={`w-2.5 h-2.5 rounded-full border border-orange-500 flex-shrink-0 flex items-center justify-center`}>
@@ -965,13 +986,13 @@ export default function RegistrationForm({ onSuccess, onCancel, preselectedDista
 
                     {(formData.donationObjective === "project" || formData.donationObjective === "other") && (
                       <div className="space-y-1.5 pt-1 animate-fade-in">
-                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/50 block">ระบุรายละเอียดวัตถุประสงค์ในการบริจาค <span className="text-red-500">*</span></label>
+                        <label className="text-sm font-bold uppercase tracking-wider text-slate-800 block">ระบุรายละเอียดวัตถุประสงค์ในการบริจาค <span className="text-red-500">*</span></label>
                         <input
                           type="text"
                           placeholder={formData.donationObjective === "project" ? "เช่น โครงการพัฒนาอาคารนวัตกรรมการเรียนรู้" : "ระบุวัตถุประสงค์อื่นๆ ตามประสงค์ของท่าน"}
                           value={formData.donationObjectiveDetail}
                           onChange={(e) => setFormData(prev => ({ ...prev, donationObjectiveDetail: e.target.value }))}
-                          className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-slate-900 dark:text-white"
+                          className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-slate-900"
                         />
                       </div>
                     )}
@@ -985,64 +1006,64 @@ export default function RegistrationForm({ onSuccess, onCancel, preselectedDista
         {/* STEP 4: WAIVER & CONSENT */}
         {step === 4 && (
           <div className="space-y-6 animate-fade-in">
-            <div className="border-b border-slate-200 dark:border-white/5 pb-2">
-              <h3 className="text-base font-black italic uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-1.5">
-                หนังสือยินยอมปฏิบัติตามกฎกติกาและยอมรับความเสี่ยง <FileText className="w-4 h-4 text-orange-500" />
+            <div className="border-b border-slate-200 pb-3">
+              <h3 className="text-lg sm:text-xl font-black italic uppercase tracking-wider text-slate-900 flex items-center gap-2">
+                หนังสือยินยอมปฏิบัติตามกฎกติกาและยอมรับความเสี่ยง <FileText className="w-5 h-5 text-orange-500" />
               </h3>
-              <p className="text-xs text-slate-400 dark:text-white/50">กรุณาอ่านและทำความเข้าใจข้อตกลงและเงื่อนไขการเข้าร่วมกิจกรรมเพื่อความปลอดภัยสูงสุด</p>
+              <p className="text-sm sm:text-base text-slate-700 font-medium mt-1">กรุณาอ่านและทำความเข้าใจข้อตกลงและเงื่อนไขการเข้าร่วมกิจกรรมเพื่อความปลอดภัยสูงสุด</p>
             </div>
 
-            <div className="border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 rounded-2xl p-6 space-y-6 max-h-[300px] overflow-y-auto custom-scrollbar text-sm text-slate-900 dark:text-white/80 leading-relaxed font-light">
+            <div className="border border-slate-300 bg-white rounded-2xl p-6 space-y-6 max-h-[350px] overflow-y-auto custom-scrollbar text-base text-slate-800 leading-relaxed font-normal">
               {formData.distance === "donation" || formData.distance === "souvenir" ? (
                 <div className="space-y-4">
-                  <h4 className="font-bold text-slate-900 dark:text-white text-sm">ข้อตกลงและเงื่อนไขการสนับสนุนบริจาคเพื่อการกุศล</h4>
+                  <h4 className="font-bold text-slate-900 text-lg">ข้อตกลงและเงื่อนไขการสนับสนุนบริจาคเพื่อการกุศล</h4>
                   <p>
-                    ผู้แสดงเจตจำนงในการร่วมบริจาคสนับสนุนหรือสั่งซื้อของที่ระลึกสำหรับโครงการเดิน-วิ่งการกุศล <strong className="text-slate-900 dark:text-white font-bold">"วิ่ง-ฉาย-แสง" LSEd Running 2569</strong> ตกลงยอมรับเงื่อนไขและข้อบังคับดังต่อไปนี้:
+                    ผู้แสดงเจตจำนงในการร่วมบริจาคสนับสนุนหรือสั่งซื้อของที่ระลึกสำหรับโครงการเดิน-วิ่งการกุศล <strong className="text-slate-900 font-bold">"วิ่ง - ฉาย - แสง" LSEd Running 2569</strong> ตกลงยอมรับเงื่อนไขและข้อบังคับดังต่อไปนี้:
                   </p>
-                  <ol className="list-decimal pl-5 space-y-2">
+                  <ol className="list-decimal pl-5 space-y-2.5">
                     <li>
-                      <strong className="text-slate-900 dark:text-white font-semibold">วัตถุประสงค์ในการสมทบทุน:</strong> รายได้ทั้งหมดหลังหักค่าใช้จ่ายจะถูกนำไปสมทบเข้ากองทุนคณะวิทยาการเรียนรู้และศึกษาศาสตร์ มหาวิทยาลัยธรรมศาสตร์ เพื่อสนับสนุนทุนการศึกษา พัฒนาสิ่งเรียนรู้ และนวัตกรรมเพื่อประโยชน์สาธารณะตามวัตถุประสงค์ของการจัดกิจกรรม
+                      <strong className="text-slate-900 font-bold">วัตถุประสงค์ในการสมทบทุน:</strong> รายได้ทั้งหมดหลังหักค่าใช้จ่ายจะถูกนำไปสมทบเข้ากองทุนคณะวิทยาการเรียนรู้และศึกษาศาสตร์ มหาวิทยาลัยธรรมศาสตร์ เพื่อสนับสนุนทุนการศึกษา พัฒนาสิ่งเรียนรู้ และนวัตกรรมเพื่อประโยชน์สาธารณะตามวัตถุประสงค์ของการจัดกิจกรรม
                     </li>
                     <li>
-                      <strong className="text-slate-900 dark:text-white font-semibold">สิทธิ์ทางภาษี (e-Donation):</strong> ในกรณีที่ผู้บริจาคเลือกขอใช้สิทธิ์ลดหย่อนภาษี ระบบจะนำส่งข้อมูลการบริจาคตรงไปยังกรมสรรพากรโดยอัตโนมัติตามฐานข้อมูลเลขบัตรประชาชนที่ระบุไว้
+                      <strong className="text-slate-900 font-bold">สิทธิ์ทางภาษี (e-Donation):</strong> ในกรณีที่ผู้บริจาคเลือกขอใช้สิทธิ์ลดหย่อนภาษี ระบบจะนำส่งข้อมูลการบริจาคตรงไปยังกรมสรรพากรโดยอัตโนมัติตามฐานข้อมูลเลขบัตรประชาชนที่ระบุไว้
                     </li>
                     <li>
-                      <strong className="text-slate-900 dark:text-white font-semibold">การไม่เข้าร่วมกิจกรรมวิ่ง:</strong> ผู้สมัครรับทราบและตกลงว่า การเลือกรูปแบบ "ร่วมบริจาคสนับสนุน" หรือ "ของที่ระลึกสะสม" นี้ เป็นเพียงรูปแบบการสนับสนุนการกุศลเท่านั้น และ<span className="text-orange-500 font-bold">ไม่มีสิทธิ์ในการลงทะเบียนวิ่งทางกายภาพในวันจัดกิจกรรมจริง</span>
+                      <strong className="text-slate-900 font-bold">การไม่เข้าร่วมกิจกรรมวิ่ง:</strong> ผู้สมัครรับทราบและตกลงว่า การเลือกรูปแบบ "ร่วมบริจาคสนับสนุน" หรือ "ของที่ระลึกสะสม" นี้ เป็นเพียงรูปแบบการสนับสนุนการกุศลเท่านั้น และ<span className="text-orange-600 font-bold">ไม่มีสิทธิ์ในการลงทะเบียนวิ่งทางกายภาพในวันจัดกิจกรรมจริง</span>
                     </li>
                   </ol>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <h4 className="font-bold text-slate-900 dark:text-white text-sm">หนังสือยินยอมเข้าร่วมกิจกรรมและรับทราบความเสี่ยงทางกายภาพ</h4>
+                  <h4 className="font-bold text-slate-900 text-lg">หนังสือยินยอมเข้าร่วมกิจกรรมและรับทราบความเสี่ยงทางกายภาพ</h4>
                   <p>
-                    ข้าพเจ้ามีความประสงค์ในการสมัครเข้าร่วมโครงการเดิน-วิ่งการกุศล <strong className="text-slate-900 dark:text-white font-bold">"วิ่ง-ฉาย-แสง" LSEd Running 2569</strong> จัดโดย คณะวิทยาการเรียนรู้และศึกษาศาสตร์ มหาวิทยาลัยธรรมศาสตร์ ในวันที่ 24 มกราคม พ.ศ. 2570 และตกลงยินยอมปฏิบัติตามกฎกติกาและมาตรการเพื่อความปลอดภัยดังต่อไปนี้:
+                    ข้าพเจ้ามีความประสงค์ในการสมัครเข้าร่วมโครงการเดิน-วิ่งการกุศล <strong className="text-slate-900 font-bold">"วิ่ง - ฉาย - แสง" LSEd Running 2569</strong> จัดโดย คณะวิทยาการเรียนรู้และศึกษาศาสตร์ มหาวิทยาลัยธรรมศาสตร์ ในวันที่ 24 มกราคม พ.ศ. 2570 และตกลงยินยอมปฏิบัติตามกฎกติกาและมาตรการเพื่อความปลอดภัยดังต่อไปนี้:
                   </p>
                   
-                  <div className="space-y-3 pt-2">
-                    <div className="p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5">
-                      <h5 className="font-bold text-slate-900 dark:text-white text-xs mb-1">1. การปฏิบัติตามกฎกติกาของคณะผู้จัดงานอย่างเคร่งครัด</h5>
-                      <p className="text-[11px] text-slate-600 dark:text-white/70 leading-relaxed">
+                  <div className="space-y-4 pt-2">
+                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                      <h5 className="font-bold text-slate-900 text-base mb-1.5">1. การปฏิบัติตามกฎกติกาของคณะผู้จัดงานอย่างเคร่งครัด</h5>
+                      <p className="text-base text-slate-800 leading-relaxed font-normal">
                         ข้าพเจ้าตกลงที่จะปฏิบัติตามกฎกติกาการแข่งขัน คำแนะนำ ตลอดจนมาตรการความปลอดภัยและคำสั่งการดูแลทางการแพทย์ที่กำหนดโดยคณะผู้จัดงานและเจ้าหน้าที่สนามทุกประการ หากคณะผู้จัดงานพิจารณาเห็นว่าพฤติกรรมหรือสภาวะของข้าพเจ้าอาจก่อให้เกิดอันตราย จะมีสิทธิ์ระงับการเข้าร่วมกิจกรรมของข้าพเจ้าทันทีเพื่อความปลอดภัยสูงสุด
                       </p>
                     </div>
 
-                    <div className="p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5">
-                      <h5 className="font-bold text-slate-900 dark:text-white text-xs mb-1">2. การยืนยันสุขภาพร่างกายและความพร้อมทางร่างกาย</h5>
-                      <p className="text-[11px] text-slate-600 dark:text-white/70 leading-relaxed">
+                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                      <h5 className="font-bold text-slate-900 text-base mb-1.5">2. การยืนยันสุขภาพร่างกายและความพร้อมทางร่างกาย</h5>
+                      <p className="text-base text-slate-800 leading-relaxed font-normal">
                         ข้าพเจ้าขอรับรองว่าตนเองมีสุขภาพร่างกายที่แข็งแรงสมบูรณ์ มีความพร้อมทั้งทางกายและจิตใจในการเข้าร่วมเดิน-วิ่งตามระยะทางที่สมัคร โดยไม่ได้ตั้งครรภ์ ไม่มีอาการเจ็บป่วยร้ายแรง หรือสภาวะโรคประจำตัวใดๆ (เช่น โรคหัวใจ ความดันโลหิตสูง โรคระบบทางเดินหายใจ) ที่อาจเป็นความเสี่ยงต่อชีวิตหรือก่อให้เกิดอันตรายร้ายแรงในระหว่างการออกกำลังกาย
                       </p>
                     </div>
 
-                    <div className="p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5">
-                      <h5 className="font-bold text-slate-900 dark:text-white text-xs mb-1">3. การยอมรับความเสี่ยงและการยกเว้นการเรียกร้องค่าชดเชย</h5>
-                      <p className="text-[11px] text-slate-600 dark:text-white/70 leading-relaxed">
+                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                      <h5 className="font-bold text-slate-900 text-base mb-1.5">3. การยอมรับความเสี่ยงและการยกเว้นการเรียกร้องค่าชดเชย</h5>
+                      <p className="text-base text-slate-800 leading-relaxed font-normal">
                         ข้าพเจ้ารับทราบว่าการเข้าร่วมกิจกรรมเดิน-วิ่งในระยะทางดังกล่าวมีความเสี่ยงที่อาจทำให้เกิดอุบัติเหตุ การบาดเจ็บของกล้ามเนื้อหรือกระดูก หรืออันตรายทางสุขภาพอื่นๆ ข้าพเจ้าตกลงยินยอมยอมรับความเสี่ยงที่อาจเกิดขึ้นทั้งหมดนี้ด้วยความสมัครใจ และตกลงสละสิทธิ์ในการเรียกร้องค่าเสียหาย ค่าชดเชย หรือดำเนินคดีทางกฎหมายใดๆ ต่อคณะผู้จัดงาน คณะกรรมการ สตาฟ อาสาสมัคร หรือหน่วยงานร่วมจัด หากเกิดเหตุสุดวิสัย อุบัติเหตุ หรือการบาดเจ็บใดๆ แก่ตัวข้าพเจ้า ยกเว้นกรณีที่เป็นการพิสูจน์ได้ว่าเกิดจากความประมาทเลินเล่ออย่างร้ายแรงของคณะผู้จัดงานโดยตรง
                       </p>
                     </div>
 
-                    <div className="p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5">
-                      <h5 className="font-bold text-slate-900 dark:text-white text-xs mb-1">4. การอนุญาตให้ใช้ภาพถ่ายภาพเคลื่อนไหวและสื่อ (PDPA)</h5>
-                      <p className="text-[11px] text-slate-600 dark:text-white/70 leading-relaxed">
+                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                      <h5 className="font-bold text-slate-900 text-base mb-1.5">4. การอนุญาตให้ใช้ภาพถ่ายภาพเคลื่อนไหวและสื่อ (PDPA)</h5>
+                      <p className="text-base text-slate-800 leading-relaxed font-normal">
                         ข้าพเจ้ายินยอมและอนุญาตให้คณะผู้จัดงาน บันทึกภาพนิ่ง ภาพเคลื่อนไหว หรือเสียงของข้าพเจ้าในระหว่างเข้าร่วมกิจกรรม และนำภาพหรือเสียงดังกล่าวไปจัดทำสื่อประชาสัมพันธ์ รายงานผลการจัดงาน หรือสื่อสารกิจกรรมของคณะวิทยาการเรียนรู้และศึกษาศาสตร์ มธ. ในช่องทางต่างๆ เพื่อประโยชน์สาธารณะโดยไม่มีค่าตอบแทนใดๆ
                       </p>
                     </div>
@@ -1061,13 +1082,13 @@ export default function RegistrationForm({ onSuccess, onCancel, preselectedDista
                     id="agreedToRules"
                     checked={agreedToRules}
                     onChange={(e) => setAgreedToRules(e.target.checked)}
-                    className="w-4.5 h-4.5 rounded text-orange-500 focus:ring-orange-500 border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 mt-1 cursor-pointer"
+                    className="w-5 h-5 rounded text-orange-500 focus:ring-orange-500 border-slate-300 bg-white mt-1 cursor-pointer"
                   />
-                  <div className="text-xs">
-                    <label htmlFor="agreedToRules" className="text-slate-900 dark:text-white font-black cursor-pointer block leading-normal text-sm">
+                  <div className="text-base">
+                    <label htmlFor="agreedToRules" className="text-slate-900 font-black cursor-pointer block leading-normal text-base md:text-lg">
                       ข้าพเจ้ายอมรับข้อตกลงและเงื่อนไขการร่วมสมทบทุนสนับสนุน <span className="text-orange-500">*</span>
                     </label>
-                    <p className="text-slate-500 dark:text-white/60 mt-1 leading-relaxed text-[11px]">
+                    <p className="text-slate-700 mt-1 leading-relaxed text-sm sm:text-base font-normal">
                       ข้าพเจ้ายินยอมตกลงร่วมบริจาคสนับสนุนและยอมรับว่าแพ็กเกจที่เลือกไม่มีสิทธิ์วิ่งหรือเสื้อวิ่งในวันจัดงานจริง
                     </p>
                   </div>
@@ -1081,13 +1102,13 @@ export default function RegistrationForm({ onSuccess, onCancel, preselectedDista
                       id="agreedToRules"
                       checked={agreedToRules}
                       onChange={(e) => setAgreedToRules(e.target.checked)}
-                      className="w-4.5 h-4.5 rounded text-teal-600 dark:text-teal-400 focus:ring-teal-500 border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 mt-1 cursor-pointer"
+                      className="w-5 h-5 rounded text-teal-700 focus:ring-teal-500 border-slate-300 bg-white mt-1 cursor-pointer"
                     />
-                    <div className="text-xs">
-                      <label htmlFor="agreedToRules" className="text-slate-900 dark:text-white font-black cursor-pointer block leading-normal text-sm">
+                    <div className="text-base">
+                      <label htmlFor="agreedToRules" className="text-slate-900 font-black cursor-pointer block leading-normal text-base md:text-lg">
                         ข้าพเจ้ายินยอมและตกลงปฏิบัติตามกฎกติกาของคณะผู้จัดงานอย่างเคร่งครัด <span className="text-red-500">*</span>
                       </label>
-                      <p className="text-slate-500 dark:text-white/60 mt-1 leading-relaxed text-[11px]">
+                      <p className="text-slate-700 mt-1 leading-relaxed text-sm sm:text-base font-normal">
                         ข้าพเจ้าตกลงยินดีที่จะปฏิบัติตามเงื่อนไข กฎระเบียบ และมาตรการเพื่อความปลอดภัยและสุขภาพตามที่กำหนดทุกประการ
                       </p>
                     </div>
@@ -1100,13 +1121,13 @@ export default function RegistrationForm({ onSuccess, onCancel, preselectedDista
                       id="acceptedRisks"
                       checked={acceptedRisks}
                       onChange={(e) => setAcceptedRisks(e.target.checked)}
-                      className="w-4.5 h-4.5 rounded text-orange-500 focus:ring-orange-500 border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/40 mt-1 cursor-pointer"
+                      className="w-5 h-5 rounded text-orange-500 focus:ring-orange-500 border-slate-300 bg-white mt-1 cursor-pointer"
                     />
-                    <div className="text-xs">
-                      <label htmlFor="acceptedRisks" className="text-slate-900 dark:text-white font-black cursor-pointer block leading-normal text-sm">
+                    <div className="text-base">
+                      <label htmlFor="acceptedRisks" className="text-slate-900 font-black cursor-pointer block leading-normal text-base md:text-lg">
                         ข้าพเจ้ายอมรับความเสี่ยงทางสุขภาพและอุบัติเหตุที่อาจเกิดขึ้น <span className="text-red-500">*</span>
                       </label>
-                      <p className="text-slate-500 dark:text-white/60 mt-1 leading-relaxed text-[11px]">
+                      <p className="text-slate-700 mt-1 leading-relaxed text-sm sm:text-base font-normal">
                         ข้าพเจ้าขอปฏิเสธการเรียกร้องค่าชดเชยความเสียหายใดๆ ต่อคณะผู้จัดงาน หากเกิดเหตุอุบัติเหตุหรืออันตรายต่อสุขภาพจากการวิ่ง
                       </p>
                     </div>
@@ -1120,182 +1141,211 @@ export default function RegistrationForm({ onSuccess, onCancel, preselectedDista
         {/* STEP 5: REVIEW & CONFIRM */}
         {step === 5 && (
           <div className="space-y-6 animate-fade-in">
-            <div className="border-b border-slate-200 dark:border-white/5 pb-2">
-              <h3 className="text-base font-black italic uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-1.5">
-                ตรวจสอบข้อมูลการสมัคร <Sparkles className="w-4 h-4 text-orange-500" />
+            <div className="border-b border-slate-200 pb-3">
+              <h3 className="text-lg sm:text-xl font-black italic uppercase tracking-wider text-slate-900 flex items-center gap-2">
+                ตรวจสอบข้อมูลการสมัคร <Sparkles className="w-5 h-5 text-orange-500" />
               </h3>
-              <p className="text-xs text-slate-400 dark:text-white/50">กรุณาตรวจสอบข้อมูลของท่านให้ถูกต้องก่อนทำการยืนยันการลงทะเบียน</p>
+              <p className="text-sm sm:text-base text-slate-700 font-medium mt-1">กรุณาตรวจสอบข้อมูลของท่านให้ถูกต้องก่อนทำการยืนยันการลงทะเบียน</p>
             </div>
 
-            <div className="border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 rounded-2xl p-5 space-y-4">
-              <div className="flex justify-between items-start pb-4 border-b border-slate-200 dark:border-white/5">
+            <div className="border border-slate-200 bg-slate-50 rounded-2xl p-5 md:p-6 space-y-5">
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 pb-4 border-b border-slate-200">
                 <div>
-                  <h4 className="text-base font-black text-slate-900 dark:text-white">{formData.firstName} {formData.lastName}</h4>
-                  <p className="text-xs text-slate-400 dark:text-white/50 mt-1">เลขบัตร/พาสปอร์ต: {formData.nationalId}</p>
+                  <h4 className="text-xl md:text-2xl font-black text-slate-900">{formData.firstName} {formData.lastName}</h4>
+                  <p className="text-sm text-slate-600 font-medium mt-0.5">เลขประจำตัวบัตร: <span className="font-bold text-slate-900">{formData.nationalId}</span></p>
                 </div>
-                <div className="text-right">
-                  <span className={`text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-wider border ${
+                <div className="text-left sm:text-right">
+                  <span className={`inline-flex items-center justify-center whitespace-nowrap text-xs sm:text-sm font-black px-3.5 py-1.5 rounded-full uppercase tracking-wider border shadow-xs ${
                     formData.distance === "donation" 
-                      ? "text-orange-400 bg-orange-500/10 border-orange-500/20" 
+                      ? "text-orange-700 bg-orange-100 border-orange-300" 
                       : formData.distance === "souvenir"
-                        ? "text-amber-400 bg-amber-500/10 border-amber-500/20"
-                        : "text-teal-600 dark:text-teal-400 bg-teal-500/10 border-teal-500/20"
+                        ? "text-amber-800 bg-amber-100 border-amber-300"
+                        : "text-teal-800 bg-teal-100 border-teal-300"
                   }`}>
-                    {formData.distance === "donation" ? "Donation" : formData.distance === "souvenir" ? "Souvenir" : formData.distance}
+                    {formData.distance === "donation" ? "ร่วมบริจาคสนับสนุน" : formData.distance === "souvenir" ? "ของที่ระลึกสะสม" : formData.distance}
                   </span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6 text-sm text-slate-900 dark:text-white/80 leading-relaxed font-light">
-                <div>
-                  <span className="text-[10px] text-slate-400 dark:text-white/40 block font-bold uppercase tracking-wider">อีเมลผู้สมัคร</span>
-                  <span className="font-bold text-slate-900 dark:text-white">{formData.email}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-slate-400 dark:text-white/40 block font-bold uppercase tracking-wider">เบอร์โทรศัพท์</span>
-                  <span className="font-bold text-slate-900 dark:text-white">{formData.phone}</span>
-                </div>
-                <div>
-                  {formData.distance === "donation" ? (
-                    <>
-                      <span className="text-[10px] text-slate-400 dark:text-white/40 block font-bold uppercase tracking-wider">วัตถุประสงค์การสนับสนุน</span>
-                      <span className="font-bold text-orange-400">บริจาคสนับสนุนทุนการศึกษา (ไม่เข้าร่วมวิ่ง)</span>
-                    </>
-                  ) : formData.distance === "souvenir" ? (
-                    <>
-                      <span className="text-[10px] text-slate-400 dark:text-white/40 block font-bold uppercase tracking-wider">รายละเอียดผู้สั่งซื้อ</span>
-                      <span className="font-bold text-slate-900 dark:text-white">สั่งซื้อแพ็กเกจของที่ระลึก (ไม่เข้าร่วมวิ่ง)</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-[10px] text-slate-400 dark:text-white/40 block font-bold uppercase tracking-wider">อายุ / เพศ / กรุ๊ปเลือด</span>
-                      <span className="font-bold text-slate-900 dark:text-white">
-                        {formData.age} ปี / {formData.gender === "male" ? "ชาย" : formData.gender === "female" ? "หญิง" : "อื่นๆ"} / กรุ๊ป {formData.bloodType}
-                      </span>
-                    </>
-                  )}
-                </div>
-                <div>
-                  {formData.distance === "donation" ? (
-                    <>
-                      <span className="text-[10px] text-slate-400 dark:text-white/40 block font-bold uppercase tracking-wider">สิทธิ์ลดหย่อนภาษี</span>
-                      <span className="font-bold text-orange-400">e-Donation (ลดหย่อนภาษีได้ 2 เท่า)</span>
-                    </>
-                  ) : formData.distance === "souvenir" ? (
-                    <>
-                      <span className="text-[10px] text-slate-400 dark:text-white/40 block font-bold uppercase tracking-wider">เสื้อที่ระลึกไซส์ & ของที่จะได้รับ</span>
-                      <span className="font-black text-amber-400">
-                        ไซส์ {formData.shirtSize} + เหรียญทองสุโขทัยพรีเมียม
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-[10px] text-slate-400 dark:text-white/40 block font-bold uppercase tracking-wider">เสื้อที่ระลึกไซส์</span>
-                      <span className="font-black text-teal-600 dark:text-teal-400">
-                        {formData.shirtSize} ({SHIRT_SIZES.find(s => s.size === formData.shirtSize)?.desc.split(" ")[1] || "M"})
-                      </span>
-                    </>
-                  )}
-                </div>
-                {formData.distance !== "donation" && formData.distance !== "souvenir" && (
-                  <div className="sm:col-span-2 pt-2 border-t border-slate-200 dark:border-white/5">
-                    <span className="text-[10px] text-slate-400 dark:text-white/40 block font-bold uppercase tracking-wider">กรณีฉุกเฉินติดต่อ</span>
-                    <span className="font-bold text-slate-900 dark:text-white">{formData.emergencyContactName} ({formData.emergencyContactPhone})</span>
-                  </div>
-                )}
-                {formData.distance !== "donation" && (
-                  <>
-                    <div className="pt-2 border-t border-slate-200 dark:border-white/5">
-                      <span className="text-[10px] text-slate-400 dark:text-white/40 block font-bold uppercase tracking-wider">สิทธิ์ลดหย่อนภาษี</span>
-                      <span className="font-bold text-slate-900 dark:text-white">
-                        {formData.taxDeduction ? "ขอใช้สิทธิ์ลดหย่อนภาษีประจำปี (e-Donation)" : "ไม่ขอใช้สิทธิ์"}
-                      </span>
-                    </div>
-                    <div className="pt-2 border-t border-slate-200 dark:border-white/5">
-                      <span className="text-[10px] text-slate-400 dark:text-white/40 block font-bold uppercase tracking-wider">รูปแบบการรับเสื้อ</span>
-                      <span className="font-bold text-slate-900 dark:text-white">
-                        {formData.deliveryMethod === "shipping" ? "จัดส่งโดยไปรษณีย์ไทย (EMS) (+60 บาท)" : "รับหน้างานด้วยตนเอง"}
-                      </span>
-                    </div>
-                    {formData.deliveryMethod === "shipping" && (
-                      <div className="sm:col-span-2 pt-2 border-t border-slate-200 dark:border-white/5">
-                        <span className="text-[10px] text-slate-400 dark:text-white/40 block font-bold uppercase tracking-wider">ที่อยู่ในการจัดส่ง</span>
-                        <span className="font-bold text-slate-900 dark:text-white block bg-slate-50 dark:bg-white/5 p-2.5 rounded-lg mt-1 text-xs border border-slate-200 dark:border-white/5 leading-relaxed">{formData.shippingAddress}</span>
-                      </div>
+              {/* Data Table */}
+              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
+                <table className="w-full text-left border-collapse text-sm sm:text-base">
+                  <tbody className="divide-y divide-slate-100">
+                    <tr className="hover:bg-slate-50/50 transition">
+                      <td className="px-5 py-3.5 bg-slate-50 text-slate-700 font-bold w-1/3 sm:w-1/4 whitespace-nowrap">อีเมล</td>
+                      <td className="px-5 py-3.5 text-slate-900 font-bold">{formData.email}</td>
+                    </tr>
+                    <tr className="hover:bg-slate-50/50 transition">
+                      <td className="px-5 py-3.5 bg-slate-50 text-slate-700 font-bold whitespace-nowrap">เบอร์โทรศัพท์</td>
+                      <td className="px-5 py-3.5 text-slate-900 font-bold">{formData.phone}</td>
+                    </tr>
+
+                    {formData.distance !== "donation" && formData.distance !== "souvenir" && (
+                      <>
+                        <tr className="hover:bg-slate-50/50 transition">
+                          <td className="px-5 py-3.5 bg-slate-50 text-slate-700 font-bold whitespace-nowrap">อายุ</td>
+                          <td className="px-5 py-3.5 text-slate-900 font-bold">{formData.age} ปี</td>
+                        </tr>
+                        <tr className="hover:bg-slate-50/50 transition">
+                          <td className="px-5 py-3.5 bg-slate-50 text-slate-700 font-bold whitespace-nowrap">เพศ</td>
+                          <td className="px-5 py-3.5 text-slate-900 font-bold">{formData.gender === "male" ? "ชาย" : formData.gender === "female" ? "หญิง" : "อื่นๆ"}</td>
+                        </tr>
+                        <tr className="hover:bg-slate-50/50 transition">
+                          <td className="px-5 py-3.5 bg-slate-50 text-slate-700 font-bold whitespace-nowrap">หมู่โลหิต</td>
+                          <td className="px-5 py-3.5 text-slate-900 font-bold">กรุ๊ป {formData.bloodType}</td>
+                        </tr>
+                        <tr className="hover:bg-slate-50/50 transition">
+                          <td className="px-5 py-3.5 bg-slate-50 text-slate-700 font-bold whitespace-nowrap">ไซส์เสื้อที่ระลึก</td>
+                          <td className="px-5 py-3.5 text-teal-800 font-black">
+                            {formData.shirtSize} <span className="text-xs font-semibold text-slate-500 ml-1">({SHIRT_SIZES.find(s => s.size === formData.shirtSize)?.desc || ""})</span>
+                          </td>
+                        </tr>
+                        <tr className="hover:bg-slate-50/50 transition">
+                          <td className="px-5 py-3.5 bg-slate-50 text-slate-700 font-bold whitespace-nowrap">ผู้ติดต่อฉุกเฉิน</td>
+                          <td className="px-5 py-3.5 text-slate-900 font-bold">
+                            {formData.emergencyContactName} <span className="text-xs sm:text-sm font-semibold text-slate-600 ml-1">({formData.emergencyContactPhone})</span>
+                          </td>
+                        </tr>
+                        <tr className="hover:bg-slate-50/50 transition">
+                          <td className="px-5 py-3.5 bg-slate-50 text-slate-700 font-bold whitespace-nowrap">รูปแบบการรับเสื้อ</td>
+                          <td className="px-5 py-3.5 text-slate-900 font-bold">
+                            {formData.deliveryMethod === "shipping" ? "จัดส่งโดยไปรษณีย์ไทย EMS (+60 บาท)" : "รับหน้างานด้วยตนเอง"}
+                          </td>
+                        </tr>
+                        {formData.deliveryMethod === "shipping" && (
+                          <tr className="hover:bg-slate-50/50 transition">
+                            <td className="px-5 py-3.5 bg-slate-50 text-slate-700 font-bold align-top whitespace-nowrap">ที่อยู่จัดส่ง</td>
+                            <td className="px-5 py-3.5 text-slate-900 font-medium leading-relaxed">{formData.shippingAddress}</td>
+                          </tr>
+                        )}
+                        <tr className="hover:bg-slate-50/50 transition">
+                          <td className="px-5 py-3.5 bg-slate-50 text-slate-700 font-bold whitespace-nowrap">สิทธิ์ลดหย่อนภาษี</td>
+                          <td className="px-5 py-3.5 text-slate-900 font-bold">
+                            {formData.taxDeduction ? "ขอใช้สิทธิ์ลดหย่อนภาษีประจำปี (e-Donation)" : "ไม่ขอใช้สิทธิ์"}
+                          </td>
+                        </tr>
+                      </>
                     )}
-                  </>
-                )}
 
-                {/* Show detailed Tax Deduction Request info in summary */}
-                {formData.taxDeduction && (
-                  <div className="sm:col-span-2 mt-2 pt-3 border-t border-orange-500/20 bg-orange-500/5 p-4 rounded-xl border border-orange-500/10 space-y-3">
-                    <div className="flex items-center gap-1.5 border-b border-orange-500/10 pb-1.5">
-                      <FileText className="w-3.5 h-3.5 text-orange-400" />
-                      <span className="text-xs font-black uppercase tracking-wider text-orange-400">สรุปข้อมูลเพื่อออกใบลดหย่อนภาษี</span>
-                    </div>
+                    {formData.distance === "souvenir" && (
+                      <>
+                        <tr className="hover:bg-slate-50/50 transition">
+                          <td className="px-5 py-3.5 bg-slate-50 text-slate-700 font-bold whitespace-nowrap">รายการสั่งซื้อ</td>
+                          <td className="px-5 py-3.5 text-slate-900 font-bold">สั่งซื้อแพ็กเกจของที่ระลึก (ไม่เข้าร่วมวิ่ง)</td>
+                        </tr>
+                        <tr className="hover:bg-slate-50/50 transition">
+                          <td className="px-5 py-3.5 bg-slate-50 text-slate-700 font-bold whitespace-nowrap">ของที่ระลึก</td>
+                          <td className="px-5 py-3.5 text-amber-800 font-black">เสื้อไซส์ {formData.shirtSize} และเหรียญทองสุโขทัยพรีเมียม</td>
+                        </tr>
+                        <tr className="hover:bg-slate-50/50 transition">
+                          <td className="px-5 py-3.5 bg-slate-50 text-slate-700 font-bold whitespace-nowrap">รูปแบบการรับของ</td>
+                          <td className="px-5 py-3.5 text-slate-900 font-bold">
+                            {formData.deliveryMethod === "shipping" ? "จัดส่งโดยไปรษณีย์ไทย EMS (+60 บาท)" : "รับหน้างานด้วยตนเอง"}
+                          </td>
+                        </tr>
+                        {formData.deliveryMethod === "shipping" && (
+                          <tr className="hover:bg-slate-50/50 transition">
+                            <td className="px-5 py-3.5 bg-slate-50 text-slate-700 font-bold align-top whitespace-nowrap">ที่อยู่จัดส่ง</td>
+                            <td className="px-5 py-3.5 text-slate-900 font-medium leading-relaxed">{formData.shippingAddress}</td>
+                          </tr>
+                        )}
+                      </>
+                    )}
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                      <div>
-                        <span className="text-[10px] text-slate-400 dark:text-white/40 block font-bold">ชื่อผู้บริจาค (ออกในใบเสร็จ)</span>
-                        <span className="font-bold text-slate-900 dark:text-white">{formData.donorName}</span>
-                      </div>
-                      <div>
-                        <span className="text-[10px] text-slate-400 dark:text-white/40 block font-bold">เลขประจำตัวผู้เสียภาษี</span>
-                        <span className="font-mono font-bold text-slate-900 dark:text-white">{formData.taxId}</span>
-                      </div>
-                      <div className="sm:col-span-2">
-                        <span className="text-[10px] text-slate-400 dark:text-white/40 block font-bold">ที่อยู่ในการออกใบเสร็จรับเงิน</span>
-                        <span className="font-bold text-slate-900 dark:text-white text-[11px] block mt-0.5 leading-normal">{formData.receiptAddress}</span>
-                      </div>
-                      <div>
-                        <span className="text-[10px] text-slate-400 dark:text-white/40 block font-bold">วัตถุประสงค์ในการบริจาค</span>
-                        <span className="font-bold text-orange-300">
-                          {formData.donationObjective === "education" && "เพื่อการศึกษาทั่วไป"}
-                          {formData.donationObjective === "fund" && 'เพื่อ "กองทุนคณะวิทยาการเรียนรู้และศึกษาศาสตร์"'}
-                          {formData.donationObjective === "project" && `เพื่อสนับสนุนโครงการ: ${formData.donationObjectiveDetail}`}
-                          {formData.donationObjective === "other" && `วัตถุประสงค์อื่นๆ: ${formData.donationObjectiveDetail}`}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-[10px] text-slate-400 dark:text-white/40 block font-bold">การจัดส่งใบเสร็จรับเงิน</span>
-                        <span className="font-bold text-slate-900 dark:text-white">
-                          {formData.receiptDeliveryType === "same" ? "ตามที่อยู่ใบเสร็จ" : "ระบุที่อยู่จัดส่งใหม่"}
-                        </span>
-                      </div>
-                      {formData.receiptDeliveryType === "custom" && (
-                        <div className="sm:col-span-2">
-                          <span className="text-[10px] text-slate-400 dark:text-white/40 block font-bold">ที่อยู่จัดส่งใบเสร็จรับเงิน</span>
-                          <span className="font-bold text-slate-900 dark:text-white text-[11px] block mt-0.5 leading-normal">{formData.receiptDeliveryAddress}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
+                    {formData.distance === "donation" && (
+                      <>
+                        <tr className="hover:bg-slate-50/50 transition">
+                          <td className="px-5 py-3.5 bg-slate-50 text-slate-700 font-bold whitespace-nowrap">วัตถุประสงค์</td>
+                          <td className="px-5 py-3.5 text-orange-600 font-bold">บริจาคสนับสนุนทุนการศึกษา (ไม่เข้าร่วมวิ่ง)</td>
+                        </tr>
+                        <tr className="hover:bg-slate-50/50 transition">
+                          <td className="px-5 py-3.5 bg-slate-50 text-slate-700 font-bold whitespace-nowrap">สิทธิ์ลดหย่อนภาษี</td>
+                          <td className="px-5 py-3.5 text-orange-600 font-bold">e-Donation (ลดหย่อนภาษีได้ 2 เท่า)</td>
+                        </tr>
+                      </>
+                    )}
+                  </tbody>
+                </table>
               </div>
+
+              {/* ตารางข้อมูลเพื่อออกใบลดหย่อนภาษี */}
+              {formData.taxDeduction && (
+                <div className="rounded-2xl border border-orange-200 bg-white overflow-hidden shadow-xs">
+                  <div className="bg-orange-100/70 px-5 py-3.5 border-b border-orange-200 flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-orange-600" />
+                    <span className="text-sm font-black uppercase tracking-wider text-orange-800">ข้อมูลเพื่อออกใบลดหย่อนภาษี (e-Donation)</span>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse text-sm sm:text-base">
+                      <tbody className="divide-y divide-orange-100">
+                        <tr className="hover:bg-orange-50/30 transition">
+                          <td className="px-5 py-3.5 bg-orange-50/60 text-slate-700 font-bold w-1/3 sm:w-1/4 whitespace-nowrap">ชื่อผู้บริจาค</td>
+                          <td className="px-5 py-3.5 text-slate-900 font-bold">{formData.donorName}</td>
+                        </tr>
+                        <tr className="hover:bg-orange-50/30 transition">
+                          <td className="px-5 py-3.5 bg-orange-50/60 text-slate-700 font-bold whitespace-nowrap">เลขประจำตัวผู้เสียภาษี</td>
+                          <td className="px-5 py-3.5 text-slate-900 font-bold font-mono">{formData.taxId}</td>
+                        </tr>
+                        <tr className="hover:bg-orange-50/30 transition">
+                          <td className="px-5 py-3.5 bg-orange-50/60 text-slate-700 font-bold align-top whitespace-nowrap">ที่อยู่ออกใบเสร็จ</td>
+                          <td className="px-5 py-3.5 text-slate-900 font-medium leading-relaxed">{formData.receiptAddress}</td>
+                        </tr>
+                        {formData.donationObjective && (
+                          <tr className="hover:bg-orange-50/30 transition">
+                            <td className="px-5 py-3.5 bg-orange-50/60 text-slate-700 font-bold whitespace-nowrap">วัตถุประสงค์ในการบริจาค</td>
+                            <td className="px-5 py-3.5 text-orange-700 font-bold">
+                              {formData.donationObjective === "education" && "เพื่อการศึกษาทั่วไป"}
+                              {formData.donationObjective === "fund" && 'เพื่อ "กองทุนคณะวิทยาการเรียนรู้และศึกษาศาสตร์"'}
+                              {formData.donationObjective === "project" && `เพื่อสนับสนุนโครงการ: ${formData.donationObjectiveDetail}`}
+                              {formData.donationObjective === "other" && `วัตถุประสงค์อื่นๆ: ${formData.donationObjectiveDetail}`}
+                            </td>
+                          </tr>
+                        )}
+                        <tr className="hover:bg-orange-50/30 transition">
+                          <td className="px-5 py-3.5 bg-orange-50/60 text-slate-700 font-bold whitespace-nowrap">การจัดส่งใบเสร็จ</td>
+                          <td className="px-5 py-3.5 text-slate-900 font-bold">
+                            {formData.receiptDeliveryType === "same" ? "ตามที่อยู่ใบเสร็จ" : "ระบุที่อยู่จัดส่งใหม่"}
+                          </td>
+                        </tr>
+                        {formData.receiptDeliveryType === "custom" && (
+                          <tr className="hover:bg-orange-50/30 transition">
+                            <td className="px-5 py-3.5 bg-orange-50/60 text-slate-700 font-bold align-top whitespace-nowrap">ที่อยู่จัดส่งใบเสร็จ</td>
+                            <td className="px-5 py-3.5 text-slate-900 font-medium leading-relaxed">{formData.receiptDeliveryAddress}</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
 
               {/* Total price highlight */}
-              <div className="pt-4 border-t border-slate-200 dark:border-white/10 flex justify-between items-center bg-slate-100 dark:bg-black/40 rounded-xl p-4 mt-4 border border-slate-200 dark:border-white/5">
+              <div className="pt-4 border-t border-slate-200 flex justify-between items-center bg-white rounded-xl p-4 mt-4 border border-slate-200">
                 <div>
-                  <span className="text-[10px] text-slate-400 dark:text-white/40 font-bold block uppercase tracking-wider">
+                  <span className="text-sm md:text-base text-slate-800 font-bold block uppercase tracking-wider">
                     {formData.distance === "donation" ? "ยอดร่วมบริจาคสนับสนุน" : "อัตราค่าสมัครเข้าร่วมกิจกรรม"}
                   </span>
-                  <span className="text-xs text-slate-500 dark:text-white/60 font-medium">
+                  <span className="text-sm text-slate-600 font-medium">
                     {formData.distance === "donation" 
                       ? "สมทบทุนสนับสนุนงานพัฒนาวิชาการและลดหย่อนภาษี" 
                       : `ระยะวิ่ง ${formData.distance === "REGULAR" || formData.distance === "5K" ? "REGULAR 5KM" : formData.distance}`}
                   </span>
                 </div>
                 <div className="text-right">
-                  <span className="text-[10px] text-slate-400 dark:text-white/40 block uppercase tracking-wider font-bold">ราคาสุทธิ</span>
-                  <span className="text-2xl font-black text-teal-600 dark:text-teal-400 font-mono tracking-tight">
-                    {getPrice(formData.distance)} THB
-                  </span>
+                  <span className="text-xs text-slate-500 block uppercase tracking-wider font-bold mb-0.5">ราคาสุทธิ</span>
+                  <div className="flex items-baseline gap-1.5 justify-end flex-wrap">
+                    <span className="text-4xl sm:text-5xl font-black text-teal-700 tracking-tight font-sans">
+                      {getPrice(formData.distance)}
+                    </span>
+                    <span className="text-base sm:text-lg font-bold text-slate-500 font-sans">THB</span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className={`flex items-start gap-2.5 ${formData.distance === "donation" ? "bg-orange-500/10 border-orange-500/20 text-orange-700 dark:text-orange-200" : "bg-teal-500/10 border-teal-500/20 text-teal-700 dark:text-teal-200"} border rounded-xl p-4 text-xs leading-relaxed font-light`}>
-              <CheckCircle2 className={`w-4 h-4 ${formData.distance === "donation" ? "text-orange-400" : "text-teal-600 dark:text-teal-400"} flex-shrink-0 mt-0.5`} />
+            <div className={`flex items-start gap-3 ${formData.distance === "donation" ? "bg-orange-500/10 border-orange-500/20 text-orange-800 " : "bg-teal-500/10 border-teal-500/20 text-teal-900 "} border rounded-2xl p-4 text-base leading-relaxed font-normal`}>
+              <CheckCircle2 className={`w-5 h-5 ${formData.distance === "donation" ? "text-orange-500" : "text-teal-700"} flex-shrink-0 mt-0.5`} />
               <p>
                 {formData.distance === "donation" 
                   ? "ข้าพเจ้าขอรับรองและยืนยันว่าข้อมูลทั้งหมดที่ระบุข้างต้นเป็นความจริงทุกประการ และมีความประสงค์ในการร่วมบริจาคเพื่อสนับสนุนการศึกษาและนวัตกรรมการเรียนรู้ แก่คณะวิทยาการเรียนรู้และศึกษาศาสตร์ มหาวิทยาลัยธรรมศาสตร์ เพื่อร่วมขับเคลื่อนประโยชน์สาธารณะ"
@@ -1306,21 +1356,21 @@ export default function RegistrationForm({ onSuccess, onCancel, preselectedDista
         )}
 
         {/* Form Controls */}
-        <div className="pt-6 border-t border-slate-200 dark:border-white/5 flex flex-col-reverse sm:flex-row justify-between gap-3">
+        <div className="pt-6 border-t border-slate-200 flex flex-col-reverse sm:flex-row justify-between gap-3">
           {step > 1 ? (
             <button
               type="button"
               onClick={handlePrev}
               disabled={loading}
-              className="px-5 py-3 rounded-xl text-xs font-black uppercase tracking-wider border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-white flex items-center justify-center gap-1.5 transition cursor-pointer"
+              className="px-6 py-3.5 rounded-xl text-sm sm:text-base font-black uppercase tracking-wider border border-slate-300 hover:bg-slate-100 text-slate-800 flex items-center justify-center gap-1.5 transition cursor-pointer"
             >
-              <ChevronLeft className="w-4 h-4" /> ย้อนกลับ
+              <ChevronLeft className="w-5 h-5" /> ย้อนกลับ
             </button>
           ) : (
             <button
               type="button"
               onClick={onCancel}
-              className="px-5 py-3 rounded-xl text-xs font-black uppercase tracking-wider border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-white/80 flex items-center justify-center gap-1.5 transition cursor-pointer"
+              className="px-6 py-3.5 rounded-xl text-sm sm:text-base font-black uppercase tracking-wider border border-slate-300 hover:bg-slate-100 text-slate-700 flex items-center justify-center gap-1.5 transition cursor-pointer"
             >
               ยกเลิก
             </button>
@@ -1330,26 +1380,26 @@ export default function RegistrationForm({ onSuccess, onCancel, preselectedDista
             <button
               type="button"
               onClick={handleNext}
-              className="px-6 py-3 bg-white text-black font-black uppercase tracking-widest text-xs rounded-xl flex items-center justify-center gap-1.5 transition ml-auto cursor-pointer hover:bg-slate-200"
+              className="px-8 py-3.5 bg-teal-600 hover:bg-teal-700 text-white font-black uppercase tracking-wider text-base rounded-xl flex items-center justify-center gap-1.5 transition ml-auto cursor-pointer shadow-md shadow-teal-600/20"
             >
-              ถัดไป <ChevronRight className="w-4 h-4" />
+              ถัดไป <ChevronRight className="w-5 h-5" />
             </button>
           ) : (
             <button
               type="submit"
               disabled={loading}
-              className="px-8 py-3 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 transition shadow-lg shadow-teal-500/20 ml-auto cursor-pointer"
+              className="px-8 py-3.5 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-base font-black uppercase tracking-wider flex items-center justify-center gap-2 transition shadow-lg shadow-teal-500/20 ml-auto cursor-pointer"
             >
               {loading ? (
                 <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-slate-900 dark:text-white" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-slate-900" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
                   กำลังส่งข้อมูล...
                 </>
               ) : (
-                <>ยืนยันการลงทะเบียน <CheckCircle2 className="w-4 h-4" /></>
+                <>ยืนยันการลงทะเบียน <CheckCircle2 className="w-5 h-5" /></>
               )}
             </button>
           )}

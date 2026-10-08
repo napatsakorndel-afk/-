@@ -2,13 +2,20 @@
 @import "tailwindcss";
 
 /* ======================================================== */
-/* 1. TYPOGRAPHY STACK: FC Minimal + Poppins + Prompt       */
+/* 1. TYPOGRAPHY STACK: FC Minimal as Primary Font for All   */
 /* ======================================================== */
 
 /* FC Minimal (Regular & Medium 300-500) */
 @font-face {
   font-family: 'FC Minimal';
-  src: local('FC Minimal'), local('FCMinimal'), local('FC-Minimal'), local('FC Minimal Regular'), local('FC-Minimal-Regular');
+  src: local('FC Minimal'), 
+       local('FCMinimal'), 
+       local('FC-Minimal'), 
+       local('FC Minimal Regular'), 
+       local('FC-Minimal-Regular'),
+       url('/fonts/FC-Minimal.woff2') format('woff2'),
+       url('/fonts/FC-Minimal.ttf') format('truetype'),
+       url('https://db.onlinewebfonts.com/t/21ec023098ce660aa613b46db5d29e55.woff2') format('woff2');
   font-weight: 300 500;
   font-style: normal;
   font-display: swap;
@@ -17,7 +24,14 @@
 /* FC Minimal (SemiBold & Bold 600-900) */
 @font-face {
   font-family: 'FC Minimal';
-  src: local('FC Minimal Bold'), local('FCMinimal-Bold'), local('FC-Minimal-Bold');
+  src: local('FC Minimal Bold'), 
+       local('FCMinimal-Bold'), 
+       local('FC-Minimal-Bold'),
+       local('FC Minimal'), 
+       local('FCMinimal'), 
+       url('/fonts/FC-Minimal.woff2') format('woff2'),
+       url('/fonts/FC-Minimal.ttf') format('truetype'),
+       url('https://db.onlinewebfonts.com/t/21ec023098ce660aa613b46db5d29e55.woff2') format('woff2');
   font-weight: 600 900;
   font-style: normal;
   font-display: swap;
@@ -26,16 +40,12 @@
 /* FCMinimal Alias */
 @font-face {
   font-family: 'FCMinimal';
-  src: local('FC Minimal'), local('FCMinimal'), local('FC-Minimal'), local('FC Minimal Regular');
-  font-weight: 300 500;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'FCMinimal';
-  src: local('FC Minimal Bold'), local('FCMinimal-Bold'), local('FC-Minimal-Bold');
-  font-weight: 600 900;
+  src: local('FC Minimal'), 
+       local('FCMinimal'), 
+       local('FC-Minimal'), 
+       url('/fonts/FC-Minimal.woff2') format('woff2'),
+       url('/fonts/FC-Minimal.ttf') format('truetype');
+  font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
@@ -43,22 +53,19 @@
 /* FC-Minimal Alias */
 @font-face {
   font-family: 'FC-Minimal';
-  src: local('FC Minimal'), local('FCMinimal'), local('FC-Minimal'), local('FC Minimal Regular');
-  font-weight: 300 500;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'FC-Minimal';
-  src: local('FC Minimal Bold'), local('FCMinimal-Bold'), local('FC-Minimal-Bold');
-  font-weight: 600 900;
+  src: local('FC Minimal'), 
+       local('FCMinimal'), 
+       local('FC-Minimal'), 
+       url('/fonts/FC-Minimal.woff2') format('woff2'),
+       url('/fonts/FC-Minimal.ttf') format('truetype');
+  font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
 
 @theme {
-  --font-sans: 'Poppins', 'FC Minimal', 'FCMinimal', 'FC-Minimal', 'Prompt', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-sans: 'FC Minimal', 'FCMinimal', 'FC-Minimal', 'Poppins', 'Prompt', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'FC Minimal', 'FCMinimal', 'FC-Minimal', 'Poppins', 'Prompt', monospace;
   
   /* ======================================================== */
   /* 2. LSEd Official Identity: Turquoise & Orange            */
@@ -87,19 +94,37 @@
   --color-orange-900: #7c2d12;
 }
 
-/* Force Pure Light Theme System */
+/* Standard Normal font size for clear, elegant, balanced readability */
+html {
+  font-size: 16px;
+  line-height: 1.55;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+/* Force FC Minimal as primary typeface so brackets, dashes and Thai characters are gracefully balanced */
 html, body {
   background-color: #f8fafb;
   color: #0f172a;
-  font-family: 'Poppins', 'FC Minimal', 'FCMinimal', 'FC-Minimal', 'Prompt', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  letter-spacing: -0.01em;
+  font-family: 'FC Minimal', 'FCMinimal', 'FC-Minimal', 'Poppins', 'Prompt', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  letter-spacing: normal;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Crisp form controls */
+*, button, input, select, textarea {
+  font-family: 'FC Minimal', 'FCMinimal', 'FC-Minimal', 'Poppins', 'Prompt', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Ensure clean contrast and proper rendering */
+p, span, label, td, th, li {
+  text-rendering: optimizeLegibility;
+}
+
+/* Crisp form controls with comfortable adult-friendly sizes */
 input, select, textarea {
   color: #0f172a;
+  font-size: 1rem;
 }
 
 /* Smooth Turquoise-Orange aesthetic scrollbar */
